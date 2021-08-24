@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>DPDK-架构解析 | Hexo</title>
+  <meta name="description" content="目录DPDK-架构解析 目录 前文列表 DPDK 架构 内核态模块 IGB_UIO KNI   PMD DPDK Lib（核心部件库） 组件代码   平台相关模块 Classify 库 QoS 库前文列表《DPDK — 安装部署》《DPDK — 数据平面开发技术》DPDK 架构  内核态模块：  IGB_UIO： KNI  用户态函数库以及网卡驱动程序：  用户态轮询模式的网卡驱动程序（PMD D">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DPDK-架构解析">
+<meta property="og:url" content="http://example.com/2021/08/04/network/dpdk/DPDK-%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="目录DPDK-架构解析 目录 前文列表 DPDK 架构 内核态模块 IGB_UIO KNI   PMD DPDK Lib（核心部件库） 组件代码   平台相关模块 Classify 库 QoS 库前文列表《DPDK — 安装部署》《DPDK — 数据平面开发技术》DPDK 架构  内核态模块：  IGB_UIO： KNI  用户态函数库以及网卡驱动程序：  用户态轮询模式的网卡驱动程序（PMD D">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627481768904-b3db99fb-9713-449c-8322-139b150da09f.png#clientId=u0928072c-4fbe-4&from=paste&id=ud4958617&margin=%5Bobject%20Object%5D&name=image.png&originHeight=750&originWidth=942&originalType=url&ratio=1&size=130624&status=done&style=none&taskId=ue7338f12-4782-4375-b298-d165d19cfce">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627481769146-6c669857-20c2-4539-8a45-342d8064df02.png#clientId=u0928072c-4fbe-4&from=paste&id=u61914ee9&margin=%5Bobject%20Object%5D&name=image.png&originHeight=496&originWidth=389&originalType=url&ratio=1&size=244431&status=done&style=none&taskId=u498a303d-b2c5-4b95-9d2b-b86ccccf82b">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627481769261-be65ada1-ff35-4880-a322-d18f4e381979.png#clientId=u0928072c-4fbe-4&from=paste&id=uba9293cc&margin=%5Bobject%20Object%5D&name=image.png&originHeight=345&originWidth=558&originalType=url&ratio=1&size=82294&status=done&style=none&taskId=ucad680f6-11df-4deb-8c57-78c6b3ef9ff">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627481773020-678f8177-7108-49a0-864e-ddf4523e41ba.png#clientId=u0928072c-4fbe-4&from=paste&id=uf52df5e3&margin=%5Bobject%20Object%5D&name=image.png&originHeight=378&originWidth=797&originalType=url&ratio=1&size=72204&status=done&style=none&taskId=ud2675454-3c19-45ba-93aa-e142cbd7379">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627481769193-9dfea3cf-22c5-4457-a519-93ed7c367c80.png#clientId=u0928072c-4fbe-4&from=paste&id=u0bdac4d1&margin=%5Bobject%20Object%5D&name=image.png&originHeight=567&originWidth=754&originalType=url&ratio=1&size=235286&status=done&style=none&taskId=u50cc4576-6bc3-4c17-9ca9-16f78f2a3f9">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627481772817-48082ec2-383b-4210-ba40-a1222f0bc792.png#clientId=u0928072c-4fbe-4&from=paste&id=u3da3a1cd&margin=%5Bobject%20Object%5D&name=image.png&originHeight=1242&originWidth=850&originalType=url&ratio=1&size=875251&status=done&style=none&taskId=uf4da37b8-7885-437e-85b9-45254cdde0a">
+<meta property="article:published_time" content="2021-08-04T06:25:13.670Z">
+<meta property="article:modified_time" content="2021-08-04T06:25:13.670Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="5G">
+<meta property="article:tag" content="DPDK">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627481768904-b3db99fb-9713-449c-8322-139b150da09f.png#clientId=u0928072c-4fbe-4&from=paste&id=ud4958617&margin=%5Bobject%20Object%5D&name=image.png&originHeight=750&originWidth=942&originalType=url&ratio=1&size=130624&status=done&style=none&taskId=ue7338f12-4782-4375-b298-d165d19cfce">
+  <!-- Canonical links -->
+  <link rel="canonical" href="http://example.com/2021/08/04/network/dpdk/DPDK-%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">15</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">7</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.5px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.25px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 14px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.75px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.5px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">22</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/24/devops/docker/ftp%E6%9C%8D%E5%8A%A1%E6%90%AD%E5%BB%BA/" class="title">ftp服务器搭建</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-24T07:05:26.767Z" itemprop="datePublished">2021-08-24</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/24/devops/docker/nexus%E6%9C%8D%E5%8A%A1%E6%90%AD%E5%BB%BA/" class="title">nexus服务搭建</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-24T07:05:26.756Z" itemprop="datePublished">2021-08-24</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/24/devops/docker/%E6%95%B0%E6%8D%AE%E7%8E%AF%E5%A2%83/" class="title">数据环境</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-24T07:00:25.063Z" itemprop="datePublished">2021-08-24</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/5G/">5G</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/04/network/protocol/SCTP%E6%A6%82%E8%A6%81/" class="title">SCTP概要</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-04T06:25:13.672Z" itemprop="datePublished">2021-08-04</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/5G/">5G</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/04/network/dpdk/DPDK-%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/" class="title">DPDK-架构解析</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-04T06:25:13.670Z" itemprop="datePublished">2021-08-04</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-network/dpdk/DPDK-架构解析" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      DPDK-架构解析
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/08/04/network/dpdk/DPDK-%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/" class="article-date">
+	  <time datetime="2021-08-04T06:25:13.670Z" itemprop="datePublished">2021-08-04</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/5G/">5G</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/5G/" rel="tag">5G</a>, <a class="article-tag-link-link" href="/tags/DPDK/" rel="tag">DPDK</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/08/04/network/dpdk/DPDK-%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="目录"><a href="#目录" class="headerlink" title="目录"></a>目录</h1><h3 id="DPDK-架构解析"><a href="#DPDK-架构解析" class="headerlink" title="DPDK-架构解析"></a>DPDK-架构解析</h3><ul>
+<li><a target="_blank" rel="noopener" href="http://t.zoukankan.com/hzcya1995-p-13309271.html#_0">目录</a></li>
+<li><a target="_blank" rel="noopener" href="http://t.zoukankan.com/hzcya1995-p-13309271.html#_3">前文列表</a></li>
+<li><a target="_blank" rel="noopener" href="http://t.zoukankan.com/hzcya1995-p-13309271.html#DPDK__7">DPDK 架构</a></li>
+<li><a target="_blank" rel="noopener" href="http://t.zoukankan.com/hzcya1995-p-13309271.html#_32">内核态模块</a><ul>
+<li><a target="_blank" rel="noopener" href="http://t.zoukankan.com/hzcya1995-p-13309271.html#IGB_UIO_33">IGB_UIO</a></li>
+<li><a target="_blank" rel="noopener" href="http://t.zoukankan.com/hzcya1995-p-13309271.html#KNI_35">KNI</a></li>
+</ul>
+</li>
+<li><a target="_blank" rel="noopener" href="http://t.zoukankan.com/hzcya1995-p-13309271.html#PMD_44">PMD</a></li>
+<li><a target="_blank" rel="noopener" href="http://t.zoukankan.com/hzcya1995-p-13309271.html#DPDK_Lib_47">DPDK Lib（核心部件库）</a><ul>
+<li><a target="_blank" rel="noopener" href="http://t.zoukankan.com/hzcya1995-p-13309271.html#_75">组件代码</a></li>
+</ul>
+</li>
+<li><a target="_blank" rel="noopener" href="http://t.zoukankan.com/hzcya1995-p-13309271.html#_98">平台相关模块</a></li>
+<li><a target="_blank" rel="noopener" href="http://t.zoukankan.com/hzcya1995-p-13309271.html#Classify__109">Classify 库</a></li>
+<li><a target="_blank" rel="noopener" href="http://t.zoukankan.com/hzcya1995-p-13309271.html#QoS__112">QoS 库</a><h1 id="前文列表"><a href="#前文列表" class="headerlink" title="前文列表"></a>前文列表</h1>《<a target="_blank" rel="noopener" href="https://is-cloud.blog.csdn.net/article/details/105980054">DPDK — 安装部署</a>》<br>《<a target="_blank" rel="noopener" href="https://is-cloud.blog.csdn.net/article/details/98944634">DPDK — 数据平面开发技术</a>》<h1 id="DPDK-架构"><a href="#DPDK-架构" class="headerlink" title="DPDK 架构"></a>DPDK 架构</h1><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1627481768904-b3db99fb-9713-449c-8322-139b150da09f.png#clientId=u0928072c-4fbe-4&from=paste&id=ud4958617&margin=%5Bobject%20Object%5D&name=image.png&originHeight=750&originWidth=942&originalType=url&ratio=1&size=130624&status=done&style=none&taskId=ue7338f12-4782-4375-b298-d165d19cfce" alt="image.png"></li>
+</ul>
+<p><strong>内核态模块</strong>：</p>
+<ul>
+<li>IGB_UIO：</li>
+<li>KNI</li>
+</ul>
+<p><strong>用户态函数库以及网卡驱动程序</strong>：</p>
+<ul>
+<li>用户态轮询模式的网卡驱动程序（PMD Driver）</li>
+<li>核心部件库（Core Libraries）</li>
+<li>操作系统平台相关模块（Platform）</li>
+<li>QoS 库</li>
+<li>报文转发分类算法库（Classify）</li>
+</ul>
+<p>用户应用程序可以应用以上函数库以及驱动支持，来实现完全内核旁路的数据面转发应用程序，例如：OVS-DPDK。<br><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1627481769146-6c669857-20c2-4539-8a45-342d8064df02.png#clientId=u0928072c-4fbe-4&from=paste&id=u61914ee9&margin=%5Bobject%20Object%5D&name=image.png&originHeight=496&originWidth=389&originalType=url&ratio=1&size=244431&status=done&style=none&taskId=u498a303d-b2c5-4b95-9d2b-b86ccccf82b" alt="image.png"></p>
+<ul>
+<li><p><strong>EAL（Environment Abstraction Layer，环境抽象层）</strong>：为应用提供了一个通用接口，隐藏了与底层库与设备打交道的相关细节。EAL 实现了 DPDK 运行的初始化工作，基于大页表的内存分配，多核亲缘性设置，原子和锁操作，并将 PCI 设备地址映射到用户空间，方便应用程序访问。</p>
+</li>
+<li><p><strong>Buffer Manager API</strong>：通过预先从 EAL 上分配固定大小的多个内存对象，避免了在运行过程中动态进行内存分配和回收，以此来提高效率，用于数据包 Buffer 的管理。</p>
+</li>
+<li><p><strong>Queue/Ring Manager API</strong>：以高效的方式实现了无锁的 FIFO 环形队列，适用于一个生产者多个消费者、一个消费者多个生产者模型。支持批量无锁操作，可避免锁冲突导致的等待。</p>
+</li>
+<li><p><strong>Packet Flow Classification API</strong>：通过 Intel SSE 基于多元组的方式实现了高效的 HASH 算法，以便快速对数据包进行分类处理。该 API 一般用于路由查找过程中的最长前缀匹配。此外，安全产品场景中，可以根据 DataFlow 五元组来标记不同的用户。</p>
+</li>
+<li><p><strong>PMD（Poll Mode Library）</strong>：则实现了 Intel 1GbE、10GbE 和 40GbE 网卡下基于轮询收发包的工作模式，大大加速网卡收发包性能。</p>
+<h1 id="内核态模块"><a href="#内核态模块" class="headerlink" title="内核态模块"></a>内核态模块</h1><h2 id="IGB-UIO"><a href="#IGB-UIO" class="headerlink" title="IGB_UIO"></a>IGB_UIO</h2><p>《<a target="_blank" rel="noopener" href="https://is-cloud.blog.csdn.net/article/details/106007926">DPDK — IGB_UIO，与 UIO Framework 进行交互的内核模块</a>》</p>
+<h2 id="KNI"><a href="#KNI" class="headerlink" title="KNI"></a>KNI</h2><p>KNI（Kernel NIC Interface，内核网卡接口），是 DPDK 允许用户态和内核态交换报文的解决方案，模拟了一个虚拟的网口，提供 DPDK 应用程序和 Linux 内核之间通讯没接。<strong>即 KNI 接口允许报文从用户态接收后转发到 Linux 内核协议栈中去</strong>。<br>虽然 DPDK 的高速转发性能很出色，但是也有自己的一些缺点，比如没有标准协议栈就是其中之一，当然也可能当时设计时就将没有将协议栈考虑进去，毕竟协议栈需要将报文转发处理，可能会使处理报文的能力大大降低。<br><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1627481769261-be65ada1-ff35-4880-a322-d18f4e381979.png#clientId=u0928072c-4fbe-4&from=paste&id=uba9293cc&margin=%5Bobject%20Object%5D&name=image.png&originHeight=345&originWidth=558&originalType=url&ratio=1&size=82294&status=done&style=none&taskId=ucad680f6-11df-4deb-8c57-78c6b3ef9ff" alt="image.png"><br>上图是 KNI 的 mbuf 的使用流程，也可以看出报文的流向，因为报文在代码中其实就是一个个内存指针。其中 rx_q 右边是用户态，左边是内核态。最后通过调用 netif_rx 将报文送入 Linux 内核协议栈，这其中需要将 DPDK 的 mbuf 转换成标准的 skb_buf 结构体。当 Linux 内核向 KNI 端口发送报文时，调用回调函数 kni_net_tx，然后报文经过转换之后发送到端口上。</p>
+<h1 id="PMD"><a href="#PMD" class="headerlink" title="PMD"></a>PMD</h1><p>《<a target="_blank" rel="noopener" href="https://blog.csdn.net/Jmilk/article/details/103025477">DPDK — PMD，DPDK 的核心优化</a>》</p>
+<h1 id="DPDK-Lib（核心部件库）"><a href="#DPDK-Lib（核心部件库）" class="headerlink" title="DPDK Lib（核心部件库）"></a>DPDK Lib（核心部件库）</h1><p><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1627481773020-678f8177-7108-49a0-864e-ddf4523e41ba.png#clientId=u0928072c-4fbe-4&from=paste&id=uf52df5e3&margin=%5Bobject%20Object%5D&name=image.png&originHeight=378&originWidth=797&originalType=url&ratio=1&size=72204&status=done&style=none&taskId=ud2675454-3c19-45ba-93aa-e142cbd7379" alt="image.png"><br>核心部件库（Core Libraries）是 DPDK 面向用户态协议栈应用程序员开发的模块。</p>
+</li>
+<li><p><strong>EAL（Environment Abstraction Layer，环境抽象层）</strong>：对 DPDK 的运行环境（e.g. Linux 操作系统）进行初始化，包括：HugePage 内存分配、内存/缓冲区/队列分配、原子性无锁操作、NUMA 亲和性、CPU 绑定等，并通过 UIO 或 VFIO 技术将 PCI/PCIe 设备地址映射到用户态，方便了用户态的 DPDK 应用程序调用。同时为应用程序提供了一个通用接口，隐藏了其与底层库以及设备打交道的相关细节。</p>
+</li>
+<li><p><strong>MALLOC（堆内存管理组件）</strong>：为 DPDK 应用程序提供从 HugePage 内分配堆内存的接口。当需要为 SKB（Socket Buffer，本质是若干个数据包的缓存区）分配大量的小块内存时（如：分配用于存储 Buffer descriptor table 中每个表项指针的内存）可以调用该接口。由于堆内存是从 HugePage 内存分配的，所以可以减少 TLB 缺页。</p>
+</li>
+</ul>
+<p>注：堆，是由开发人员主动分配和释放的存储空间， 若开发人员不释放，则程序结束时由 OS 回收，分配方式类似于链表；与堆不同，栈，是由操作系统自动分配和释放的存储空间 ，用于存放函数的参数值、局部变量等，其操作方式类似于数据结构中的栈。</p>
+<ul>
+<li><strong>MBUF（网络报文缓存块管理组件）</strong>：为 DPDK 应用程序提供创建和释放用于存储数据报文信息的缓存块的接口。提供了两种类型的 MBUF，一种用于存储一般信息，一种用于存储实际的报文数据。这些 MBUF 存储在一个内存池中。</li>
+<li><strong>MEMPOOL（内存池管理组件）</strong>：为 DPDK 应用程序和其它组件提供分配内存池的接口，内存池是一个由固定大小的多个内存块组成的内存容器，可用于存储不同的对像实体，如：数据报文缓存块等。内存池由内存池的名称（一个字符串）进行唯一标识，它由一个 Ring 缓冲区和一组本地缓存队列组成，每个 CPU Core 优先从自身的缓存队列中分配内存块，当本地缓存队列减少到一定程度时，开始从内存环缓冲区中申请内存块来进行补充。</li>
+<li><strong>RING（环缓冲区管理组件）</strong>：为 DPDK 应用程序和其它组件提供一个无锁的多生产者多消费者 FIFO 队列。</li>
+</ul>
+<p><strong>NOTE</strong>：DPDK 基于 Linux 内核的无锁环形缓冲 kfifo 实现了一套自己的无锁机制。支持单生产者入列/单消费者出列和多生产者入列/多消费者出列操作，在数据传输的时候，降低性能的同时还能保证数据的同步。</p>
+<ul>
+<li><strong>TIMER（定时器组件）</strong>：提供一些异步周期执行的接口（也可以只执行一次），可以指定某个函数在规定时间内的异步执行，就像 LIBC 中的 timer 定时器。但是这里的定时器需要 DPDK 应用程序在主循环中周期内调用 rte_timer_manage 来使能定时器，使用起来不那么方便。TIMER 的时间参考来自 EAL 层提供的时间接口。</li>
+</ul>
+<p>注：除了以上六个核心组件外，DPDK 还提供以下功能：</p>
+<ol>
+<li>以太网轮询模式驱动（PMD）架构：把以太网驱动从内核移到应用层，采用同步轮询机制而不是内核态的异步中断机制来提高报文的接收和发送效率。</li>
+<li>报文转发算法支持：Hash 库和 LPM 库为报文转发算法提供支持。</li>
+<li>网络协议定义和相关宏定义：基于 FreeBSD IP 协议栈的相关定义，如：TCP、UDP、SCTP 等协议头定义。</li>
+<li>报文 QoS 调度库：支持随机早检测、流量整形、严格优先级和加权随机循环优先级调度等相关 QoS 功能。</li>
+<li>内核网络接口库（KNI）：提供一种 DPDK 应用程序与内核协议栈的通信的方法，类似 Linux 的 TUN/TAP 接口，但比 TUN/TAP 接口效率高。每个物理网口可以虚拟出多个 KNI 接口。<h2 id="组件代码"><a href="#组件代码" class="headerlink" title="组件代码"></a>组件代码</h2><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1627481769193-9dfea3cf-22c5-4457-a519-93ed7c367c80.png#clientId=u0928072c-4fbe-4&from=paste&id=u0bdac4d1&margin=%5Bobject%20Object%5D&name=image.png&originHeight=567&originWidth=754&originalType=url&ratio=1&size=235286&status=done&style=none&taskId=u50cc4576-6bc3-4c17-9ca9-16f78f2a3f9" alt="image.png"></li>
+</ol>
+<p><strong>注</strong>：</p>
+<ul>
+<li>RTE：Run-Time Environment</li>
+<li>EAL：Environment Abstraction Layer</li>
+<li>PMD：Poll-Mode Driver</li>
+</ul>
+<p>核心部件库对应的 DPDK 核心组件实现：</p>
+<ul>
+<li><strong>Memory Manager（librte_malloc，堆内存管理器）</strong>：提供一组 API，用于从 HugePages 内存创建的 memzones 中分配内存，而不是在堆中分配。这有助于改善 Linux 用户空间环境下典型的从堆中大量分配 4KB 页面而容易引起 TLB 不命中。</li>
+<li><strong>Memory Pool Manager（librte_mempool，内存池管理器）</strong>：内存池管理器负责分配的内存中的 Pool 对象。Pool 由名称唯一标识，并使用一个 Ring 来存储空闲对象。它提供了其他一些可选的服务，例如：每个 CPU Core 的对象缓存和对齐方式帮助，以确保将填充的对象在所有内存通道上得到均匀分布。</li>
+<li><strong>Ring Manager（librte_ring，环形队列管理器）</strong>：在一个大小有限的页表中，Ring 数据结构提供了一个无锁的多生产者-多消费者 FIFO API。相较于无锁队列，它有一些的优势，如：更容易实现，适应于大容量操作，而且速度更快。 一个 Ring 可以在 Memory Pool Manager 中被使用，也可以用于不同 CPU Core 或 Processor 之间作为通用的通信机制。</li>
+<li><strong>Network Packet Buffer Management（librte_mbuf，网络报文缓冲区管理）</strong>：提供一组 API，用于分配、释放和操作 MBUFs（数据报文缓冲区），DPDK 应用程序中可以使用这些缓存区来存储消息以及报文数据。</li>
+<li><strong>Timer Manager（librte_timer，定时器管理）</strong>：为 DPDK 应用程序的执行单元提供了定时服务，支持以异步的方式执行函数。定时器可以设置周期调用，也可以设置为只调用一次。DPDK 应用程序可以使用 EAL 提供的 HPET 接口来获取高精度时钟的引用，并且能在每个 Core 上根据需要进行初始化。</li>
+</ul>
+<p>代码目录：<br><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1627481772817-48082ec2-383b-4210-ba40-a1222f0bc792.png#clientId=u0928072c-4fbe-4&from=paste&id=u3da3a1cd&margin=%5Bobject%20Object%5D&name=image.png&originHeight=1242&originWidth=850&originalType=url&ratio=1&size=875251&status=done&style=none&taskId=uf4da37b8-7885-437e-85b9-45254cdde0a" alt="image.png"></p>
+<h1 id="平台相关模块"><a href="#平台相关模块" class="headerlink" title="平台相关模块"></a>平台相关模块</h1><p>平台相关模块（Platform）包括 KNI、POWER（能耗管理）以及 IVSHMEM 接口。</p>
+<ul>
+<li><strong>KNI</strong>：主要通过 Linux 内核中的 kni.ko 模块将数据报文从用户态传递给内核态协议栈处理，以便常规的用户进程（e.g. Container）可以使用 Linux 内核协议栈传统的 Socket 接口对相关报文进行处理。</li>
+<li><strong>POWER</strong>：提供了一些 API，让 DPDK 应用程序可以根据收包速率动态调整 CPU 频率或让 CPU 进入不同的休眠状态。</li>
+<li><strong>IVSHMEM</strong>：模块提供了虚拟机与虚拟机之间，或者虚拟机与主机之间的零拷贝共享内存机制。当 DPDK 应用程序运行时，IVSHMEM 模块会调用 Core Libraries 的 API，把几个 HugePage 内存映射为一个 IVSHMEM 设备池，并通过参数传递给 QEMU，这样，就实现了虚拟机之间的零拷贝内存共享。<h1 id="Classify-库"><a href="#Classify-库" class="headerlink" title="Classify 库"></a>Classify 库</h1>支持精确匹配（Exact Match）、最长匹配（LPM）和通配符匹配（ACL）数据报文，并提供常用的包处理的查表操作。<h1 id="QoS-库"><a href="#QoS-库" class="headerlink" title="QoS 库"></a>QoS 库</h1>提供网络服务质量相关的组件，如：限速（Meter）和调度（Scheduler）。</li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://example.com/2021/08/04/network/dpdk/DPDK-%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/" title="DPDK-架构解析" target="_blank" rel="external">http://example.com/2021/08/04/network/dpdk/DPDK-架构解析/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/08/04/network/protocol/SCTP%E6%A6%82%E8%A6%81/" title="SCTP概要"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/08/04/network/dpdk/%E4%B8%80%E6%96%87%E7%9C%8B%E6%87%82DPDK/" title="一文看懂DPDK"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

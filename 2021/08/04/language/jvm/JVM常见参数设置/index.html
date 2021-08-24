@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>JVM常见参数设置 | Hexo</title>
+  <meta name="description" content="1. 查看-XX:+PrintFlagsFinal  查看堆的默认值，使用下面的代码。其中 InitialHeapSize 为最开始的堆的大小，MaxHeapSize 为堆的最大值。 12345678910$ java -XX:+PrintFlagsFinal -version | grep HeapSize    uintx ErgoHeapSizeLimit">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM常见参数设置">
+<meta property="og:url" content="http://example.com/2021/08/04/language/jvm/JVM%E5%B8%B8%E8%A7%81%E5%8F%82%E6%95%B0%E8%AE%BE%E7%BD%AE/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="1. 查看-XX:+PrintFlagsFinal  查看堆的默认值，使用下面的代码。其中 InitialHeapSize 为最开始的堆的大小，MaxHeapSize 为堆的最大值。 12345678910$ java -XX:+PrintFlagsFinal -version | grep HeapSize    uintx ErgoHeapSizeLimit">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627721065789-f0943cfd-fbc6-4efd-847f-5661628e8a9e.png#clientId=ud7a2e44c-082c-4&from=paste&id=uac2b358e&margin=%5Bobject%20Object%5D&name=image.png&originHeight=321&originWidth=593&originalType=url&ratio=1&size=88416&status=done&style=none&taskId=u6a74a41e-6989-4ec2-b966-583063cd2d7">
+<meta property="article:published_time" content="2021-08-04T06:25:13.663Z">
+<meta property="article:modified_time" content="2021-08-04T06:25:13.663Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="JVM">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627721065789-f0943cfd-fbc6-4efd-847f-5661628e8a9e.png#clientId=ud7a2e44c-082c-4&from=paste&id=uac2b358e&margin=%5Bobject%20Object%5D&name=image.png&originHeight=321&originWidth=593&originalType=url&ratio=1&size=88416&status=done&style=none&taskId=u6a74a41e-6989-4ec2-b966-583063cd2d7">
+  <!-- Canonical links -->
+  <link rel="canonical" href="http://example.com/2021/08/04/language/jvm/JVM%E5%B8%B8%E8%A7%81%E5%8F%82%E6%95%B0%E8%AE%BE%E7%BD%AE/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">15</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">7</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.5px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.25px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 14px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.75px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.5px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">22</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/24/devops/docker/ftp%E6%9C%8D%E5%8A%A1%E6%90%AD%E5%BB%BA/" class="title">ftp服务器搭建</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-24T07:05:26.767Z" itemprop="datePublished">2021-08-24</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/24/devops/docker/nexus%E6%9C%8D%E5%8A%A1%E6%90%AD%E5%BB%BA/" class="title">nexus服务搭建</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-24T07:05:26.756Z" itemprop="datePublished">2021-08-24</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/24/devops/docker/%E6%95%B0%E6%8D%AE%E7%8E%AF%E5%A2%83/" class="title">数据环境</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-24T07:00:25.063Z" itemprop="datePublished">2021-08-24</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/5G/">5G</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/04/network/protocol/SCTP%E6%A6%82%E8%A6%81/" class="title">SCTP概要</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-04T06:25:13.672Z" itemprop="datePublished">2021-08-04</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/5G/">5G</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/04/network/dpdk/DPDK-%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/" class="title">DPDK-架构解析</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-04T06:25:13.670Z" itemprop="datePublished">2021-08-04</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-language/jvm/JVM常见参数设置" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      JVM常见参数设置
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/08/04/language/jvm/JVM%E5%B8%B8%E8%A7%81%E5%8F%82%E6%95%B0%E8%AE%BE%E7%BD%AE/" class="article-date">
+	  <time datetime="2021-08-04T06:25:13.663Z" itemprop="datePublished">2021-08-04</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/java/">java</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/JVM/" rel="tag">JVM</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/08/04/language/jvm/JVM%E5%B8%B8%E8%A7%81%E5%8F%82%E6%95%B0%E8%AE%BE%E7%BD%AE/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="1-查看"><a href="#1-查看" class="headerlink" title="1. 查看"></a>1. 查看</h2><p><strong>-XX:+PrintFlagsFinal</strong></p>
+<ul>
+<li><p>查看堆的默认值，使用下面的代码。<br>其中 InitialHeapSize 为最开始的堆的大小，MaxHeapSize 为堆的最大值。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ java -XX:+PrintFlagsFinal -version | grep HeapSize</span><br><span class="line">    uintx ErgoHeapSizeLimit                         = 0                                   &#123;product&#125;</span><br><span class="line">    uintx HeapSizePerGCThread                       = 87241520                            &#123;product&#125;</span><br><span class="line">    uintx InitialHeapSize                          := 134217728                           &#123;product&#125;</span><br><span class="line">    uintx LargePageHeapSizeThreshold                = 134217728                           &#123;product&#125;</span><br><span class="line">    uintx MaxHeapSize                              := 2147483648                          &#123;product&#125;</span><br><span class="line">java version &quot;1.8.0_25&quot;</span><br><span class="line">Java(TM) SE Runtime Environment (build 1.8.0_25-b17)</span><br><span class="line">Java HotSpot(TM) 64-Bit Server VM (build 25.25-b02, mixed mode)</span><br><span class="line"></span><br></pre></td></tr></table></figure></li>
+<li><p>查看栈的默认值, 其中 ThreadStackSize 为栈内存的大小。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ java -XX:+PrintFlagsFinal -version | grep ThreadStackSize</span><br><span class="line"> intx CompilerThreadStackSize                   = 0                                   &#123;pd product&#125;</span><br><span class="line"> intx ThreadStackSize                           = 1024                                &#123;pd product&#125;</span><br><span class="line"> intx VMThreadStackSize                         = 1024                                &#123;pd product&#125;</span><br><span class="line">java version &quot;1.8.0_25&quot;</span><br><span class="line">Java(TM) SE Runtime Environment (build 1.8.0_25-b17)</span><br><span class="line">Java HotSpot(TM) 64-Bit Server VM (build 25.25-b02, mixed mode)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="2-堆"><a href="#2-堆" class="headerlink" title="2. 堆"></a>2. 堆</h2><p><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1627721065789-f0943cfd-fbc6-4efd-847f-5661628e8a9e.png#clientId=ud7a2e44c-082c-4&from=paste&id=uac2b358e&margin=%5Bobject%20Object%5D&name=image.png&originHeight=321&originWidth=593&originalType=url&ratio=1&size=88416&status=done&style=none&taskId=u6a74a41e-6989-4ec2-b966-583063cd2d7" alt="image.png"></p>
+</li>
+<li><p>-Xmx：初始堆的大小</p>
+</li>
+<li><p>-Xms：最大堆大小，建议这两个参数大小保持一致，为物理内存的 1/4</p>
+</li>
+<li><p>-Xmn：指定新生代的大小（Eden + Survior from + Survior to）的大小，增大新生代的大小，老年代的大小将被减小，sun 官方推荐 新生代的大小：堆 = 3 : 8</p>
+</li>
+<li><p>-XX:NewSize：设置新生代大小</p>
+</li>
+<li><p>-XX:MaxNewSize：设置新生代的最大值-Xmn 相当于设同时设置 NewSize=MaxNewSize</p>
+</li>
+<li><p>-XX:NewRation：老年代：新生代 = 4，即 old：(Eden + Survivor from + Survivor to) ，则说明新生代为整个堆区的 1/5</p>
+</li>
+<li><p>-XX:SurvivorRation：设置 Eden 区和 Survivor。<br>默认值为8；即：Eden：Survivor=8:1 ==&gt; Eden：Survivor from：Survivor to = 8:1:1<br>若值为3，即：Eden：Survivor=8:1 ==&gt; Eden：Survivor from：Survivor to = 3:1:1</p>
+<h2 id="3-方法区（非堆）"><a href="#3-方法区（非堆）" class="headerlink" title="3. 方法区（非堆）"></a>3. 方法区（非堆）</h2></li>
+<li><p>-XX:PermSize：设置方法区大小</p>
+</li>
+<li><p>-XX:MaxPermSize： 设置方法区的最大值</p>
+</li>
+<li><p>1.8 之前可以理解为 永久区（PerSize，MaxPerSize）。</p>
+</li>
+<li><p>1.8 之后使用 元数据区 取代。（MaxMetaspaceSize）。</p>
+<h2 id="4-栈"><a href="#4-栈" class="headerlink" title="4. 栈"></a>4. 栈</h2></li>
+<li><p>-Xss：栈内存的大小</p>
+<h2 id="5-详细参数"><a href="#5-详细参数" class="headerlink" title="5. 详细参数"></a>5. 详细参数</h2><h3 id="5-1-基础参数"><a href="#5-1-基础参数" class="headerlink" title="5.1.基础参数"></a>5.1.基础参数</h3><table>
+<thead>
+<tr>
+<th><strong>参数名称</strong></th>
+<th><strong>含义</strong></th>
+<th><strong>默认值</strong></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>-Xms</td>
+<td>初始堆大小</td>
+<td>物理内存的1/64(&lt;1GB)</td>
+<td>默认(MinHeapFreeRatio参数可以调整)空余堆内存小于40%时，JVM就会增大堆直到-Xmx的最大限制.</td>
+</tr>
+<tr>
+<td>-Xmx</td>
+<td>最大堆大小</td>
+<td>物理内存的1/4(&lt;1GB)</td>
+<td>默认(MaxHeapFreeRatio参数可以调整)空余堆内存大于70%时，JVM会减少堆直到 -Xms的最小限制</td>
+</tr>
+<tr>
+<td>-Xmn</td>
+<td>年轻代大小(1.4or lator)</td>
+<td></td>
+<td><strong>注意</strong>：此处的大小是（eden+ 2 survivor space).与jmap -heap中显示的New gen是不同的。</td>
+</tr>
+<tr>
+<td>整个堆大小=年轻代大小 + 年老代大小 + 持久代大小.</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>增大年轻代后,将会减小年老代大小.此值对系统性能影响较大,Sun官方推荐配置为整个堆的3/8</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:NewSize</td>
+<td>设置年轻代大小(for 1.3/1.4)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:MaxNewSize</td>
+<td>年轻代最大值(for 1.3/1.4)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:PermSize</td>
+<td>设置持久代(perm gen)初始值</td>
+<td>物理内存的1/64</td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:MaxPermSize</td>
+<td>设置持久代最大值</td>
+<td>物理内存的1/4</td>
+<td></td>
+</tr>
+<tr>
+<td>-Xss</td>
+<td>每个线程的堆栈大小</td>
+<td></td>
+<td>JDK5.0以后每个线程堆栈大小为1M,以前每个线程堆栈大小为256K. 根据应用的线程所需内存大小进行 调整.在相同物理内存下,减小这个值能生成更多的线程.但是操作系统对一个进程内的线程数还是有限制的,不能无限生成,经验值在3000~5000左右</td>
+</tr>
+<tr>
+<td>一般小的应用， 如果栈不是很深， 应该128k够用的 大的应用建议使用256k。这个选项对性能影响比较大，需要严格的测试。</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>和threadstacksize选项解释很类似,官方文档似乎没有解释,在论坛中有这样一句话:”-Xss is translated in a VM flag named ThreadStackSize”. 一般设置128k或者256k这个值就可以了。</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>-<em>XX:ThreadStackSize</em></td>
+<td>Thread Stack Size</td>
+<td></td>
+<td>(0 means use default stack size) [Sparc: 512; Solaris x86: 320 (was 256 prior in 5.0 and earlier); Sparc 64 bit: 1024; Linux amd64: 1024 (was 0 in 5.0 and earlier); all others 0.]</td>
+</tr>
+<tr>
+<td>-XX:NewRatio</td>
+<td>年轻代(包括Eden和两个Survivor区)与年老代的比值(除去持久代)</td>
+<td></td>
+<td>-XX:NewRatio=4表示年轻代与年老代所占比值为1:4,年轻代占整个堆栈的1/5</td>
+</tr>
+<tr>
+<td>Xms=Xmx并且设置了Xmn的情况下，该参数不需要进行设置。</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:SurvivorRatio</td>
+<td>Eden区与Survivor区的大小比值</td>
+<td></td>
+<td>设置为8,则两个Survivor区与一个Eden区的比值为2:8,一个Survivor区占整个年轻代的1/10</td>
+</tr>
+<tr>
+<td>-XX:LargePageSizeInBytes</td>
+<td>内存页的大小不可设置过大， 会影响Perm的大小</td>
+<td></td>
+<td>=128m</td>
+</tr>
+<tr>
+<td>-XX:+UseFastAccessorMethods</td>
+<td>原始类型的快速优化</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:+DisableExplicitGC</td>
+<td>关闭System.gc()</td>
+<td></td>
+<td>这个参数需要严格的测试</td>
+</tr>
+<tr>
+<td>-XX:MaxTenuringThreshold</td>
+<td>垃圾最大年龄</td>
+<td></td>
+<td>如果设置为0的话,则年轻代对象不经过Survivor区,直接进入年老代. 对于年老代比较多的应用,可以提高效率.如果将此值设置为一个较大值,则年轻代对象会在Survivor区进行多次复制,这样可以增加对象再年轻代的存活 时间,增加在年轻代即被回收的概率</td>
+</tr>
+<tr>
+<td>该参数只有在串行GC时才有效.</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:+AggressiveOpts</td>
+<td>加快编译</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:+UseBiasedLocking</td>
+<td>锁机制的性能改善</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>-Xnoclassgc</td>
+<td>禁用垃圾回收</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:SoftRefLRUPolicyMSPerMB</td>
+<td>每兆堆空闲空间中SoftReference的存活时间</td>
+<td>1s</td>
+<td>softly reachable objects will remain alive for some amount of time after the last time they were referenced. The default value is one second of lifetime per free megabyte in the heap</td>
+</tr>
+<tr>
+<td>-XX:PretenureSizeThreshold</td>
+<td>对象超过多大是直接在旧生代分配</td>
+<td>0</td>
+<td>单位字节 新生代采用Parallel Scavenge GC时无效</td>
+</tr>
+<tr>
+<td>另一种直接在旧生代分配的情况是大的数组对象,且数组中无外部引用对象.</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:TLABWasteTargetPercent</td>
+<td>TLAB占eden区的百分比</td>
+<td>1%</td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:+<em>CollectGen0First</em></td>
+<td>FullGC时是否先YGC</td>
+<td>false</td>
+<td></td>
+</tr>
+</tbody></table>
+</li>
+</ul>
+<h3 id="5-2-并行收集器相关参数"><a href="#5-2-并行收集器相关参数" class="headerlink" title="5.2 并行收集器相关参数"></a>5.2 并行收集器相关参数</h3><p>| -XX:+UseParallelGC | Full GC采用parallel MSC<br>(此项待验证) |   | 选择垃圾收集器为并行收集器.此配置仅对年轻代有效.即上述配置下,年轻代使用并发收集,而年老代仍旧使用串行收集.(此项待验证) |<br>| — | — | — | — |<br>| -XX:+UseParNewGC | 设置年轻代为并行收集 |   | 可与CMS收集同时使用<br>JDK5.0以上,JVM会根据系统配置自行设置,所以无需再设置此值 |<br>| -XX:ParallelGCThreads | 并行收集器的线程数 |   | 此值最好配置与处理器数目相等 同样适用于CMS |<br>| -XX:+UseParallelOldGC | 年老代垃圾收集方式为并行收集(Parallel Compacting) |   | 这个是JAVA 6出现的参数选项 |<br>| -XX:MaxGCPauseMillis | 每次年轻代垃圾回收的最长时间(最大暂停时间) |   | 如果无法满足此时间,JVM会自动调整年轻代大小,以满足此值. |<br>| -XX:+UseAdaptiveSizePolicy | 自动选择年轻代区大小和相应的Survivor区比例 |   | 设置此选项后,并行收集器会自动选择年轻代区大小和相应的Survivor区比例,以达到目标系统规定的最低相应时间或者收集频率等,此值建议使用并行收集器时,一直打开. |<br>| -XX:GCTimeRatio | 设置垃圾回收时间占程序运行时间的百分比 |   | 公式为1/(1+n) |<br>| -XX:+<em>ScavengeBeforeFullGC</em> | Full GC前调用YGC | true | Do young generation GC prior to a full GC. (Introduced in 1.4.1.) |</p>
+<h3 id="5-3-CMS相关参数"><a href="#5-3-CMS相关参数" class="headerlink" title="5.3 CMS相关参数"></a>5.3 CMS相关参数</h3><table>
+<thead>
+<tr>
+<th>-XX:+UseConcMarkSweepGC</th>
+<th>使用CMS内存收集</th>
+<th></th>
+<th>测试中配置这个以后,-XX:NewRatio=4的配置失效了,原因不明.所以,此时年轻代大小最好用-Xmn设置.???</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>-XX:+AggressiveHeap</td>
+<td></td>
+<td></td>
+<td>试图是使用大量的物理内存</td>
+</tr>
+<tr>
+<td>长时间大内存使用的优化，能检查计算资源（内存， 处理器数量）</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>至少需要256MB内存</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>大量的CPU／内存， （在1.4.1在4CPU的机器上已经显示有提升）</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:CMSFullGCsBeforeCompaction</td>
+<td>多少次后进行内存压缩</td>
+<td></td>
+<td>由于并发收集器不对内存空间进行压缩,整理,所以运行一段时间以后会产生”碎片”,使得运行效率降低.此值设置运行多少次GC以后对内存空间进行压缩,整理.</td>
+</tr>
+<tr>
+<td>-XX:+CMSParallelRemarkEnabled</td>
+<td>降低标记停顿</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>-XX+UseCMSCompactAtFullCollection</td>
+<td>在FULL GC的时候， 对年老代的压缩</td>
+<td></td>
+<td>CMS是不会移动内存的， 因此， 这个非常容易产生碎片， 导致内存不够用， 因此， 内存的压缩这个时候就会被启用。 增加这个参数是个好习惯。</td>
+</tr>
+<tr>
+<td>可能会影响性能,但是可以消除碎片</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:+UseCMSInitiatingOccupancyOnly</td>
+<td>使用手动定义初始化定义开始CMS收集</td>
+<td></td>
+<td>禁止hostspot自行触发CMS GC</td>
+</tr>
+<tr>
+<td>-XX:CMSInitiatingOccupancyFraction=70</td>
+<td>使用cms作为垃圾回收</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>使用70％后开始CMS收集</td>
+<td>92</td>
+<td>为了保证不出现promotion failed(见下面介绍)错误,该值的设置需要满足以下公式<a target="_blank" rel="noopener" href="http://www.cnblogs.com/redcreen/archive/2011/05/04/2037057.html#CMSInitiatingOccupancyFraction_value">CMSInitiatingOccupancyFraction计算公式</a></td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:CMSInitiatingPermOccupancyFraction</td>
+<td>设置Perm Gen使用到达多少比率时触发</td>
+<td>92</td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:+CMSIncrementalMode</td>
+<td>设置为增量模式</td>
+<td></td>
+<td>用于单CPU情况</td>
+</tr>
+<tr>
+<td>-XX:+CMSClassUnloadingEnabled</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h3 id="5-4-辅助信息"><a href="#5-4-辅助信息" class="headerlink" title="5.4 辅助信息"></a>5.4 辅助信息</h3><p>| -XX:+PrintGC |   |   | 输出形式:<br>[GC 118250K-&gt;113543K(130112K), 0.0094143 secs]<br>[Full GC 121376K-&gt;10414K(130112K), 0.0650971 secs] |<br>| — | — | — | — |<br>| -XX:+PrintGCDetails |   |   | 输出形式:[GC [DefNew: 8614K-&gt;781K(9088K), 0.0123035 secs] 118250K-&gt;113543K(130112K), 0.0124633 secs]<br>[GC [DefNew: 8614K-&gt;8614K(9088K), 0.0000665 secs][Tenured: 112761K-&gt;10414K(121024K), 0.0433488 secs] 121376K-&gt;10414K(130112K), 0.0436268 secs] |<br>| -XX:+PrintGCTimeStamps |   |   |   |<br>| -XX:+PrintGC:PrintGCTimeStamps |   |   | 可与-XX:+PrintGC -XX:+PrintGCDetails混合使用<br>输出形式:11.851: [GC 98328K-&gt;93620K(130112K), 0.0082960 secs] |<br>| -XX:+PrintGCApplicationStoppedTime | 打印垃圾回收期间程序暂停的时间.可与上面混合使用 |   | 输出形式:Total time for which application threads were stopped: 0.0468229 seconds |<br>| -XX:+PrintGCApplicationConcurrentTime | 打印每次垃圾回收前,程序未中断的执行时间.可与上面混合使用 |   | 输出形式:Application time: 0.5291524 seconds |<br>| -XX:+PrintHeapAtGC | 打印GC前后的详细堆栈信息 |   |   |<br>| -Xloggc:filename | 把相关日志信息记录到文件以便分析.<br>与上面几个配合使用 |   |   |<br>| -XX:+PrintClassHistogram | garbage collects before printing the histogram. |   |   |<br>| -XX:+PrintTLAB | 查看TLAB空间的使用情况 |   |   |<br>| XX:+PrintTenuringDistribution | 查看每次minor GC后新的存活周期的阈值 |   | Desired survivor size 1048576 bytes, new threshold 7 (max 15)<br>new threshold 7即标识新的存活周期的阈值为7。 |</p>
+<h2 id="6-参考"><a href="#6-参考" class="headerlink" title="6.参考"></a>6.参考</h2><p><a target="_blank" rel="noopener" href="https://juejin.cn/post/6844903740848242695">https://juejin.cn/post/6844903740848242695</a><br><a target="_blank" rel="noopener" href="http://ssword.cn/f/view-3-be0e37a28e984c9c832a864b70d615cf.html">http://ssword.cn/f/view-3-be0e37a28e984c9c832a864b70d615cf.html</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://example.com/2021/08/04/language/jvm/JVM%E5%B8%B8%E8%A7%81%E5%8F%82%E6%95%B0%E8%AE%BE%E7%BD%AE/" title="JVM常见参数设置" target="_blank" rel="external">http://example.com/2021/08/04/language/jvm/JVM常见参数设置/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/08/04/language/jvm/JVM%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" title="JVM类加载机制"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/08/04/language/jvm/JVM%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%8F%8A%E6%95%85%E9%9A%9C%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7/" title="JVM性能监控及故障分析工具"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>
