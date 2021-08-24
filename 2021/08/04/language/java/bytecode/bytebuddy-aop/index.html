@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>bytebuddy实现aop | Hexo</title>
+  <meta name="description" content="1.背景最近业务服务需要做一些组件第三方组件监控的事，需要用到字节码修改相关的技术，bytebuddy就是其中一种，网上找了一下bytebuddy相关资料，不少大佬写的不错的帖子就直接拿过来了，下方备注参考连接 本文主要介绍 bytebuddy-aop相关操作 2.ByteBuddy简介Byte Buddy 是一个代码生成和操作库，用于在 Java 应用程序运行时创建和修改 Java 类，无需编译">
+<meta property="og:type" content="article">
+<meta property="og:title" content="bytebuddy实现aop">
+<meta property="og:url" content="http://example.com/2021/08/04/language/java/bytecode/bytebuddy-aop/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="1.背景最近业务服务需要做一些组件第三方组件监控的事，需要用到字节码修改相关的技术，bytebuddy就是其中一种，网上找了一下bytebuddy相关资料，不少大佬写的不错的帖子就直接拿过来了，下方备注参考连接 本文主要介绍 bytebuddy-aop相关操作 2.ByteBuddy简介Byte Buddy 是一个代码生成和操作库，用于在 Java 应用程序运行时创建和修改 Java 类，无需编译">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-08-04T06:25:13.666Z">
+<meta property="article:modified_time" content="2021-08-04T06:25:13.667Z">
+<meta property="article:author" content="wuhao">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="http://example.com/2021/08/04/language/java/bytecode/bytebuddy-aop/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">15</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">7</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.67px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.33px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 14px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.67px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">7</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">8</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/5G/">5G</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/04/network/5G%E7%A7%BB%E5%8A%A8%E7%BD%91%E7%BB%9C/" class="title">5G网络</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-04T06:25:13.668Z" itemprop="datePublished">2021-08-04</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/java/">java</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/04/language/java/bytecode/java%E5%AD%97%E8%8A%82%E7%A0%81%E5%A2%9E%E5%BC%BA/" class="title">java字节码增强</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-04T06:25:13.668Z" itemprop="datePublished">2021-08-04</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/java/">java</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/04/language/java/bytecode/bytebuddy-code/" class="title">bytebuddy介绍</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-04T06:25:13.667Z" itemprop="datePublished">2021-08-04</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/java/">java</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/04/language/java/bytecode/bytebuddy-%E6%9B%BF%E6%8D%A2%E7%B1%BB%E5%AE%9E%E7%8E%B0/" class="title">bytebuddy替换类实现</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-04T06:25:13.667Z" itemprop="datePublished">2021-08-04</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/java/">java</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/04/language/java/bytecode/aspectj%E4%BD%BF%E7%94%A8%E4%BB%8B%E7%BB%8D/" class="title">AspectJ使用介绍</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-04T06:25:13.666Z" itemprop="datePublished">2021-08-04</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-language/java/bytecode/bytebuddy-aop" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      bytebuddy实现aop
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/08/04/language/java/bytecode/bytebuddy-aop/" class="article-date">
+	  <time datetime="2021-08-04T06:25:13.666Z" itemprop="datePublished">2021-08-04</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/java/">java</a>
+  </span>
+
+        
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/08/04/language/java/bytecode/bytebuddy-aop/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="1-背景"><a href="#1-背景" class="headerlink" title="1.背景"></a>1.背景</h2><p>最近业务服务需要做一些组件第三方组件监控的事，需要用到字节码修改相关的技术，bytebuddy就是其中一种，<br>网上找了一下bytebuddy相关资料，不少大佬写的不错的帖子就直接拿过来了，下方备注参考连接</p>
+<p>本文主要介绍 bytebuddy-aop相关操作</p>
+<h2 id="2-ByteBuddy简介"><a href="#2-ByteBuddy简介" class="headerlink" title="2.ByteBuddy简介"></a>2.ByteBuddy简介</h2><p>Byte Buddy 是一个代码生成和操作库，用于在 Java 应用程序运行时创建和修改 Java 类，无需编译器的帮助。<br>除了Java 类库附带的代码生成实用程序，Byte Buddy 允许创建任意类，并且不限于实现用于创建运行时代理的接口。<br>此外，Byte Buddy 提供了一个方便的 API，用于手动、使用 Java 代理或在构建期间更改类。</p>
+<p>简单来说，ByteBuddy是一个可以在运行时动态生成java class的类库。在这篇文章中，<br>我们将会使用ByteBuddy这个框架操作已经存在的类，创建指定的新类，甚至拦截方法调用。</p>
+<p>官网：<a target="_blank" rel="noopener" href="https://bytebuddy.net/#/">https://bytebuddy.net/#/</a></p>
+<ul>
+<li>代码地址参考：<a target="_blank" rel="noopener" href="https://github.com/wuhaocn/jcode-simple.git">https://github.com/wuhaocn/jcode-simple.git</a></li>
+</ul>
+<h2 id="3-AOP注解实现"><a href="#3-AOP注解实现" class="headerlink" title="3.AOP注解实现"></a>3.AOP注解实现</h2><h3 id="3-1-依赖引入"><a href="#3-1-依赖引入" class="headerlink" title="3.1 依赖引入"></a>3.1 依赖引入</h3><p> 依赖byte-buddy、byte-buddy-agent相关类</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">dependencies &#123;</span><br><span class="line">  implementation group: &#x27;net.bytebuddy&#x27;, name: &#x27;byte-buddy&#x27;, version: &#x27;1.11.8&#x27;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-定义相关类"><a href="#3-2-定义相关类" class="headerlink" title="3.2 定义相关类"></a>3.2 定义相关类</h3><p>定义 注解类、业务类、监听类;</p>
+<ul>
+<li>注解类</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">@Retention(RetentionPolicy.RUNTIME)</span><br><span class="line">public @interface Monitor &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>业务类<br>此处定义监控方法并加上Monitor注解<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public class BizAnnotationService &#123;</span><br><span class="line">	@Monitor</span><br><span class="line">    public int foo(int value) &#123;</span><br><span class="line">        System.out.println(&quot;foo: &quot; + value);</span><br><span class="line">        return value;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public int bar(int value) &#123;</span><br><span class="line">        System.out.println(&quot;bar: &quot; + value);</span><br><span class="line">        return value;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>监听类<br>实现 @Advice.OnMethodEnter    @Advice.OnMethodExit 监听业务<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">class MonitorAnnotationAdvisor &#123;</span><br><span class="line">    @Advice.OnMethodEnter</span><br><span class="line">    public static void onMethodEnter(@Advice.Origin Method method, @Advice.AllArguments Object[] arguments) &#123;</span><br><span class="line">		if (method.getAnnotation(Monitor.class) != null) &#123;</span><br><span class="line">			System.out.println(&quot;onMethodEnter &quot; + method.getName() + &quot; with arguments: &quot; + Arrays.toString(arguments));</span><br><span class="line">		&#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Advice.OnMethodExit</span><br><span class="line">    public static void onMethodExit(@Advice.Origin Method method, @Advice.AllArguments Object[] arguments, @Advice.Return Object ret) &#123;</span><br><span class="line">		if (method.getAnnotation(Monitor.class) != null) &#123;</span><br><span class="line">			System.out.println(&quot;onMethodExit &quot; + method.getName() + &quot; with arguments: &quot; + Arrays.toString(arguments));</span><br><span class="line">		&#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>测试类</li>
+</ul>
+<p>测试注解生效</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public class BizAnnotationTest &#123;</span><br><span class="line">	public static void main(String[] args) throws Exception &#123;</span><br><span class="line">		BizAnnotationService service = new ByteBuddy()</span><br><span class="line">				.subclass(BizAnnotationService.class)</span><br><span class="line">				.method(ElementMatchers.any())</span><br><span class="line">				.intercept(Advice.to(MonitorAnnotationAdvisor.class))</span><br><span class="line">				.make()</span><br><span class="line">				.load(BizAnnotationService.class.getClassLoader())</span><br><span class="line">				.getLoaded()</span><br><span class="line">				.newInstance();</span><br><span class="line">		service.bar(11111);</span><br><span class="line">		service.foo(99999);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>结果输出</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&gt; Task :code-gen:bytebuddy:BizAnnotationTest.main()</span><br><span class="line">bar: 11111</span><br><span class="line">onMethodEnter foo with arguments: [99999]</span><br><span class="line">foo: 99999</span><br><span class="line">onMethodExit foo with arguments: [99999]</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+<h2 id="4-AOP监听第三方组件"><a href="#4-AOP监听第三方组件" class="headerlink" title="4.AOP监听第三方组件"></a>4.AOP监听第三方组件</h2><h3 id="4-1-定义相关类"><a href="#4-1-定义相关类" class="headerlink" title="4.1 定义相关类"></a>4.1 定义相关类</h3><p>定义 业务类、监听类、测试类;</p>
+<p>主要原因是调用代码无法增加注解</p>
+<ul>
+<li><p>业务类<br>此处定义监控方法并加上未添加注解</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">public class BizService &#123;</span><br><span class="line">    public int foo(int value) &#123;</span><br><span class="line">        System.out.println(&quot;foo: &quot; + value);</span><br><span class="line">        return value;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public int bar(int value) &#123;</span><br><span class="line">        System.out.println(&quot;bar: &quot; + value);</span><br><span class="line">        return value;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>监听类<br>实现 @Advice.OnMethodEnter    @Advice.OnMethodExit 监听业务</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">class MonitorAdvisor &#123;</span><br><span class="line">    @Advice.OnMethodEnter</span><br><span class="line">    public static void onMethodEnter(@Advice.Origin Method method, @Advice.AllArguments Object[] arguments) &#123;</span><br><span class="line">		System.out.println(&quot;onMethodEnter &quot; + method.getName() + &quot; with arguments: &quot; + Arrays.toString(arguments));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Advice.OnMethodExit</span><br><span class="line">    public static void onMethodExit(@Advice.Origin Method method, @Advice.AllArguments Object[] arguments, @Advice.Return Object ret) &#123;</span><br><span class="line">		System.out.println(&quot;onMethodExit &quot; + method.getName() + &quot; with arguments: &quot; + Arrays.toString(arguments) + &quot; return: &quot; + ret);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>测试类</p>
+</li>
+</ul>
+<p>测试不添加注解验证</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public class BizServiceTest &#123;</span><br><span class="line">	public static void main(String[] args) throws Exception &#123;</span><br><span class="line">		BizService service = new ByteBuddy()</span><br><span class="line">				.subclass(BizService.class)</span><br><span class="line">				.method(ElementMatchers.any())</span><br><span class="line">				.intercept(Advice.to(MonitorAdvisor.class))</span><br><span class="line">				.make()</span><br><span class="line">				.load(BizService.class.getClassLoader())</span><br><span class="line">				.getLoaded()</span><br><span class="line">				.newInstance();</span><br><span class="line">		service.bar(00000);</span><br><span class="line">		service.foo(99999);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>结果输出</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&gt; Task :code-gen:bytebuddy:BizServiceTest.main()</span><br><span class="line">onMethodEnter bar with arguments: [11111]</span><br><span class="line">bar: 11111</span><br><span class="line">onMethodExit bar with arguments: [11111] return: 11111</span><br><span class="line">onMethodEnter foo with arguments: [99999]</span><br><span class="line">foo: 99999</span><br><span class="line">onMethodExit foo with arguments: [99999] return: 99999</span><br></pre></td></tr></table></figure>
+
+<h2 id="5-监控耗时"><a href="#5-监控耗时" class="headerlink" title="5.监控耗时"></a>5.监控耗时</h2><h3 id="5-1-定义相关类"><a href="#5-1-定义相关类" class="headerlink" title="5.1 定义相关类"></a>5.1 定义相关类</h3><ul>
+<li><p>业务类<br>耗时处理</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public class CostService &#123;</span><br><span class="line">    public int play(int value) throws Exception &#123;</span><br><span class="line">        System.out.println(&quot;foo: &quot; + value);</span><br><span class="line">        Thread.sleep(1000);</span><br><span class="line">        return value;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>监控类<br>实现    @RuntimeType通过 Object intercept(@SuperCall Callable&lt;?&gt; callable)返回处理结果</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">public class CostMonitorAdvisor &#123;</span><br><span class="line">	@RuntimeType</span><br><span class="line">	public static Object intercept(@SuperCall Callable&lt;?&gt; callable) throws Exception &#123;</span><br><span class="line">		long start = System.currentTimeMillis();</span><br><span class="line">		try &#123;</span><br><span class="line">			return callable.call();</span><br><span class="line">		&#125; finally &#123;</span><br><span class="line">			System.out.println(&quot;方法耗时：&quot; + (System.currentTimeMillis() - start) + &quot;ms&quot;);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>测试类</p>
+</li>
+</ul>
+<p>通过方法委托实现 ByteBuddy#intercept(MethodDelegation.to(CostMonitorAdvisor.class))</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">public class CostServiceTest &#123;</span><br><span class="line">	public static void main(String[] args) throws Exception &#123;</span><br><span class="line">		CostService service = new ByteBuddy()</span><br><span class="line">				.subclass(CostService.class)</span><br><span class="line">				.method(ElementMatchers.any())</span><br><span class="line">				.intercept(MethodDelegation.to(CostMonitorAdvisor.class))</span><br><span class="line">				.make()</span><br><span class="line">				.load(CostService.class.getClassLoader())</span><br><span class="line">				.getLoaded()</span><br><span class="line">				.newInstance();</span><br><span class="line">		service.play(11111);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>结果输出</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt; Task :code-gen:bytebuddy:CostServiceTest.main()</span><br><span class="line">play: 11111</span><br><span class="line">方法耗时：35ms</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>带参传递<br>部分构造函数携带参数，这里以redis为例简单写了下带参数传递的类<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">ByteBuddy byteBuddy = new ByteBuddy();</span><br><span class="line">Class aClass = byteBuddy.subclass(Jedis.class)</span><br><span class="line">        .method(ElementMatchers.any())</span><br><span class="line">        .intercept(MethodDelegation.to(RedisMonitorAdvisor.class))</span><br><span class="line">        .make()</span><br><span class="line">        .load(Jedis.class.getClassLoader())</span><br><span class="line">        .getLoaded();</span><br><span class="line">Class[] p = &#123;String.class, int.class&#125;;</span><br><span class="line">Constructor&lt;Jedis&gt; classDeclaredConstructor = aClass.getDeclaredConstructor(p);</span><br><span class="line">Jedis jedis = classDeclaredConstructor.newInstance(&quot;10.3.4.111&quot;, 6379);</span><br><span class="line">        </span><br></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="6-总结"><a href="#6-总结" class="headerlink" title="6.总结"></a>6.总结</h2><ul>
+<li><p>通过ByteBuddy创建实例，并注入切面可实现横切</p>
+<ul>
+<li>可执行onMethodEnter onMethodExit相关操作</li>
+<li>RuntimeType监听方法耗时</li>
+</ul>
+</li>
+<li><p>对象创建需要通过ByteBuddy创建，自己创建类无法实现</p>
+</li>
+<li><p>无法监控静态对象</p>
+</li>
+</ul>
+<h2 id="7-注解含义"><a href="#7-注解含义" class="headerlink" title="7.注解含义"></a>7.注解含义</h2><table>
+<thead>
+<tr>
+<th>注解</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>@Argument</td>
+<td>绑定单个参数</td>
+</tr>
+<tr>
+<td>@AllArguments</td>
+<td>绑定所有参数的数组</td>
+</tr>
+<tr>
+<td>@This</td>
+<td>当前被拦截的、动态生成的那个对象</td>
+</tr>
+<tr>
+<td>@Super</td>
+<td>当前被拦截的、动态生成的那个对象的父类对象</td>
+</tr>
+<tr>
+<td>@Origin</td>
+<td>可以绑定到以下类型的参数：Method 被调用的原始方法 Constructor 被调用的原始构造器 Class 当前动态创建的类 MethodHandle MethodType String 动态类的toString()的返回值 int 动态方法的修饰符</td>
+</tr>
+<tr>
+<td>@DefaultCall</td>
+<td>调用默认方法而非super的方法</td>
+</tr>
+<tr>
+<td>@SuperCall</td>
+<td>用于调用父类版本的方法</td>
+</tr>
+<tr>
+<td>@Super</td>
+<td>注入父类型对象，可以是接口，从而调用它的任何方法</td>
+</tr>
+<tr>
+<td>@RuntimeType</td>
+<td>可以用在返回值、参数上，提示ByteBuddy禁用严格的类型检查</td>
+</tr>
+<tr>
+<td>@Empty</td>
+<td>注入参数的类型的默认值</td>
+</tr>
+<tr>
+<td>@StubValue</td>
+<td>注入一个存根值。对于返回引用、void的方法，注入null；对于返回原始类型的方法，注入0</td>
+</tr>
+<tr>
+<td>@FieldValue</td>
+<td>注入被拦截对象的一个字段的值</td>
+</tr>
+<tr>
+<td>@Morph</td>
+<td>类似于@SuperCall，但是允许指定调用参数</td>
+</tr>
+</tbody></table>
+<ul>
+<li>代码参考:<br><a target="_blank" rel="noopener" href="https://github.com/wuhaocn/jcode-simple/tree/master/code-gen/bytebuddy">https://github.com/wuhaocn/jcode-simple/tree/master/code-gen/bytebuddy</a></li>
+</ul>
+<h2 id="8-参考"><a href="#8-参考" class="headerlink" title="8.参考"></a>8.参考</h2><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/151843984">https://zhuanlan.zhihu.com/p/151843984</a><br><a target="_blank" rel="noopener" href="https://bytebuddy.net/#/">https://bytebuddy.net/#/</a><br><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/be2efc2b0e4c">https://www.jianshu.com/p/be2efc2b0e4c</a><br><a target="_blank" rel="noopener" href="https://blog.csdn.net/generalfu/article/details/106086475">https://blog.csdn.net/generalfu/article/details/106086475</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://example.com/2021/08/04/language/java/bytecode/bytebuddy-aop/" title="bytebuddy实现aop" target="_blank" rel="external">http://example.com/2021/08/04/language/java/bytecode/bytebuddy-aop/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/08/04/language/java/bytecode/aspectj%E4%BD%BF%E7%94%A8%E4%BB%8B%E7%BB%8D/" title="AspectJ使用介绍"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/08/04/language/java/design/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F-%E9%9D%99%E6%80%81%E5%86%85%E9%83%A8%E7%B1%BB%E5%8D%95%E4%BE%8B%E5%8E%9F%E7%90%86/" title="深入理解单例模式:静态内部类单例"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

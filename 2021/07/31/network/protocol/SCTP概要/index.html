@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>SCTP概要 | Hexo</title>
+  <meta name="description" content="1.简介SCTP(Stream Control Transmission Protocol),流控制传输协议,和UDP，TCP类似TCP是一种面向连接的协议，提供可靠传输，确保数据有序发送；UDP是一种面向消息的协议，不能确保数据有序发送SCTP是后来引入的一种新的协议，提供了和TCP一样的可靠、有序的数据传输功能，同时却能和UDP一样面对消息的方式来进行操作，保护消息边界，有下面一些特性 2.S">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SCTP概要">
+<meta property="og:url" content="http://example.com/2021/07/31/network/protocol/SCTP%E6%A6%82%E8%A6%81/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="1.简介SCTP(Stream Control Transmission Protocol),流控制传输协议,和UDP，TCP类似TCP是一种面向连接的协议，提供可靠传输，确保数据有序发送；UDP是一种面向消息的协议，不能确保数据有序发送SCTP是后来引入的一种新的协议，提供了和TCP一样的可靠、有序的数据传输功能，同时却能和UDP一样面对消息的方式来进行操作，保护消息边界，有下面一些特性 2.S">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627480915523-b1986537-7174-48d4-a148-fba170b4d657.png#clientId=u48df284e-bf72-4&from=paste&id=u8942af97&margin=%5Bobject%20Object%5D&originHeight=325&originWidth=485&originalType=url&ratio=1&status=done&style=none&taskId=uafde6a16-0d86-4649-9d84-0dcd105a004">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627480914764-6dbae28f-4e8d-4bf3-9bf9-a53f4d86d378.png#clientId=u48df284e-bf72-4&from=paste&id=u08bbe321&margin=%5Bobject%20Object%5D&originHeight=164&originWidth=463&originalType=url&ratio=1&status=done&style=none&taskId=u612f73a4-99ec-4c4d-85c8-ff80dcdc695">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627480917379-b7cb7c2b-b1cb-4a80-8573-ebe1d246c7c7.png#clientId=u48df284e-bf72-4&from=paste&id=u3a4682d7&margin=%5Bobject%20Object%5D&originHeight=258&originWidth=546&originalType=url&ratio=1&status=done&style=none&taskId=u554b496a-477c-49ba-bcc3-a16bad0a456">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627480915216-fecb3fa7-5a65-419b-9101-aff14c310912.png#clientId=u48df284e-bf72-4&from=paste&id=u3c6a317d&margin=%5Bobject%20Object%5D&originHeight=202&originWidth=426&originalType=url&ratio=1&status=done&style=none&taskId=u68997ce0-2001-421a-9e05-de4aaad582a">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627480914813-f11dbcb5-74ba-46f1-a04d-c7e5538f7a5d.png#clientId=u48df284e-bf72-4&from=paste&id=u04833e5f&margin=%5Bobject%20Object%5D&originHeight=258&originWidth=546&originalType=url&ratio=1&status=done&style=none&taskId=u43fedf9d-ba51-4d9a-992d-96bed9ef960">
+<meta property="article:published_time" content="2021-07-31T11:10:47.927Z">
+<meta property="article:modified_time" content="2021-07-31T11:10:47.927Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="5G">
+<meta property="article:tag" content="NGAP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627480915523-b1986537-7174-48d4-a148-fba170b4d657.png#clientId=u48df284e-bf72-4&from=paste&id=u8942af97&margin=%5Bobject%20Object%5D&originHeight=325&originWidth=485&originalType=url&ratio=1&status=done&style=none&taskId=uafde6a16-0d86-4649-9d84-0dcd105a004">
+  <!-- Canonical links -->
+  <link rel="canonical" href="http://example.com/2021/07/31/network/protocol/SCTP%E6%A6%82%E8%A6%81/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">15</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">7</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.67px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.33px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 14px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.67px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">7</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">8</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/5G/">5G</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/04/network/5G%E7%A7%BB%E5%8A%A8%E7%BD%91%E7%BB%9C/" class="title">5G网络</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-04T06:25:13.668Z" itemprop="datePublished">2021-08-04</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/java/">java</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/04/language/java/bytecode/java%E5%AD%97%E8%8A%82%E7%A0%81%E5%A2%9E%E5%BC%BA/" class="title">java字节码增强</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-04T06:25:13.668Z" itemprop="datePublished">2021-08-04</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/java/">java</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/04/language/java/bytecode/bytebuddy-code/" class="title">bytebuddy介绍</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-04T06:25:13.667Z" itemprop="datePublished">2021-08-04</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/java/">java</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/04/language/java/bytecode/bytebuddy-%E6%9B%BF%E6%8D%A2%E7%B1%BB%E5%AE%9E%E7%8E%B0/" class="title">bytebuddy替换类实现</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-04T06:25:13.667Z" itemprop="datePublished">2021-08-04</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/java/">java</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/08/04/language/java/bytecode/aspectj%E4%BD%BF%E7%94%A8%E4%BB%8B%E7%BB%8D/" class="title">AspectJ使用介绍</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-08-04T06:25:13.666Z" itemprop="datePublished">2021-08-04</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-network/protocol/SCTP概要" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      SCTP概要
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/07/31/network/protocol/SCTP%E6%A6%82%E8%A6%81/" class="article-date">
+	  <time datetime="2021-07-31T11:10:47.927Z" itemprop="datePublished">2021-07-31</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/5G/">5G</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/5G/" rel="tag">5G</a>, <a class="article-tag-link-link" href="/tags/NGAP/" rel="tag">NGAP</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/07/31/network/protocol/SCTP%E6%A6%82%E8%A6%81/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h2><p>SCTP(Stream Control Transmission Protocol),流控制传输协议,和UDP，TCP类似<br>TCP是一种面向连接的协议，提供可靠传输，确保数据有序发送；<br>UDP是一种面向消息的协议，不能确保数据有序发送<br>SCTP是后来引入的一种新的协议，提供了和TCP一样的可靠、有序的数据传输功能，同时却能和UDP一样面对消息的方式来进行操作，保护消息边界，有下面一些特性</p>
+<h2 id="2-SCTP特性"><a href="#2-SCTP特性" class="headerlink" title="2.SCTP特性"></a>2.SCTP特性</h2><ul>
+<li>多宿主（Multi-Homing）</li>
+<li>多流（Multi-streaming）</li>
+<li>初始化保护（Initiation protection）</li>
+<li>消息分帧（Message framing）</li>
+<li>可配置的无序发送（Configurable unordered delivery）</li>
+<li>平滑关闭（Graceful shutdown）</li>
+</ul>
+<p>​</p>
+<h3 id="2-1-多宿主"><a href="#2-1-多宿主" class="headerlink" title="2.1 多宿主"></a>2.1 多宿主</h3><p>SCTP里面引入了联合（Association）的概念TCP连接是在两个主机的单个接口之间建立的SCTP可以把多条路径合并到一个联合中，数据可以在任意一个连接路径上进行传输<br><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1627480915523-b1986537-7174-48d4-a148-fba170b4d657.png#clientId=u48df284e-bf72-4&from=paste&id=u8942af97&margin=%5Bobject%20Object%5D&originHeight=325&originWidth=485&originalType=url&ratio=1&status=done&style=none&taskId=uafde6a16-0d86-4649-9d84-0dcd105a004"></p>
+<h3 id="2-2-多流"><a href="#2-2-多流" class="headerlink" title="2.2 多流"></a>2.2 多流</h3><pre><code>   SCTP可以在一个联合中支持多流机制，每个流（stream）都是独立的。每个流都有各自的编号，编码在SCTP报文中阻塞的流不会影响同一联合中的其他流，可以并行进行传输
+</code></pre>
+<p><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1627480914764-6dbae28f-4e8d-4bf3-9bf9-a53f4d86d378.png#clientId=u48df284e-bf72-4&from=paste&id=u08bbe321&margin=%5Bobject%20Object%5D&originHeight=164&originWidth=463&originalType=url&ratio=1&status=done&style=none&taskId=u612f73a4-99ec-4c4d-85c8-ff80dcdc695"></p>
+<h3 id="2-3-初始化保护"><a href="#2-3-初始化保护" class="headerlink" title="2.3 初始化保护"></a>2.3 初始化保护</h3><pre><code>  TCP中的三次握手机制会被利用来进行DoS（Denial of Service）攻击，通过发送大量的SYN报文最终耗尽服务器的资源SCTP通过引入4次握手机制来避免这种场景：服务器的INIT-ACK中会包含cookie（标识这个连接的唯一上下文）；
+</code></pre>
+<p>客户端使用这个cookie来进行响应。服务器收到这个响应后，才为这个连接分配资源；为了解决4次握手机制带来的时延，SCTP协议还允许在COOKIE-ECHO和COOKIE-ACK报文中传输数据包<br><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1627480917379-b7cb7c2b-b1cb-4a80-8573-ebe1d246c7c7.png#clientId=u48df284e-bf72-4&from=paste&id=u3a4682d7&margin=%5Bobject%20Object%5D&originHeight=258&originWidth=546&originalType=url&ratio=1&status=done&style=none&taskId=u554b496a-477c-49ba-bcc3-a16bad0a456"><br>消息分帧<br>TCP协议是按照字节流的方式进行数据传输的，并不存在消息边界，比如说音频视频都可以通过流的方式进行传递；UDP使用的是消息分帧，发端多大的数据包，收端收到的数据包也是这么大；<br><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1627480915216-fecb3fa7-5a65-419b-9101-aff14c310912.png#clientId=u48df284e-bf72-4&from=paste&id=u3c6a317d&margin=%5Bobject%20Object%5D&originHeight=202&originWidth=426&originalType=url&ratio=1&status=done&style=none&taskId=u68997ce0-2001-421a-9e05-de4aaad582a"><br>可配置的无序发送<br>TCP能确保数据按照次序发送；UDP无法保证消息有序；SCTP中也可以配置成接受无序的消息；<br>这样的通信方式对于面向消息的传输非常有用，因为每个消息都是各自独立的，次序并不重要。<br>平滑关闭<br>TCP和SCTP都是基于连接的协议，完成传输后都需要有一个拆除连接的过程。TCP中连接的删除是半关闭的，服务的某一端可以关闭自己这端的socket，但是可以继续接受数据。SCTP协议设计的时候考虑这种半关闭的状态实际上很少使用，所以简化了关闭的过程，一旦某一端发起了连接拆除，对等的两端都关闭。<br><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1627480914813-f11dbcb5-74ba-46f1-a04d-c7e5538f7a5d.png#clientId=u48df284e-bf72-4&from=paste&id=u04833e5f&margin=%5Bobject%20Object%5D&originHeight=258&originWidth=546&originalType=url&ratio=1&status=done&style=none&taskId=u43fedf9d-ba51-4d9a-992d-96bed9ef960"></p>
+<p>版权声明：本文为博主原创文章，遵循<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-sa/4.0/">CC 4.0 BY-SA</a>版权协议，转载请附上原文出处链接和本声明。<br>本文链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_34709713/article/details/106511096">https://blog.csdn.net/qq_34709713/article/details/106511096</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://example.com/2021/07/31/network/protocol/SCTP%E6%A6%82%E8%A6%81/" title="SCTP概要" target="_blank" rel="external">http://example.com/2021/07/31/network/protocol/SCTP概要/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/07/31/language/jvm/JVM%E5%86%85%E5%AD%98%E4%B8%8E%E7%BA%BF%E7%A8%8B/" title="JVM内存与线程"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/07/31/language/jvm/JVM%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" title="JVM类加载机制"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>
