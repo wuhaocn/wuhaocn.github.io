@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>docker常用命令 | Hexo</title>
+  <meta name="description" content="组合命令 模糊删除镜像 1docker rmi --force &#96;docker images | grep java | awk &amp;#x27;&amp;#123;print $3&amp;#125;&amp;#x27;&#96; 删除停止容器   1docker rm &#96;docker ps -a -q&#96;   停止&#x2F;启动容器  12docker start $(docker ps -a | awk &amp;#x27;&amp;#123; pri">
+<meta property="og:type" content="article">
+<meta property="og:title" content="docker常用命令">
+<meta property="og:url" content="https://wuhaocn.github.io/2021/10/14/devops/docker/docker%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="组合命令 模糊删除镜像 1docker rmi --force &#96;docker images | grep java | awk &amp;#x27;&amp;#123;print $3&amp;#125;&amp;#x27;&#96; 删除停止容器   1docker rm &#96;docker ps -a -q&#96;   停止&#x2F;启动容器  12docker start $(docker ps -a | awk &amp;#x27;&amp;#123; pri">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-10-14T02:20:08.920Z">
+<meta property="article:modified_time" content="2021-10-18T04:11:47.492Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="docker">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2021/10/14/devops/docker/docker%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.4px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.2px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 13.8px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/atomic/" style="font-size: 13.4px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.6px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/sort/" style="font-size: 14px;">sort</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.4px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">24</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/linux/">linux</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/10/18/language/shell/Linux%E5%AE%9A%E6%97%B6%E4%BB%BB%E5%8A%A1%E7%94%A8%E6%B3%95%E4%B8%8E%E5%AE%9E%E4%BE%8B/" class="title">Linux定时任务用法与实例</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-10-18T03:19:43.244Z" itemprop="datePublished">2021-10-18</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/linux/">linux</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/10/18/language/shell/Linux%E6%97%A5%E6%9C%9F%E8%8E%B7%E5%8F%96/" class="title">Linux日期获取</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-10-18T03:19:29.345Z" itemprop="datePublished">2021-10-18</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/10/15/tool/mac/brew%E5%B8%B8%E7%94%A8%E8%AE%BE%E7%BD%AE/" class="title">brew常用设置</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-10-15T06:08:00.262Z" itemprop="datePublished">2021-10-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/10/14/devops/docker/docker%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" class="title">docker常用命令</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-10-14T02:20:08.920Z" itemprop="datePublished">2021-10-14</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/10/01/tool/hexo-config/" class="title">hexo-配置</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-10-01T13:12:11.461Z" itemprop="datePublished">2021-10-01</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-devops/docker/docker常用命令" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      docker常用命令
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/10/14/devops/docker/docker%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" class="article-date">
+	  <time datetime="2021-10-14T02:20:08.920Z" itemprop="datePublished">2021-10-14</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/devops/">devops</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/docker/" rel="tag">docker</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/10/14/devops/docker/docker%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="组合命令"><a href="#组合命令" class="headerlink" title="组合命令"></a>组合命令</h2><ul>
+<li><p>模糊删除镜像</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker rmi --force `docker images | grep java | awk &#x27;&#123;print $3&#125;&#x27;`</span><br></pre></td></tr></table></figure></li>
+<li><p>删除停止容器</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker rm `docker ps -a -q`</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>停止/启动容器</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker start $(docker ps -a | awk &#x27;&#123; print $1&#125;&#x27; | tail -n +2)</span><br><span class="line">docker stop $(docker ps -a  | awk &#x27;&#123; print $1&#125;&#x27; | tail -n +2)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>提交容器</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">docker commit 81a82e9b5ac2 wuhaocn/java-im:8</span><br><span class="line"></span><br><span class="line">docker tag wuhaocn/java-im:8 wuhaocn/java-im:8</span><br><span class="line"></span><br><span class="line">docker push wuhaocn/java-im:8</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><h3 id="容器生命周期管理"><a href="#容器生命周期管理" class="headerlink" title="容器生命周期管理"></a>容器生命周期管理</h3><ul>
+<li>run</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">运行容器</span><br><span class="line">docker run -p 80:80 -v /data:/data -d nginx:latest </span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>start/stop/restart</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">启动/停止/重启容器</span><br><span class="line">docker start myrunoob</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>kill</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">杀死容器</span><br><span class="line">docker kill -s KILL myrunoob</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<ul>
+<li>rm</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">删除容器</span><br><span class="line">docker rm -f myrunoob1 myrunoob2</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>pause/unpause</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">暂停数据库容器myrunoob提供服务</span><br><span class="line">docker pause myrunoob</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>create</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">使用docker镜像nginx:latest创建一个容器,并将容器命名为myrunoob</span><br><span class="line">docker create  --name myrunoob  nginx:latest </span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>exec</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">通过 exec 命令对指定的容器执行 bash:</span><br><span class="line">docker exec -it 9df70f9a0714 /bin/bash</span><br></pre></td></tr></table></figure>
+<h3 id="容器操作"><a href="#容器操作" class="headerlink" title="容器操作"></a>容器操作</h3><ul>
+<li>ps</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">列出容器</span><br><span class="line">runoob@runoob:~$ docker ps</span><br><span class="line">CONTAINER ID   IMAGE          COMMAND                ...  PORTS                    NAMES</span><br><span class="line">09b93464c2f7   nginx:latest   &quot;nginx -g &#x27;daemon off&quot; ...  80/tcp, 443/tcp          myrunoob</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<ul>
+<li>inspect</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">获取镜像mysql:5.6的元信息。</span><br><span class="line">docker inspect mysql:5.6</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>top</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">查看容器mymysql的进程信息。</span><br><span class="line">docker top mymysql</span><br><span class="line">查看所有运行容器的进程信息。</span><br><span class="line">for i in  `docker ps |grep Up|awk &#x27;&#123;print $1&#125;&#x27;`;do echo \ &amp;&amp;docker top $i; done</span><br></pre></td></tr></table></figure></li>
+<li><p>attach</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">容器mynginx将访问日志指到标准输出，连接到容器查看访问信息。</span><br><span class="line">docker attach --sig-proxy=false mynginx</span><br></pre></td></tr></table></figure></li>
+<li><p>events</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">显示docker 2016年7月1日后的所有事件。</span><br><span class="line">docker events  --since=&quot;1467302400&quot;</span><br><span class="line">显示docker 镜像为mysql:5.6 2016年7月1日后的相关事件。</span><br><span class="line">docker events -f &quot;image&quot;=&quot;mysql:5.6&quot; --since=&quot;1467302400&quot; </span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>logs</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">跟踪查看容器mynginx的日志输出。</span><br><span class="line">docker logs -f mynginx</span><br><span class="line">查看容器mynginx从2016年7月1日后的最新10条日志。</span><br><span class="line">docker logs --since=&quot;2016-07-01&quot; --tail=10 mynginx</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<ul>
+<li>wait</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">docker wait : 阻塞运行直到容器停止，然后打印出它的退出代码。</span><br><span class="line"></span><br><span class="line">docker wait CONTAINER</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>export</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">将id为a404c6c174a2的容器按日期保存为tar文件。</span><br><span class="line"></span><br><span class="line">runoob@runoob:~$ docker export -o mysql-`date +%Y%m%d`.tar a404c6c174a2</span><br><span class="line">runoob@runoob:~$ ls mysql-`date +%Y%m%d`.tar</span><br><span class="line">mysql-20160711.tar</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>port</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">查看容器mynginx的端口映射情况。</span><br><span class="line"></span><br><span class="line">docker port mymysql</span><br><span class="line">3306/tcp -&gt; 0.0.0.0:3306</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="容器rootfs命令"><a href="#容器rootfs命令" class="headerlink" title="容器rootfs命令"></a>容器rootfs命令</h3><ul>
+<li><p>commit</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">将容器a404c6c174a2 保存为新的镜像,并添加提交人信息和说明信息。</span><br><span class="line">docker commit -a &quot;runoob.com&quot; -m &quot;my apache&quot; a404c6c174a2  mymysql:v1</span><br><span class="line">简化参考</span><br><span class="line">docker commit faa474c052c6 java-sctp:8</span><br></pre></td></tr></table></figure></li>
+<li><p>cp</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">将主机/www/runoob目录拷贝到容器96f7f14e99ab的/www目录下。</span><br><span class="line"></span><br><span class="line">docker cp /www/runoob 96f7f14e99ab:/www/</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>diff</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">查看容器mymysql的文件结构更改。</span><br><span class="line"></span><br><span class="line">runoob@runoob:~$ docker diff mymysql</span><br><span class="line">A /logs</span><br><span class="line">A /mysql_data</span><br><span class="line">C /run</span><br><span class="line">C /run/mysqld</span><br><span class="line">A /run/mysqld/mysqld.pid</span><br><span class="line">A /run/mysqld/mysqld.sock</span><br><span class="line">C /tmp</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="镜像仓库"><a href="#镜像仓库" class="headerlink" title="镜像仓库"></a>镜像仓库</h3><ul>
+<li><p>login</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">登陆到Docker Hub</span><br><span class="line"></span><br><span class="line">docker login -u 用户名 -p 密码</span><br></pre></td></tr></table></figure></li>
+<li><p>pull</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">从Docker Hub下载java最新版镜像。</span><br><span class="line"></span><br><span class="line">docker pull java</span><br></pre></td></tr></table></figure></li>
+<li><p>push</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">上传本地镜像myapache:v1到镜像仓库中。</span><br><span class="line"></span><br><span class="line">docker push myapache:v1</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>search</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">从 Docker Hub 查找所有镜像名包含 java，并且收藏数大于 10 的镜像</span><br><span class="line"></span><br><span class="line">docker search -f stars=10 java</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="本地镜像管理"><a href="#本地镜像管理" class="headerlink" title="本地镜像管理"></a>本地镜像管理</h3><ul>
+<li><p>images</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">查看本地镜像列表。</span><br><span class="line"></span><br><span class="line">runoob@runoob:~$ docker images</span><br><span class="line">REPOSITORY              TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">mymysql                 v1                  37af1236adef        5 minutes ago       329 MB</span><br></pre></td></tr></table></figure></li>
+<li><p>rmi</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">强制删除本地镜像 runoob/ubuntu:v4。    </span><br><span class="line"></span><br><span class="line">docker rmi -f runoob/ubuntu:v4</span><br><span class="line">Untagged: runoob/ubuntu:v4</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>tag</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">将镜像ubuntu:15.10标记为 runoob/ubuntu:v3 镜像。</span><br><span class="line"></span><br><span class="line">docker tag ubuntu:15.10 runoob/ubuntu:v3</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>build</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">使用当前目录的 Dockerfile 创建镜像，标签为 runoob/ubuntu:v1。</span><br><span class="line"></span><br><span class="line">docker build -t runoob/ubuntu:v1 . </span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>history</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">查看本地镜像runoob/ubuntu:v3的创建历史。</span><br><span class="line"></span><br><span class="line">root@runoob:~# docker history runoob/ubuntu:v3</span><br><span class="line">IMAGE             CREATED           CREATED BY                                      SIZE      COMMENT</span><br><span class="line">4e3b13c8a266      3 months ago      /bin/sh -c #(nop) CMD [&quot;/bin/bash&quot;]             0 B                 </span><br><span class="line">&lt;missing&gt;         3 months ago      /bin/sh -c sed -i &#x27;s/^#\s*\(deb.*universe\)$/   1.863 kB            </span><br><span class="line">&lt;missing&gt;         3 months ago      /bin/sh -c set -xe   &amp;&amp; echo &#x27;#!/bin/sh&#x27; &gt; /u   701 B               </span><br><span class="line">&lt;missing&gt;         3 months ago      /bin/sh -c #(nop) ADD file:43cb048516c6b80f22   136.3 MB</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>save</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">将镜像 runoob/ubuntu:v3 生成 my_ubuntu_v3.tar 文档</span><br><span class="line"></span><br><span class="line">runoob@runoob:~$ docker save -o my_ubuntu_v3.tar runoob/ubuntu:v3</span><br><span class="line">runoob@runoob:~$ ll my_ubuntu_v3.tar</span><br><span class="line">-rw------- 1 runoob runoob 142102016 Jul 11 01:37 my_ubuntu_v3.ta</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>load</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">导入镜像：</span><br><span class="line">$ docker load &lt; busybox.tar.gz</span><br><span class="line">Loaded image: busybox:latest</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>import</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">A:export/import 是根据容器来导出镜像（因此没有镜像的历史记录）而 save/load 操作的对象是镜像</span><br><span class="line">B:export/import 镜像的历史记录再导后无法进行回滚操作，而save/load镜像有完整的历史记录可以回滚</span><br><span class="line">docker import : 从归档文件中创建镜像。</span><br><span class="line">docker import  my_ubuntu_v3.tar runoob/ubuntu:v4  </span><br></pre></td></tr></table></figure>
+
+<h3 id="系统信息"><a href="#系统信息" class="headerlink" title="系统信息"></a>系统信息</h3><ul>
+<li>info</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">$ docker info</span><br><span class="line">Containers: 12</span><br><span class="line">Images: 41</span><br><span class="line">Storage Driver: aufs</span><br><span class="line"> Root Dir: /var/lib/docker/aufs</span><br><span class="line"> Backing Filesystem: extfs</span><br><span class="line"> Dirs: 66</span><br><span class="line"> Dirperm1 Supported: false</span><br><span class="line">Execution Driver: native-0.2</span><br><span class="line">Logging Driver: json-file</span><br><span class="line">Kernel Version: 3.13.0-32-generic</span><br><span class="line">Operating System: Ubuntu 14.04.1 LTS</span><br><span class="line">CPUs: 1</span><br><span class="line">Total Memory: 1.954 GiB</span><br><span class="line">Name: iZ23mtq8bs1Z</span><br><span class="line">ID: M5N4:K6WN:PUNC:73ZN:AONJ:AUHL:KSYH:2JPI:CH3K:O4MK:6OCX:5OYW</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>version</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">显示 Docker 版本信息。</span><br><span class="line"></span><br><span class="line">$ docker version</span><br><span class="line">Client:</span><br><span class="line"> Version:      1.8.2</span><br><span class="line"> API version:  1.20</span><br><span class="line"> Go version:   go1.4.2</span><br><span class="line"> Git commit:   0a8c2e3</span><br><span class="line"> Built:        Thu Sep 10 19:19:00 UTC 2015</span><br><span class="line"> OS/Arch:      linux/amd64</span><br><span class="line">Server:</span><br><span class="line"> Version:      1.8.2</span><br><span class="line"> API version:  1.20</span><br><span class="line"> Go version:   go1.4.2</span><br><span class="line"> Git commit:   0a8c2e3</span><br><span class="line"> Built:        Thu Sep 10 19:19:00 UTC 2015</span><br><span class="line"> OS/Arch:      linux/amd64</span><br></pre></td></tr></table></figure>
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2021/10/14/devops/docker/docker%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" title="docker常用命令" target="_blank" rel="external">https://wuhaocn.github.io/2021/10/14/devops/docker/docker常用命令/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/10/15/tool/mac/brew%E5%B8%B8%E7%94%A8%E8%AE%BE%E7%BD%AE/" title="brew常用设置"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/10/01/tool/hexo-config/" title="hexo-配置"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

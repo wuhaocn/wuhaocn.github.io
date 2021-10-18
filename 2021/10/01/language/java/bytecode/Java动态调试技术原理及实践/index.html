@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>Java动态调试技术原理及实践 | Hexo</title>
+  <meta name="description" content="Java动态调试技术原理及实践1. 动态调试要解决的问题断点调试是我们最常使用的调试手段，它可以获取到方法执行过程中的变量信息，并可以观察到方法的执行路径。但断点调试会在断点位置停顿，使得整个应用停止响应。在线上停顿应用是致命的，动态调试技术给了我们创造新的调试模式的想象空间。本文将研究 Java 语言中的动态调试技术，首先概括 Java 动态调试所涉及的技术基础，接着介绍我们在 Java 动态调">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java动态调试技术原理及实践">
+<meta property="og:url" content="https://wuhaocn.github.io/2021/10/01/language/java/bytecode/Java%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E8%B7%B5/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="Java动态调试技术原理及实践1. 动态调试要解决的问题断点调试是我们最常使用的调试手段，它可以获取到方法执行过程中的变量信息，并可以观察到方法的执行路径。但断点调试会在断点位置停顿，使得整个应用停止响应。在线上停顿应用是致命的，动态调试技术给了我们创造新的调试模式的想象空间。本文将研究 Java 语言中的动态调试技术，首先概括 Java 动态调试所涉及的技术基础，接着介绍我们在 Java 动态调">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/hEx03cFgUsXwHv2oFu6vZbZ2VriafkoE44pMzDfgj8Oe9fFbU2wHn35PjibaPxvOnFMmwx1Jzv9Tsy1kxn41Q7NQ/640">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/hEx03cFgUsXwHv2oFu6vZbZ2VriafkoE4jIYWODnoWDfEAhWyia6LIsKKwIkT5FEMxEzrFKTUV5WGdAEMmlno0hA/640">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/hEx03cFgUsXwHv2oFu6vZbZ2VriafkoE4icUzSicIdgKaWyBsIVgmiaOHEPR5mUvyqDOg3e6ELs0aFF1Ub23RjnNsQ/640">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/hEx03cFgUsXwHv2oFu6vZbZ2VriafkoE4NAFPL7rkntPMiaicJtbn84MnRNibQkPhUibZ5cuWpZpcibYxx0vR41PHNDw/640">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/hEx03cFgUsXwHv2oFu6vZbZ2VriafkoE4TYKGnNuqCgHOSkZiabggzJUESbqSDMWRZM1OtVNGziasnSAiae7ibYicAKw/640?wx_fmt=png">
+<meta property="article:published_time" content="2021-10-01T13:12:11.458Z">
+<meta property="article:modified_time" content="2021-10-01T13:12:11.459Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="动态调试技术">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://mmbiz.qpic.cn/mmbiz_png/hEx03cFgUsXwHv2oFu6vZbZ2VriafkoE44pMzDfgj8Oe9fFbU2wHn35PjibaPxvOnFMmwx1Jzv9Tsy1kxn41Q7NQ/640">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2021/10/01/language/java/bytecode/Java%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E8%B7%B5/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.4px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.2px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 13.8px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/atomic/" style="font-size: 13.4px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.6px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/sort/" style="font-size: 14px;">sort</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.4px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">24</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/linux/">linux</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/10/18/language/shell/Linux%E5%AE%9A%E6%97%B6%E4%BB%BB%E5%8A%A1%E7%94%A8%E6%B3%95%E4%B8%8E%E5%AE%9E%E4%BE%8B/" class="title">Linux定时任务用法与实例</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-10-18T03:19:43.244Z" itemprop="datePublished">2021-10-18</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/linux/">linux</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/10/18/language/shell/Linux%E6%97%A5%E6%9C%9F%E8%8E%B7%E5%8F%96/" class="title">Linux日期获取</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-10-18T03:19:29.345Z" itemprop="datePublished">2021-10-18</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/10/15/tool/mac/brew%E5%B8%B8%E7%94%A8%E8%AE%BE%E7%BD%AE/" class="title">brew常用设置</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-10-15T06:08:00.262Z" itemprop="datePublished">2021-10-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/10/14/devops/docker/docker%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" class="title">docker常用命令</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-10-14T02:20:08.920Z" itemprop="datePublished">2021-10-14</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/10/01/tool/hexo-config/" class="title">hexo-配置</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-10-01T13:12:11.461Z" itemprop="datePublished">2021-10-01</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-language/java/bytecode/Java动态调试技术原理及实践" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Java动态调试技术原理及实践
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/10/01/language/java/bytecode/Java%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E8%B7%B5/" class="article-date">
+	  <time datetime="2021-10-01T13:12:11.458Z" itemprop="datePublished">2021-10-01</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/java/">java</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/10/01/language/java/bytecode/Java%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E8%B7%B5/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h3 id="Java动态调试技术原理及实践"><a href="#Java动态调试技术原理及实践" class="headerlink" title="Java动态调试技术原理及实践"></a>Java动态调试技术原理及实践</h3><h4 id="1-动态调试要解决的问题"><a href="#1-动态调试要解决的问题" class="headerlink" title="1. 动态调试要解决的问题"></a>1. 动态调试要解决的问题</h4><p>断点调试是我们最常使用的调试手段，它可以获取到方法执行过程中的变量信息，并可以观察到方法的执行路径。<br>但断点调试会在断点位置停顿，使得整个应用停止响应。在线上停顿应用是致命的，动态调试技术给了我们创造新的调试模式的想象空间。<br>本文将研究 Java 语言中的动态调试技术，首先概括 Java 动态调试所涉及的技术基础，接着介绍我们在 Java 动态调试领域的思考及实践，<br>通过结合实际业务场景，设计并实现了一种具备动态性的断点调试工具 Java-debug-tool，显著提高了故障排查效率。</p>
+<h4 id="2-Java-Agent-技术"><a href="#2-Java-Agent-技术" class="headerlink" title="2. Java Agent 技术"></a>2. Java Agent 技术</h4><p>JVMTI （JVM Tool Interface）是 Java 虚拟机对外提供的 Native 编程接口，通过 JVMTI，外部进程可以获取到运行时 JVM 的诸多信息，比如线程、GC 等。<br>Agent 是一个运行在目标 JVM 的特定程序，它的职责是负责从目标 JVM 中获取数据，然后将数据传递给外部进程。<br>加载 Agent 的时机可以是目标 JVM 启动之时，也可以是在目标 JVM 运行时进行加载，而在目标 JVM 运行时进行 Agent 加载具备动态性，<br>对于时机未知的 Debug 场景来说非常实用。下面将详细分析 Java Agent 技术的实现细节。</p>
+<h5 id="2-1-Agent-的实现模式"><a href="#2-1-Agent-的实现模式" class="headerlink" title="2.1 Agent 的实现模式"></a>2.1 Agent 的实现模式</h5><p>JVMTI 是一套 Native 接口，在 Java SE 5 之前，要实现一个 Agent 只能通过编写 Native 代码来实现。<br>从 Java SE 5 开始，可以使用 Java 的 Instrumentation 接口（java.lang.instrument）来编写 Agent。<br>无论是通过 Native 的方式还是通过 Java Instrumentation 接口的方式来编写 Agent，它们的工作都是借助 JVMTI 来进行完成，<br>下面介绍通过 Java Instrumentation 接口编写 Agent 的方法。</p>
+<h6 id="2-1-1-通过-Java-Instrumentation-API"><a href="#2-1-1-通过-Java-Instrumentation-API" class="headerlink" title="2.1.1 通过 Java Instrumentation API"></a>2.1.1 通过 Java Instrumentation API</h6><p>实现 Agent 启动方法</p>
+<p>Java Agent 支持目标 JVM 启动时加载，也支持在目标 JVM 运行时加载，这两种不同的加载模式会使用不同的入口函数，<br>如果需要在目标 JVM 启动的同时加载 Agent，那么可以选择实现下面的方法：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[1] public static void premain(String agentArgs, Instrumentation inst);</span><br><span class="line">[2] public static void premain(String agentArgs);</span><br></pre></td></tr></table></figure>
+
+<p>JVM 将首先寻找[1]，如果没有发现[1]，再寻找[2]。如果希望在目标 JVM 运行时加载 Agent，则需要实现下面的方法：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[1] public static void agentmain(String agentArgs, Instrumentation inst);</span><br><span class="line">[2] public static void agentmain(String agentArgs);</span><br></pre></td></tr></table></figure>
+
+<p>这两组方法的第一个参数 AgentArgs 是随同 “– javaagent”一起传入的程序参数，如果这个字符串代表了多个参数，就需要自己解析这些参数。<br>inst 是 Instrumentation 类型的对象，是 JVM 自动传入的，我们可以拿这个参数进行类增强等操作。</p>
+<p>指定 Main-Class<br>Agent 需要打包成一个 jar 包，在 ManiFest 属性中指定“Premain-Class”或者“Agent-Class”：<br>Premain-Class: class<br>Agent-Class: class<br>挂载到目标 JVM<br>将编写的 Agent 打成 jar 包后，就可以挂载到目标 JVM 上去了。如果选择在目标 JVM 启动时加载 Agent，则可以使用 “-javaagent:<jarpath>[=<option>]”，<br>具体的使用方法可以使用“Java -Help”来查看。如果想要在运行时挂载 Agent 到目标 JVM，就需要做一些额外的开发了。<br>com.sun.tools.attach.VirtualMachine 这个类代表一个 JVM 抽象，可以通过这个类找到目标 JVM，并且将 Agent 挂载到目标 JVM 上。<br>下面是使用 com.sun.tools.attach.VirtualMachine 进行动态挂载 Agent 的一般实现：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">private void attachAgentToTargetJVM() throws Exception &#123;</span><br><span class="line">    List&lt;VirtualMachineDescriptor&gt; virtualMachineDescriptors = VirtualMachine.list();</span><br><span class="line">    VirtualMachineDescriptor targetVM = null;</span><br><span class="line">    for (VirtualMachineDescriptor descriptor : virtualMachineDescriptors) &#123;</span><br><span class="line">        if (descriptor.id().equals(configure.getPid())) &#123;</span><br><span class="line">            targetVM = descriptor;</span><br><span class="line">            break;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    if (targetVM == null) &#123;</span><br><span class="line">        throw new IllegalArgumentException(&quot;could not find the target jvm by process id:&quot; + configure.getPid());</span><br><span class="line">    &#125;</span><br><span class="line">    VirtualMachine virtualMachine = null;</span><br><span class="line">    try &#123;</span><br><span class="line">        virtualMachine = VirtualMachine.attach(targetVM);</span><br><span class="line">        virtualMachine.loadAgent(&quot;&#123;agent&#125;&quot;, &quot;&#123;params&#125;&quot;);</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">        if (virtualMachine != null) &#123;</span><br><span class="line">            virtualMachine.detach();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>首先通过指定的进程 ID 找到目标 JVM，然后通过 Attach 挂载到目标 JVM 上，执行加载 Agent 操作。<br>VirtualMachine 的 Attach 方法就是用来将 Agent 挂载到目标 JVM 上去的，而 Detach 则是将 Agent 从目标 JVM 卸载。关<br>于 Agent 是如何挂载到目标 JVM 上的具体技术细节，将在下文中进行分析。</p>
+<h5 id="2-2-启动时加载-Agent"><a href="#2-2-启动时加载-Agent" class="headerlink" title="2.2 启动时加载 Agent"></a>2.2 启动时加载 Agent</h5><h6 id="2-2-1-参数解析"><a href="#2-2-1-参数解析" class="headerlink" title="2.2.1 参数解析"></a>2.2.1 参数解析</h6><p>创建 JVM 时，JVM 会进行参数解析，即解析那些用来配置 JVM 启动的参数，比如堆大小、GC 等；本文主要关注解析的参数为-agentlib、 -agentpath、 -javaagent，这几个参数用来指定 Agent，JVM 会根据这几个参数加载 Agent。下面来分析一下 JVM 是如何解析这几个参数的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">// -agentlib and -agentpath</span><br><span class="line">if (match_option(option, &quot;-agentlib:&quot;, &amp;tail) ||</span><br><span class="line">        (is_absolute_path = match_option(option, &quot;-agentpath:&quot;, &amp;tail))) &#123;</span><br><span class="line">    if(tail != NULL) &#123;</span><br><span class="line">      const char* pos = strchr(tail, &#x27;=&#x27;);</span><br><span class="line">      size_t len = (pos == NULL) ? strlen(tail) : pos - tail;</span><br><span class="line">      char* name = strncpy(NEW_C_HEAP_ARRAY(char, len + 1, mtArguments), tail, len);</span><br><span class="line">      name[len] = &#x27;\0&#x27;;</span><br><span class="line">      char *options = NULL;</span><br><span class="line">      if(pos != NULL) &#123;</span><br><span class="line">        options = os::strdup_check_oom(pos + 1, mtArguments);</span><br><span class="line">      &#125;</span><br><span class="line">      #if !INCLUDE_JVMTI</span><br><span class="line">      if (valid_jdwp_agent(name, is_absolute_path)) &#123;</span><br><span class="line">        jio_fprintf(defaultStream::error_stream(),</span><br><span class="line">          &quot;Debugging agents are not supported in this VM\n&quot;);</span><br><span class="line">        return JNI_ERR;</span><br><span class="line">      &#125;</span><br><span class="line">      #endif // !INCLUDE_JVMTI</span><br><span class="line">      add_init_agent(name, options, is_absolute_path);</span><br><span class="line">    &#125;</span><br><span class="line">  // -javaagent</span><br><span class="line">  &#125; else if (match_option(option, &quot;-javaagent:&quot;, &amp;tail)) &#123;</span><br><span class="line">      #if !INCLUDE_JVMTI</span><br><span class="line">    jio_fprintf(defaultStream::error_stream(),</span><br><span class="line">      &quot;Instrumentation agents are not supported in this VM\n&quot;);</span><br><span class="line">    return JNI_ERR;</span><br><span class="line">      #else</span><br><span class="line">    if (tail != NULL) &#123;</span><br><span class="line">      size_t length = strlen(tail) + 1;</span><br><span class="line">      char *options = NEW_C_HEAP_ARRAY(char, length, mtArguments);</span><br><span class="line">      jio_snprintf(options, length, &quot;%s&quot;, tail);</span><br><span class="line">      add_init_agent(&quot;instrument&quot;, options, false);</span><br><span class="line">      // java agents need module java.instrument</span><br><span class="line">      if (!create_numbered_property(&quot;jdk.module.addmods&quot;, &quot;java.instrument&quot;, addmods_count++)) &#123;</span><br><span class="line">        return JNI_ENOMEM;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">      #endif // !INCLUDE_JVMTI</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面的代码片段截取自 hotspot/src/share/vm/runtime/arguments.cpp 中的 Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_mod_javabase, Flag::Flags origin) 函数，该函数用来解析一个具体的 JVM 参数。这段代码的主要功能是解析出需要加载的 Agent 路径，然后调用 add_init_agent 函数进行解析结果的存储。下面先看一下 add_init_agent 函数的具体实现：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// -agentlib and -agentpath arguments</span><br><span class="line">static AgentLibraryList _agentList;</span><br><span class="line">static void add_init_agent(const char* name, char* options, bool absolute_path)</span><br><span class="line">  &#123; _agentList.add(new AgentLibrary(name, options, absolute_path, NULL)); &#125;</span><br></pre></td></tr></table></figure>
+
+<p>AgentLibraryList 是一个简单的链表结构，add_init_agent 函数将解析好的、需要加载的 Agent 添加到这个链表中，等待后续的处理。</p>
+<p>这里需要注意，解析-javaagent 参数有一些特别之处，这个参数用来指定一个我们通过 Java Instrumentation API 来编写的 Agent，Java Instrumentation API 底层依赖的是 JVMTI，对-JavaAgent 的处理也说明了这一点，在调用 add_init_agent 函数时第一个参数是“instrument”，关于加载 Agent 这个问题在下一小节进行展开。到此，我们知道在启动 JVM 时指定的 Agent 已经被 JVM 解析完存放在了一个链表结构中。下面来分析一下 JVM 是如何加载这些 Agent 的。</p>
+<h6 id="2-2-2-执行加载操作"><a href="#2-2-2-执行加载操作" class="headerlink" title="2.2.2 执行加载操作"></a>2.2.2 执行加载操作</h6><p>在创建 JVM 进程的函数中，解析完 JVM 参数之后，下面的这段代码和加载 Agent 相关：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"> // Launch -agentlib/-agentpath and converted -Xrun agents</span><br><span class="line">if (Arguments::init_agents_at_startup()) &#123;</span><br><span class="line">  create_vm_init_agents();</span><br><span class="line">&#125;</span><br><span class="line">static bool init_agents_at_startup() &#123;</span><br><span class="line">  return !_agentList.is_empty();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当 JVM 判断出上一小节中解析出来的 Agent 不为空的时候，就要去调用函数 create_vm_init_agents 来加载 Agent，下面来分析一下 create_vm_init_agents 函数是如何加载 Agent 的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">void Threads::create_vm_init_agents() &#123;</span><br><span class="line">  AgentLibrary* agent;</span><br><span class="line">  for (agent = Arguments::agents(); agent != NULL; agent = agent-&gt;next()) &#123;</span><br><span class="line">    OnLoadEntry_t  on_load_entry = lookup_agent_on_load(agent);</span><br><span class="line">    if (on_load_entry != NULL) &#123;</span><br><span class="line">      // Invoke the Agent_OnLoad function</span><br><span class="line">      jint err = (*on_load_entry)(&amp;main_vm, agent-&gt;options(), NULL);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>create_vm_init_agents 这个函数通过遍历 Agent 链表来逐个加载 Agent。通过这段代码可以看出，首先通过 lookup_agent_on_load 来加载 Agent 并且找到 Agent_OnLoad 函数，这个函数是 Agent 的入口函数。如果没找到这个函数，则认为是加载了一个不合法的 Agent，则什么也不做，否则调用这个函数，这样 Agent 的代码就开始执行起来了。对于使用 Java Instrumentation API 来编写 Agent 的方式来说，在解析阶段观察到在 add_init_agent 函数里面传递进去的是一个叫做”instrument”的字符串，其实这是一个动态链接库。在 Linux 里面，这个库叫做 libinstrument.so，在 BSD 系统中叫做 libinstrument.dylib，该动态链接库在{JAVA_HOME}/jre/lib/目录下。</p>
+<h6 id="2-2-3-Instrument-动态链接库"><a href="#2-2-3-Instrument-动态链接库" class="headerlink" title="2.2.3 Instrument 动态链接库"></a>2.2.3 Instrument 动态链接库</h6><p>libinstrument 用来支持使用 Java Instrumentation API 来编写 Agent，在 libinstrument 中有一个非常重要的类称为：JPLISAgent（Java Programming Language Instrumentation Services Agent），它的作用是初始化所有通过 Java Instrumentation API 编写的 Agent，并且也承担着通过 JVMTI 实现 Java Instrumentation 中暴露 API 的责任。<br>我们已经知道，在 JVM 启动的时候，JVM 会通过-javaagent 参数加载 Agent。最开始加载的是 libinstrument 动态链接库，然后在动态链接库里面找到 JVMTI 的入口方法：Agent_OnLoad。下面就来分析一下在 libinstrument 动态链接库中，Agent_OnLoad 函数是怎么实现的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">JNIEXPORT jint JNICALL</span><br><span class="line">DEF_Agent_OnLoad(JavaVM *vm, char *tail, void * reserved) &#123;</span><br><span class="line">    initerror = createNewJPLISAgent(vm, &amp;agent);</span><br><span class="line">    if ( initerror == JPLIS_INIT_ERROR_NONE ) &#123;</span><br><span class="line">        if (parseArgumentTail(tail, &amp;jarfile, &amp;options) != 0) &#123;</span><br><span class="line">            fprintf(stderr, &quot;-javaagent: memory allocation failure.\n&quot;);</span><br><span class="line">            return JNI_ERR;</span><br><span class="line">        &#125;</span><br><span class="line">        attributes = readAttributes(jarfile);</span><br><span class="line">        premainClass = getAttribute(attributes, &quot;Premain-Class&quot;);</span><br><span class="line">        /* Save the jarfile name */</span><br><span class="line">        agent-&gt;mJarfile = jarfile;</span><br><span class="line">        /*</span><br><span class="line">         * Convert JAR attributes into agent capabilities</span><br><span class="line">         */</span><br><span class="line">        convertCapabilityAttributes(attributes, agent);</span><br><span class="line">        /*</span><br><span class="line">         * Track (record) the agent class name and options data</span><br><span class="line">         */</span><br><span class="line">        initerror = recordCommandLineData(agent, premainClass, options);</span><br><span class="line">    &#125;</span><br><span class="line">    return result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上述代码片段是经过精简的 libinstrument 中 Agent_OnLoad 实现的，大概的流程就是：先创建一个 JPLISAgent，然后将 ManiFest 中设定的一些参数解析出来， 比如（Premain-Class）等。创建了 JPLISAgent 之后，调用 initializeJPLISAgent 对这个 Agent 进行初始化操作。跟进 initializeJPLISAgent 看一下是如何初始化的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">JPLISInitializationError initializeJPLISAgent(JPLISAgent *agent, JavaVM *vm, jvmtiEnv *jvmtienv) &#123;</span><br><span class="line">    /* check what capabilities are available */</span><br><span class="line">    checkCapabilities(agent);</span><br><span class="line">    /* check phase - if live phase then we don&#x27;t need the VMInit event */</span><br><span class="line">    jvmtierror = (*jvmtienv)-&gt;GetPhase(jvmtienv, &amp;phase);</span><br><span class="line">    /* now turn on the VMInit event */</span><br><span class="line">    if ( jvmtierror == JVMTI_ERROR_NONE ) &#123;</span><br><span class="line">        jvmtiEventCallbacks callbacks;</span><br><span class="line">        memset(&amp;callbacks, 0, sizeof(callbacks));</span><br><span class="line">        callbacks.VMInit = &amp;eventHandlerVMInit;</span><br><span class="line">        jvmtierror = (*jvmtienv)-&gt;SetEventCallbacks(jvmtienv,&amp;callbacks,sizeof(callbacks));</span><br><span class="line">    &#125;</span><br><span class="line">    if ( jvmtierror == JVMTI_ERROR_NONE ) &#123;</span><br><span class="line">        jvmtierror = (*jvmtienv)-&gt;SetEventNotificationMode(jvmtienv,JVMTI_ENABLE,JVMTI_EVENT_VM_INIT,NULL);</span><br><span class="line">    &#125;</span><br><span class="line">    return (jvmtierror == JVMTI_ERROR_NONE)? JPLIS_INIT_ERROR_NONE : JPLIS_INIT_ERROR_FAILURE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里，我们关注 callbacks.VMInit = &eventHandlerVMInit;这行代码，这里设置了一个 VMInit 事件的回调函数，表示在 JVM 初始化的时候会回调 eventHandlerVMInit 函数。下面来看一下这个函数的实现细节，猜测就是在这里调用了 Premain 方法：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">void JNICALL  eventHandlerVMInit( jvmtiEnv *jvmtienv,JNIEnv *jnienv,jthread thread) &#123;</span><br><span class="line">   // ...</span><br><span class="line">   success = processJavaStart( environment-&gt;mAgent, jnienv);</span><br><span class="line">  // ...</span><br><span class="line">&#125;</span><br><span class="line">jboolean  processJavaStart(JPLISAgent *agent,JNIEnv *jnienv) &#123;</span><br><span class="line">    result = createInstrumentationImpl(jnienv, agent);</span><br><span class="line">    /*</span><br><span class="line">     *  Load the Java agent, and call the premain.</span><br><span class="line">     */</span><br><span class="line">    if ( result ) &#123;</span><br><span class="line">        result = startJavaAgent(agent, jnienv, agent-&gt;mAgentClassName, agent-&gt;mOptionsString, agent-&gt;mPremainCaller);</span><br><span class="line">    &#125;</span><br><span class="line">    return result;</span><br><span class="line">&#125;</span><br><span class="line">jboolean startJavaAgent( JPLISAgent *agent,JNIEnv *jnienv,const char *classname,const char *optionsString,jmethodID agentMainMethod) &#123;</span><br><span class="line">  // ...</span><br><span class="line">  invokeJavaAgentMainMethod(jnienv,agent-&gt;mInstrumentationImpl,agentMainMethod, classNameObject,optionsStringObject);</span><br><span class="line">  // ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>看到这里，Instrument 已经实例化，invokeJavaAgentMainMethod 这个方法将我们的 Premain 方法执行起来了。接着，我们就可以根据 Instrument 实例来做我们想要做的事情了。</p>
+<h5 id="2-3-运行时加载-Agent"><a href="#2-3-运行时加载-Agent" class="headerlink" title="2.3 运行时加载 Agent"></a>2.3 运行时加载 Agent</h5><p>比起 JVM 启动时加载 Agent，运行时加载 Agent 就比较有诱惑力了，因为运行时加载 Agent 的能力给我们提供了很强的动态性，我们可以在需要的时候加载 Agent 来进行一些工作。因为是动态的，我们可以按照需求来加载所需要的 Agent，下面来分析一下动态加载 Agent 的相关技术细节。</p>
+<h6 id="2-3-1-AttachListener"><a href="#2-3-1-AttachListener" class="headerlink" title="2.3.1 AttachListener"></a>2.3.1 AttachListener</h6><p>Attach 机制通过 Attach Listener 线程来进行相关事务的处理，下面来看一下 Attach Listener 线程是如何初始化的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">// Starts the Attach Listener thread</span><br><span class="line">void AttachListener::init() &#123;</span><br><span class="line">  // 创建线程相关部分代码被去掉了</span><br><span class="line">  const char thread_name[] = &quot;Attach Listener&quot;;</span><br><span class="line">  Handle string = java_lang_String::create_from_str(thread_name, THREAD);</span><br><span class="line">  &#123; MutexLocker mu(Threads_lock);</span><br><span class="line">    JavaThread* listener_thread = new JavaThread(&amp;attach_listener_thread_entry);</span><br><span class="line">    // ...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们知道，一个线程启动之后都需要指定一个入口来执行代码，Attach Listener 线程的入口是 attach_listener_thread_entry，下面看一下这个函数的具体实现：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">static void attach_listener_thread_entry(JavaThread* thread, TRAPS) &#123;</span><br><span class="line">  AttachListener::set_initialized();</span><br><span class="line">  for (;;) &#123;</span><br><span class="line">      AttachOperation* op = AttachListener::dequeue();</span><br><span class="line">      // find the function to dispatch too</span><br><span class="line">      AttachOperationFunctionInfo* info = NULL;</span><br><span class="line">      for (int i=0; funcs[i].name != NULL; i++) &#123;</span><br><span class="line">        const char* name = funcs[i].name;</span><br><span class="line">        if (strcmp(op-&gt;name(), name) == 0) &#123;</span><br><span class="line">          info = &amp;(funcs[i]); break;</span><br><span class="line">        &#125;&#125;</span><br><span class="line">       // dispatch to the function that implements this operation</span><br><span class="line">        res = (info-&gt;func)(op, &amp;st);</span><br><span class="line">      //...</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>整个函数执行逻辑，大概是这样的：</p>
+<p>拉取一个需要执行的任务：AttachListener::dequeue。</p>
+<p>查询匹配的命令处理函数。</p>
+<p>执行匹配到的命令执行函数。</p>
+<p>其中第二步里面存在一个命令函数表，整个表如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">static AttachOperationFunctionInfo funcs[] = &#123;</span><br><span class="line">  &#123; &quot;agentProperties&quot;,  get_agent_properties &#125;,</span><br><span class="line">  &#123; &quot;datadump&quot;,         data_dump &#125;,</span><br><span class="line">  &#123; &quot;dumpheap&quot;,         dump_heap &#125;,</span><br><span class="line">  &#123; &quot;load&quot;,             load_agent &#125;,</span><br><span class="line">  &#123; &quot;properties&quot;,       get_system_properties &#125;,</span><br><span class="line">  &#123; &quot;threaddump&quot;,       thread_dump &#125;,</span><br><span class="line">  &#123; &quot;inspectheap&quot;,      heap_inspection &#125;,</span><br><span class="line">  &#123; &quot;setflag&quot;,          set_flag &#125;,</span><br><span class="line">  &#123; &quot;printflag&quot;,        print_flag &#125;,</span><br><span class="line">  &#123; &quot;jcmd&quot;,             jcmd &#125;,</span><br><span class="line">  &#123; NULL,               NULL &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>对于加载 Agent 来说，命令就是“load”。现在，我们知道了 Attach Listener 大概的工作模式，但是还是不太清楚任务从哪来，这个秘密就藏在 AttachListener::dequeue 这行代码里面，接下来我们来分析一下 dequeue 这个函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">LinuxAttachOperation* LinuxAttachListener::dequeue() &#123;</span><br><span class="line">  for (;;) &#123;</span><br><span class="line">    // wait for client to connect</span><br><span class="line">    struct sockaddr addr;</span><br><span class="line">    socklen_t len = sizeof(addr);</span><br><span class="line">    RESTARTABLE(::accept(listener(), &amp;addr, &amp;len), s);</span><br><span class="line">    // get the credentials of the peer and check the effective uid/guid</span><br><span class="line">    // - check with jeff on this.</span><br><span class="line">    struct ucred cred_info;</span><br><span class="line">    socklen_t optlen = sizeof(cred_info);</span><br><span class="line">    if (::getsockopt(s, SOL_SOCKET, SO_PEERCRED, (void*)&amp;cred_info, &amp;optlen) == -1) &#123;</span><br><span class="line">      ::close(s);</span><br><span class="line">      continue;</span><br><span class="line">    &#125;</span><br><span class="line">    // peer credential look okay so we read the request</span><br><span class="line">    LinuxAttachOperation* op = read_request(s);</span><br><span class="line">    return op;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这是 Linux 上的实现，不同的操作系统实现方式不太一样。上面的代码表面，Attach Listener 在某个端口监听着，通过 accept 来接收一个连接，<br>然后从这个连接里面将请求读取出来，然后将请求包装成一个 AttachOperation 类型的对象，之后就会从表里查询对应的处理函数，然后进行处理。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">Attach Listener使用一种被称为“懒加载”的策略进行初始化，也就是说，JVM启动的时候Attach Listener并不一定会启动起来。下面我们来分析一下这种“懒加载”策略的具体实现方案。</span><br><span class="line">  // Start Attach Listener if +StartAttachListener or it can&#x27;t be started lazily</span><br><span class="line">  if (!DisableAttachMechanism) &#123;</span><br><span class="line">    AttachListener::vm_start();</span><br><span class="line">    if (StartAttachListener || AttachListener::init_at_startup()) &#123;</span><br><span class="line">      AttachListener::init();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">// Attach Listener is started lazily except in the case when</span><br><span class="line">// +ReduseSignalUsage is used</span><br><span class="line">bool AttachListener::init_at_startup() &#123;</span><br><span class="line">  if (ReduceSignalUsage) &#123;</span><br><span class="line">    return true;</span><br><span class="line">  &#125; else &#123;</span><br><span class="line">    return false;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面的代码截取自 create_vm 函数，DisableAttachMechanism、StartAttachListener 和 ReduceSignalUsage 这三个变量默认都是 false，所以 AttachListener::init();这行代码不会在 create_vm 的时候执行，而 vm_start 会执行。下面来看一下这个函数的实现细节：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">void AttachListener::vm_start() &#123;</span><br><span class="line">  char fn[UNIX_PATH_MAX];</span><br><span class="line">  struct stat64 st;</span><br><span class="line">  int ret;</span><br><span class="line">  int n = snprintf(fn, UNIX_PATH_MAX, &quot;%s/.java_pid%d&quot;,</span><br><span class="line">           os::get_temp_directory(), os::current_process_id());</span><br><span class="line">  assert(n &lt; (int)UNIX_PATH_MAX, &quot;java_pid file name buffer overflow&quot;);</span><br><span class="line">  RESTARTABLE(::stat64(fn, &amp;st), ret);</span><br><span class="line">  if (ret == 0) &#123;</span><br><span class="line">    ret = ::unlink(fn);</span><br><span class="line">    if (ret == -1) &#123;</span><br><span class="line">      log_debug(attach)(&quot;Failed to remove stale attach pid file at %s&quot;, fn);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这是在 Linux 上的实现，是将/tmp/目录下的.java_pid{pid}文件删除，后面在创建 Attach Listener 线程的时候会创建出来这个文件。上面说到，AttachListener::init()这行代码不会在 create_vm 的时候执行，这行代码的实现已经在上文中分析了，就是创建 Attach Listener 线程，并监听其他 JVM 的命令请求。现在来分析一下这行代码是什么时候被调用的，也就是“懒加载”到底是怎么加载起来的。</p>
+<p>// Signal Dispatcher needs to be started before VMInit event is posted<br>os::signal_init();<br>这是 create_vm 中的一段代码，看起来跟信号相关，其实 Attach 机制就是使用信号来实现“懒加载“的。下面我们来仔细地分析一下这个过程。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">void os::signal_init() &#123;</span><br><span class="line">  if (!ReduceSignalUsage) &#123;</span><br><span class="line">    // Setup JavaThread for processing signals</span><br><span class="line">    EXCEPTION_MARK;</span><br><span class="line">    Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_Thread(), true, CHECK);</span><br><span class="line">    instanceKlassHandle klass (THREAD, k);</span><br><span class="line">    instanceHandle thread_oop = klass-&gt;allocate_instance_handle(CHECK);</span><br><span class="line">    const char thread_name[] = &quot;Signal Dispatcher&quot;;</span><br><span class="line">    Handle string = java_lang_String::create_from_str(thread_name, CHECK);</span><br><span class="line">    // Initialize thread_oop to put it into the system threadGroup</span><br><span class="line">    Handle thread_group (THREAD, Universe::system_thread_group());</span><br><span class="line">    JavaValue result(T_VOID);</span><br><span class="line">    JavaCalls::call_special(&amp;result, thread_oop,klass,vmSymbols::object_initializer_name(),vmSymbols::threadgroup_string_void_signature(),</span><br><span class="line">                           thread_group,string,CHECK);</span><br><span class="line">    KlassHandle group(THREAD, SystemDictionary::ThreadGroup_klass());</span><br><span class="line">    JavaCalls::call_special(&amp;result,thread_group,group,vmSymbols::add_method_name(),vmSymbols::thread_void_signature(),thread_oop,CHECK);</span><br><span class="line">    os::signal_init_pd();</span><br><span class="line">    &#123; MutexLocker mu(Threads_lock);</span><br><span class="line">      JavaThread* signal_thread = new JavaThread(&amp;signal_thread_entry);</span><br><span class="line">     // ...</span><br><span class="line">    &#125;</span><br><span class="line">    // Handle ^BREAK</span><br><span class="line">    os::signal(SIGBREAK, os::user_handler());</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>JVM 创建了一个新的进程来实现信号处理，这个线程叫“Signal Dispatcher”，一个线程创建之后需要有一个入口，“Signal Dispatcher”的入口是 signal_thread_entry：</p>
+<p>这段代码截取自 signal_thread_entry 函数，截取中的内容是和 Attach 机制信号处理相关的代码。这段代码的意思是，当接收到“SIGBREAK”信号，就执行接下来的代码，这个信号是需要 Attach 到 JVM 上的信号发出来，这个后面会再分析。我们先来看一句关键的代码：AttachListener::is_init_trigger()：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">bool AttachListener::is_init_trigger() &#123;</span><br><span class="line">  if (init_at_startup() || is_initialized()) &#123;</span><br><span class="line">    return false;               // initialized at startup or already initialized</span><br><span class="line">  &#125;</span><br><span class="line">  char fn[PATH_MAX+1];</span><br><span class="line">  sprintf(fn, &quot;.attach_pid%d&quot;, os::current_process_id());</span><br><span class="line">  int ret;</span><br><span class="line">  struct stat64 st;</span><br><span class="line">  RESTARTABLE(::stat64(fn, &amp;st), ret);</span><br><span class="line">  if (ret == -1) &#123;</span><br><span class="line">    log_trace(attach)(&quot;Failed to find attach file: %s, trying alternate&quot;, fn);</span><br><span class="line">    snprintf(fn, sizeof(fn), &quot;%s/.attach_pid%d&quot;, os::get_temp_directory(), os::current_process_id());</span><br><span class="line">    RESTARTABLE(::stat64(fn, &amp;st), ret);</span><br><span class="line">  &#125;</span><br><span class="line">  if (ret == 0) &#123;</span><br><span class="line">    // simple check to avoid starting the attach mechanism when</span><br><span class="line">    // a bogus user creates the file</span><br><span class="line">    if (st.st_uid == geteuid()) &#123;</span><br><span class="line">      init();</span><br><span class="line">      return true;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  return false;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>首先检查了一下是否在 JVM 启动时启动了 Attach Listener，或者是否已经启动过。如果没有，才继续执行，在/tmp 目录下创建一个叫做.attach_pid%d 的文件，然后执行 AttachListener 的 init 函数，这个函数就是用来创建 Attach Listener 线程的函数，上面已经提到多次并进行了分析。到此，我们知道 Attach 机制的奥秘所在，也就是 Attach Listener 线程的创建依靠 Signal Dispatcher 线程，Signal Dispatcher 是用来处理信号的线程，当 Signal Dispatcher 线程接收到“SIGBREAK”信号之后，就会执行初始化 Attach Listener 的工作。</p>
+<h6 id="2-3-2-运行时加载-Agent-的实现"><a href="#2-3-2-运行时加载-Agent-的实现" class="headerlink" title="2.3.2 运行时加载 Agent 的实现"></a>2.3.2 运行时加载 Agent 的实现</h6><p>我们继续分析，到底是如何将一个 Agent 挂载到运行着的目标 JVM 上，在上文中提到了一段代码，用来进行运行时挂载 Agent，可以参考上文中展示的关于“attachAgentToTargetJvm”方法的代码。这个方法里面的关键是调用 VirtualMachine 的 attach 方法进行 Agent 挂载的功能。下面我们就来分析一下 VirtualMachine 的 attach 方法具体是怎么实现的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">public static VirtualMachine attach(String var0) throws AttachNotSupportedException, IOException &#123;</span><br><span class="line">    if (var0 == null) &#123;</span><br><span class="line">        throw new NullPointerException(&quot;id cannot be null&quot;);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        List var1 = AttachProvider.providers();</span><br><span class="line">        if (var1.size() == 0) &#123;</span><br><span class="line">            throw new AttachNotSupportedException(&quot;no providers installed&quot;);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            AttachNotSupportedException var2 = null;</span><br><span class="line">            Iterator var3 = var1.iterator();</span><br><span class="line">            while(var3.hasNext()) &#123;</span><br><span class="line">                AttachProvider var4 = (AttachProvider)var3.next();</span><br><span class="line">                try &#123;</span><br><span class="line">                    return var4.attachVirtualMachine(var0);</span><br><span class="line">                &#125; catch (AttachNotSupportedException var6) &#123;</span><br><span class="line">                    var2 = var6;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            throw var2;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个方法通过 attachVirtualMachine 方法进行 attach 操作，在 MacOS 系统中，AttachProvider 的实现类是 BsdAttachProvider。我们来看一下 BsdAttachProvider 的 attachVirtualMachine 方法是如何实现的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">public VirtualMachine attachVirtualMachine(String var1) throws AttachNotSupportedException, IOException &#123;</span><br><span class="line">        this.checkAttachPermission();</span><br><span class="line">        this.testAttachable(var1);</span><br><span class="line">        return new BsdVirtualMachine(this, var1);</span><br><span class="line">    &#125;</span><br><span class="line">BsdVirtualMachine(AttachProvider var1, String var2) throws AttachNotSupportedException, IOException &#123;</span><br><span class="line">        int var3 = Integer.parseInt(var2);</span><br><span class="line">        this.path = this.findSocketFile(var3);</span><br><span class="line">        if (this.path == null) &#123;</span><br><span class="line">            File var4 = new File(tmpdir, &quot;.attach_pid&quot; + var3);</span><br><span class="line">            createAttachFile(var4.getPath());</span><br><span class="line">            try &#123;</span><br><span class="line">                sendQuitTo(var3);</span><br><span class="line">                int var5 = 0;</span><br><span class="line">                long var6 = 200L;</span><br><span class="line">                int var8 = (int)(this.attachTimeout() / var6);</span><br><span class="line">                do &#123;</span><br><span class="line">                    try &#123;</span><br><span class="line">                        Thread.sleep(var6);</span><br><span class="line">                    &#125; catch (InterruptedException var21) &#123;</span><br><span class="line">                        ;</span><br><span class="line">                    &#125;</span><br><span class="line">                    this.path = this.findSocketFile(var3);</span><br><span class="line">                    ++var5;</span><br><span class="line">                &#125; while(var5 &lt;= var8 &amp;&amp; this.path == null);</span><br><span class="line">            &#125; finally &#123;</span><br><span class="line">                var4.delete();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        int var24 = socket();</span><br><span class="line">        connect(var24, this.path);</span><br><span class="line">    &#125;</span><br><span class="line">    private String findSocketFile(int var1) &#123;</span><br><span class="line">        String var2 = &quot;.java_pid&quot; + var1;</span><br><span class="line">        File var3 = new File(tmpdir, var2);</span><br><span class="line">        return var3.exists() ? var3.getPath() : null;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>findSocketFile 方法用来查询目标 JVM 上是否已经启动了 Attach Listener，它通过检查”tmp/“目录下是否存在 java_pid{pid}来进行实现。如果已经存在了，则说明 Attach 机制已经准备就绪，可以接受客户端的命令了，这个时候客户端就可以通过 connect 连接到目标 JVM 进行命令的发送，比如可以发送“load”命令来加载 Agent。如果 java_pid{pid}文件还不存在，则需要通过 sendQuitTo 方法向目标 JVM 发送一个“SIGBREAK”信号，让它初始化 Attach Listener 线程并准备接受客户端连接。可以看到，发送了信号之后客户端会循环等待 java_pid{pid}这个文件，之后再通过 connect 连接到目标 JVM 上。</p>
+<h6 id="2-3-3-load-命令的实现"><a href="#2-3-3-load-命令的实现" class="headerlink" title="2.3.3 load 命令的实现"></a>2.3.3 load 命令的实现</h6><p>下面来分析一下，“load”命令在 JVM 层面的实现：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">static jint load_agent(AttachOperation* op, outputStream* out) &#123;</span><br><span class="line">  // get agent name and options</span><br><span class="line">  const char* agent = op-&gt;arg(0);</span><br><span class="line">  const char* absParam = op-&gt;arg(1);</span><br><span class="line">  const char* options = op-&gt;arg(2);</span><br><span class="line">  // If loading a java agent then need to ensure that the java.instrument module is loaded</span><br><span class="line">  if (strcmp(agent, &quot;instrument&quot;) == 0) &#123;</span><br><span class="line">    Thread* THREAD = Thread::current();</span><br><span class="line">    ResourceMark rm(THREAD);</span><br><span class="line">    HandleMark hm(THREAD);</span><br><span class="line">    JavaValue result(T_OBJECT);</span><br><span class="line">    Handle h_module_name = java_lang_String::create_from_str(&quot;java.instrument&quot;, THREAD);</span><br><span class="line">    JavaCalls::call_static(&amp;result,SystemDictionary::module_Modules_klass(),vmSymbols::loadModule_name(),</span><br><span class="line">                           vmSymbols::loadModule_signature(),h_module_name,THREAD);</span><br><span class="line">  &#125;</span><br><span class="line">  return JvmtiExport::load_agent_library(agent, absParam, options, out);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个函数先确保加载了 java.instrument 模块，之后真正执行 Agent 加载的函数是 load_agent_library ,这个函数的套路就是加载 Agent 动态链接库，如果是通过 Java instrument API 实现的 Agent，则加载的是 libinstrument 动态链接库，然后通过 libinstrument 里面的代码实现运行 agentmain 方法的逻辑，这一部分内容和 libinstrument 实现 premain 方法运行的逻辑其实差不多，这里不再做分析。至此，我们对 Java Agent 技术已经有了一个全面而细致的了解。</p>
+<h4 id="3-动态替换类字节码技术"><a href="#3-动态替换类字节码技术" class="headerlink" title="3. 动态替换类字节码技术"></a>3. 动态替换类字节码技术</h4><h5 id="3-1-动态字节码修改的限制"><a href="#3-1-动态字节码修改的限制" class="headerlink" title="3.1 动态字节码修改的限制"></a>3.1 动态字节码修改的限制</h5><p>上文中已经详细分析了 Agent 技术的实现，我们使用 Java Instrumentation API 来完成动态类修改的功能，在 Instrumentation 接口中，通过 addTransformer 方法来增加一个类转换器，类转换器由类 ClassFileTransformer 接口实现。ClassFileTransformer 接口中唯一的方法 transform 用于实现类转换，当类被加载的时候，就会调用 transform 方法，进行类转换。在运行时，我们可以通过 Instrumentation 的 redefineClasses 方法进行类重定义，在方法上有一段注释需要特别注意：</p>
+<ul>
+<li>The redefinition may change method bodies, the constant pool and attributes.</li>
+<li>The redefinition must not add, remove or rename fields or methods, change the</li>
+<li>signatures of methods, or change inheritance. These restrictions maybe be</li>
+<li>lifted in future versions. The class file bytes are not checked, verified and installed</li>
+<li>until after the transformations have been applied, if the resultant bytes are in</li>
+<li>error this method will throw an exception.<br>这里面提到，我们不可以增加、删除或者重命名字段和方法，改变方法的签名或者类的继承关系。认识到这一点很重要，当我们通过 ASM 获取到增强的字节码之后，如果增强后的字节码没有遵守这些规则，那么调用 redefineClasses 方法来进行类的重定义就会失败。那 redefineClasses 方法具体是怎么实现类的重定义的呢？它对运行时的 JVM 会造成什么样的影响呢？下面来分析 redefineClasses 的实现细节。</li>
+</ul>
+<h5 id="3-2-重定义类字节码的实现细节"><a href="#3-2-重定义类字节码的实现细节" class="headerlink" title="3.2 重定义类字节码的实现细节"></a>3.2 重定义类字节码的实现细节</h5><p>上文中我们提到，libinstrument 动态链接库中，JPLISAgent 不仅实现了 Agent 入口代码执行的路由，而且还是 Java 代码与 JVMTI 之间的一道桥梁。我们在 Java 代码中调用 Java Instrumentation API 的 redefineClasses，其实会调用 libinstrument 中的相关代码，我们来分析一下这条路径。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">public void redefineClasses(ClassDefinition... var1) throws ClassNotFoundException &#123;</span><br><span class="line">    if (!this.isRedefineClassesSupported()) &#123;</span><br><span class="line">        throw new UnsupportedOperationException(&quot;redefineClasses is not supported in this environment&quot;);</span><br><span class="line">    &#125; else if (var1 == null) &#123;</span><br><span class="line">        throw new NullPointerException(&quot;null passed as &#x27;definitions&#x27; in redefineClasses&quot;);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        for(int var2 = 0; var2 &lt; var1.length; ++var2) &#123;</span><br><span class="line">            if (var1[var2] == null) &#123;</span><br><span class="line">                throw new NullPointerException(&quot;element of &#x27;definitions&#x27; is null in redefineClasses&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        if (var1.length != 0) &#123;</span><br><span class="line">            this.redefineClasses0(this.mNativeAgent, var1);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">private native void redefineClasses0(long var1, ClassDefinition[] var3) throws ClassNotFoundException;</span><br></pre></td></tr></table></figure>
+
+<p>这是 InstrumentationImpl 中的 redefineClasses 实现，该方法的具体实现依赖一个 Native 方法 redefineClasses()，我们可以在 libinstrument 中找到这个 Native 方法的实现：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">JNIEXPORT void JNICALL Java_sun_instrument_InstrumentationImpl_redefineClasses0</span><br><span class="line">  (JNIEnv * jnienv, jobject implThis, jlong agent, jobjectArray classDefinitions) &#123;</span><br><span class="line">    redefineClasses(jnienv, (JPLISAgent*)(intptr_t)agent, classDefinitions);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>redefineClasses 这个函数的实现比较复杂，代码很长。下面是一段关键的代码片段：</p>
+<p>可以看到，其实是调用了 JVMTI 的 RetransformClasses 函数来完成类的重定义细节。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// class_count - pre-checked to be greater than or equal to 0</span><br><span class="line">// class_definitions - pre-checked for NULL</span><br><span class="line">jvmtiError JvmtiEnv::RedefineClasses(jint class_count, const jvmtiClassDefinition* class_definitions) &#123;</span><br><span class="line">//TODO: add locking</span><br><span class="line">  VM_RedefineClasses op(class_count, class_definitions, jvmti_class_load_kind_redefine);</span><br><span class="line">  VMThread::execute(&amp;op);</span><br><span class="line">  return (op.check_error());</span><br><span class="line">&#125; /* end RedefineClasses */</span><br></pre></td></tr></table></figure>
+
+<p>重定义类的请求会被 JVM 包装成一个 VM_RedefineClasses 类型的 VM_Operation，VM_Operation 是 JVM 内部的一些操作的基类，包括 GC 操作等。VM_Operation 由 VMThread 来执行，新的 VM_Operation 操作会被添加到 VMThread 的运行队列中去，VMThread 会不断从队列里面拉取 VM_Operation 并调用其 doit 等函数执行具体的操作。VM_RedefineClasses 函数的流程较为复杂，下面是 VM_RedefineClasses 的大致流程：</p>
+<p>加载新的字节码，合并常量池，并且对新的字节码进行校验工作<br>// Load the caller’s new class definition(s) into _scratch_classes.<br>// Constant pool merging work is done here as needed. Also calls<br>// compare_and_normalize_class_versions() to verify the class<br>// definition(s).<br>jvmtiError load_new_class_versions(TRAPS);<br>清除方法上的断点</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">  // Remove all breakpoints in methods of this class</span><br><span class="line">  JvmtiBreakpoints&amp; jvmti_breakpoints = JvmtiCurrentBreakpoints::get_jvmti_breakpoints();</span><br><span class="line">  jvmti_breakpoints.clearall_in_class_at_safepoint(the_class());</span><br><span class="line">JIT逆优化</span><br><span class="line"></span><br><span class="line">  // Deoptimize all compiled code that depends on this class</span><br><span class="line">  flush_dependent_code(the_class, THREAD);</span><br></pre></td></tr></table></figure>
+
+<p>进行字节码替换工作，需要进行更新类 itable/vtable 等操作<br>进行类重定义通知</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SystemDictionary::notice_modification();</span><br></pre></td></tr></table></figure>
+
+<p>VM_RedefineClasses 实现比较复杂的，详细实现可以参考 RedefineClasses 的实现。</p>
+<h4 id="4-Java-debug-tool-设计与实现"><a href="#4-Java-debug-tool-设计与实现" class="headerlink" title="4. Java-debug-tool 设计与实现"></a>4. Java-debug-tool 设计与实现</h4><p>Java-debug-tool 是一个使用 Java Instrument API 来实现的动态调试工具，它通过在目标 JVM 上启动一个 TcpServer 来和调试客户端通信。<br>调试客户端通过命令行来发送调试命令给 TcpServer，TcpServer 中有专门用来处理命令的 handler，handler 处理完命令之后会将结果发送回客户端，<br>客户端通过处理将调试结果展示出来。下面将详细介绍 Java-debug-tool 的整体设计和实现。</p>
+<h5 id="4-1-Java-debug-tool-整体架构"><a href="#4-1-Java-debug-tool-整体架构" class="headerlink" title="4.1 Java-debug-tool 整体架构"></a>4.1 Java-debug-tool 整体架构</h5><p>Java-debug-tool 包括一个 Java Agent 和一个用于处理调试命令的核心 API，核心 API 通过一个自定义的类加载器加载进来，以保证目标 JVM 的类不会被污染。<br>整体上 Java-debug-tool 的设计是一个 Client-Server 的架构，命令客户端需要完整的完成一个命令之后才能继续执行下一个调试命令。<br>Java-debug-tool 支持多人同时进行调试，下面是整体架构图：</p>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/hEx03cFgUsXwHv2oFu6vZbZ2VriafkoE44pMzDfgj8Oe9fFbU2wHn35PjibaPxvOnFMmwx1Jzv9Tsy1kxn41Q7NQ/640"></p>
+<p>下面对每一层做简单介绍：</p>
+<ul>
+<li><p>交互层：负责将程序员的输入转换成调试交互协议，并且将调试信息呈现出来。</p>
+</li>
+<li><p>连接管理层：负责管理客户端连接，从连接中读调试协议数据并解码，对调试结果编码并将其写到连接中去；同时将那些超时未活动的连接关闭。</p>
+</li>
+<li><p>业务逻辑层：实现调试命令处理，包括命令分发、数据收集、数据处理等过程。</p>
+</li>
+<li><p>基础实现层：Java-debug-tool 实现的底层依赖，通过 Java Instrumentation 提供的 API 进行类查找、类重定义等能力，Java Instrumentation 底层依赖 JVMTI 来完成具体的功能。</p>
+</li>
+</ul>
+<p>在 Agent 被挂载到目标 JVM 上之后，Java-debug-tool 会安排一个 Spy 在目标 JVM 内活动，这个 Spy 负责将目标 JVM 内部的相关调试数据转移到命令处理模块，<br>命令处理模块会处理这些数据，然后给客户端返回调试结果。命令处理模块会增强目标类的字节码来达到数据获取的目的<br>，多个客户端可以共享一份增强过的字节码，无需重复增强。下面从 Java-debug-tool 的字节码增强方案、命令设计与实现等角度详细说明。</p>
+<h5 id="4-2-Java-debug-tool-的字节码增强方案"><a href="#4-2-Java-debug-tool-的字节码增强方案" class="headerlink" title="4.2 Java-debug-tool 的字节码增强方案"></a>4.2 Java-debug-tool 的字节码增强方案</h5><p>Java-debug-tool 使用字节码增强来获取到方法运行时的信息，比如方法入参、出参等，可以在不同的字节码位置进行增强，这种行为可以称为“插桩”，<br>每个“桩”用于获取数据并将他转储出去。Java-debug-tool 具备强大的插桩能力，不同的桩负责获取不同类别的数据，下面是 Java-debug-tool 目前所支持的“桩”：</p>
+<ul>
+<li><p>方法进入点：用于获取方法入参信息。</p>
+</li>
+<li><p>Fields 获取点 1：在方法执行前获取到对象的字段信息。</p>
+</li>
+<li><p>变量存储点：获取局部变量信息。</p>
+</li>
+<li><p>Fields 获取点 2：在方法退出前获取到对象的字段信息。</p>
+</li>
+<li><p>方法退出点：用于获取方法返回值。</p>
+</li>
+<li><p>抛出异常点：用于获取方法抛出的异常信息。</p>
+</li>
+</ul>
+<p>通过上面这些代码桩，Java-debug-tool 可以收集到丰富的方法执行信息，经过处理可以返回更加可视化的调试结果。</p>
+<h6 id="4-2-1-字节码增强"><a href="#4-2-1-字节码增强" class="headerlink" title="4.2.1 字节码增强"></a>4.2.1 字节码增强</h6><p>Java-debug-tool 在实现上使用了 ASM 工具来进行字节码增强，并且每个插桩点都可以进行配置，如果不想要什么信息，则没必要进行对应的插桩操作。这种可配置的设计是非常有必要的，因为有时候我们仅仅是想要知道方法的入参和出参，但 Java-debug-tool 却给我们返回了所有的调试信息，这样我们就得在众多的输出中找到我们所关注的内容。如果可以进行配置，则除了入参点和出参点外其他的桩都不插，那么就可以快速看到我们想要的调试数据，这种设计的本质是为了让调试者更加专注。下面是 Java-debug-tool 的字节码增强工作方式：</p>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/hEx03cFgUsXwHv2oFu6vZbZ2VriafkoE4jIYWODnoWDfEAhWyia6LIsKKwIkT5FEMxEzrFKTUV5WGdAEMmlno0hA/640"></p>
+<p>图 4-2-1</p>
+<p>如图 4-2-1 所示，当调试者发出调试命令之后，Java-debug-tool 会识别命令并判断是否需要进行字节码增强，如果命令需要增强字节码，则判断当前类+当前方法是否已经被增强过。上文已经提到，字节码替换是有一定损耗的，这种具有损耗的操作发生的次数越少越好，所以字节码替换操作会被记录起来，后续命令直接使用即可，不需要重复进行字节码增强，字节码增强还涉及多个调试客户端的协同工作问题，当一个客户端增强了一个类的字节码之后，这个客户端就锁定了该字节码，其他客户端变成只读，无法对该类进行字节码增强，只有当持有锁的客户端主动释放锁或者断开连接之后，其他客户端才能继续增强该类的字节码。<br>字节码增强模块收到字节码增强请求之后，会判断每个增强点是否需要插桩，这个判断的根据就是上文提到的插桩配置，之后字节码增强模块会生成新的字节码，Java-debug-tool 将执行字节码替换操作，之后就可以进行调试数据收集了。<br>经过字节码增强之后，原来的方法中会插入收集运行时数据的代码，这些代码在方法被调用的时候执行，获取到诸如方法入参、局部变量等信息，这些信息将传递给数据收集装置进行处理。数据收集的工作通过 Advice 完成，每个客户端同一时间只能注册一个 Advice 到 Java-debug-tool 调试模块上，多个客户端可以同时注册自己的 Advice 到调试模块上。Advice 负责收集数据并进行判断，如果当前数据符合调试命令的要求，Java-debug-tool 就会卸载这个 Advice，Advice 的数据就会被转移到 Java-debug-tool 的命令结果处理模块进行处理，并将结果发送到客户端。</p>
+<h6 id="4-2-2-Advice-的工作方式"><a href="#4-2-2-Advice-的工作方式" class="headerlink" title="4.2.2 Advice 的工作方式"></a>4.2.2 Advice 的工作方式</h6><p>Advice 是调试数据收集器，不同的调试策略会对应不同的 Advice。Advice 是工作在目标 JVM 的线程内部的，它需要轻量级和高效，意味着 Advice 不能做太过于复杂的事情，它的核心接口“match”用来判断本次收集到的调试数据是否满足调试需求。如果满足，那么 Java-debug-tool 就会将其卸载，否则会继续让他收集调试数据，这种“加载 Advice” -&gt; “卸载 Advice”的工作模式具备很好的灵活性。<br>关于 Advice，需要说明的另外一点就是线程安全，因为它加载之后会运行在目标 JVM 的线程中，目标 JVM 的方法极有可能是多线程访问的，这也就是说，Advice 需要有能力处理多个线程同时访问方法的能力，如果 Advice 处理不当，则可能会收集到杂乱无章的调试数据。下面的图片展示了 Advice 和 Java-debug-tool 调试分析模块、目标方法执行以及调试客户端等模块的关系。</p>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/hEx03cFgUsXwHv2oFu6vZbZ2VriafkoE4icUzSicIdgKaWyBsIVgmiaOHEPR5mUvyqDOg3e6ELs0aFF1Ub23RjnNsQ/640"><br>图 4-2-2<br>Advice 的首次挂载由 Java-debug-tool 的命令处理器完成，当一次调试数据收集完成之后，调试数据处理模块会自动卸载 Advice，然后进行判断，如果调试数据符合 Advice 的策略，则直接将数据交由数据处理模块进行处理，否则会清空调试数据，并再次将 Advice 挂载到目标方法上去，等待下一次调试数据。非首次挂载由调试数据处理模块进行，它借助 Advice 按需取数据，如果不符合需求，则继续挂载 Advice 来获取数据，否则对调试数据进行处理并返回给客户端。</p>
+<h5 id="4-3-Java-debug-tool-的命令设计与实现"><a href="#4-3-Java-debug-tool-的命令设计与实现" class="headerlink" title="4.3 Java-debug-tool 的命令设计与实现"></a>4.3 Java-debug-tool 的命令设计与实现</h5><h6 id="4-3-1-命令执行"><a href="#4-3-1-命令执行" class="headerlink" title="4.3.1 命令执行"></a>4.3.1 命令执行</h6><p>上文已经完整的描述了 Java-debug-tool 的设计以及核心技术方案，本小节将详细介绍 Java-debug-tool 的命令设计与实现。首先需要将一个调试命令的执行流程描述清楚，下面是一张用来表示命令请求处理流程的图片：</p>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/hEx03cFgUsXwHv2oFu6vZbZ2VriafkoE4NAFPL7rkntPMiaicJtbn84MnRNibQkPhUibZ5cuWpZpcibYxx0vR41PHNDw/640"><br>图 4-3-1<br>图 4-3-1 简单的描述了 Java-debug-tool 的命令处理方式，客户端连接到服务端之后，会进行一些协议解析、协议认证、协议填充等工作，之后将进行命令分发。服务端如果发现客户端的命令不合法，则会立即返回错误信息，否则再进行命令处理。命令处理属于典型的三段式处理，前置命令处理、命令处理以及后置命令处理，同时会对命令处理过程中的异常信息进行捕获处理，三段式处理的好处是命令处理被拆成了多个阶段，多个阶段负责不同的职责。前置命令处理用来做一些命令权限控制的工作，并填充一些类似命令处理开始时间戳等信息，命令处理就是通过字节码增强，挂载 Advice 进行数据收集，再经过数据处理来产生命令结果的过程，后置处理则用来处理一些连接关闭、字节码解锁等事项。<br>Java-debug-tool 允许客户端设置一个命令执行超时时间，超过这个时间则认为命令没有结果，如果客户端没有设置自己的超时时间，就使用默认的超时时间进行超时控制。Java-debug-tool 通过设计了两阶段的超时检测机制来实现命令执行超时功能：首先，第一阶段超时触发，则 Java-debug-tool 会友好的警告命令处理模块处理时间已经超时，需要立即停止命令执行，这允许命令自己做一些现场清理工作，当然需要命令执行线程自己感知到这种超时警告；当第二阶段超时触发，则 Java-debug-tool 认为命令必须结束执行，会强行打断命令执行线程。超时机制的目的是为了不让命令执行太长时间，命令如果长时间没有收集到调试数据，则应该停止执行，并思考是否调试了一个错误的方法。当然，超时机制还可以定期清理那些因为未知原因断开连接的客户端持有的调试资源，比如字节码锁。</p>
+<h6 id="4-3-4-获取方法执行视图"><a href="#4-3-4-获取方法执行视图" class="headerlink" title="4.3.4 获取方法执行视图"></a>4.3.4 获取方法执行视图</h6><p>Java-debug-tool 通过下面的信息来向调试者呈现出一次方法执行的视图：<br>正在调试的方法信息。</p>
+<p>方法调用堆栈。</p>
+<p>调试耗时，包括对目标 JVM 造成的 STW 时间。</p>
+<p>方法入参，包括入参的类型及参数值。</p>
+<p>方法的执行路径。</p>
+<p>代码执行耗时。</p>
+<p>局部变量信息。</p>
+<p>方法返回结果。</p>
+<p>方法抛出的异常。</p>
+<p>对象字段值快照。</p>
+<p>图 4-3-2 展示了 Java-debug-tool 获取到正在运行的方法的执行视图的信息。<br><img src="https://mmbiz.qpic.cn/mmbiz_png/hEx03cFgUsXwHv2oFu6vZbZ2VriafkoE4TYKGnNuqCgHOSkZiabggzJUESbqSDMWRZM1OtVNGziasnSAiae7ibYicAKw/640?wx_fmt=png"></p>
+<p>图 4-3-2</p>
+<h5 id="4-4-Java-debug-tool-与同类产品对比分析"><a href="#4-4-Java-debug-tool-与同类产品对比分析" class="headerlink" title="4.4 Java-debug-tool 与同类产品对比分析"></a>4.4 Java-debug-tool 与同类产品对比分析</h5><p>Java-debug-tool 的同类产品主要是 greys，其他类似的工具大部分都是基于 greys 进行的二次开发，所以直接选择 greys 来和 Java-debug-tool 进行对比。</p>
+<h4 id="5-总结"><a href="#5-总结" class="headerlink" title="5. 总结"></a>5. 总结</h4><p>本文详细剖析了 Java 动态调试关键技术的实现细节，并介绍了我们基于 Java 动态调试技术结合实际故障排查场景进行的一点探索实践；动态调试技术为研发人员进行线上问题排查提供了一种新的思路，我们基于动态调试技术解决了传统断点调试存在的问题，使得可以将断点调试这种技术应用在线上，以线下调试的思维来进行线上调试，提高问题排查效率。</p>
+<h4 id="6-参考文献"><a href="#6-参考文献" class="headerlink" title="6. 参考文献"></a>6. 参考文献</h4><p>ASM 4 guide</p>
+<p>Java Virtual Machine Specification</p>
+<p>JVM Tool Interface</p>
+<p>alibaba arthas</p>
+<p>openjdk</p>
+<h4 id="摘自"><a href="#摘自" class="headerlink" title="摘自"></a>摘自</h4><p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/ZlNcvwJ_swspifWTLHA92Q">https://mp.weixin.qq.com/s/ZlNcvwJ_swspifWTLHA92Q</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2021/10/01/language/java/bytecode/Java%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E8%B7%B5/" title="Java动态调试技术原理及实践" target="_blank" rel="external">https://wuhaocn.github.io/2021/10/01/language/java/bytecode/Java动态调试技术原理及实践/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/10/01/algorithm/%E5%88%86%E5%B8%83%E5%BC%8F%E7%AE%97%E6%B3%95/%E5%88%86%E5%B8%83%E5%BC%8Fraft%E7%AE%97%E6%B3%95/" title="分布式算法-raft"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/10/01/algorithm/sort/7.%E8%AE%A1%E6%95%B0%E6%8E%92%E5%BA%8F/" title="计数排序"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

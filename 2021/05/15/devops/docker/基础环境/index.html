@@ -18,20 +18,20 @@
   
   
   <title>基础环境 | Hexo</title>
-  <meta name="description" content="docker 部署平台服务 需搭建-以 centos7 为例 部署服务器 10.10.21.4   基础环境备注1234567891，在运行容器的时候，给容器加特权：示例：docker run -i -t --privileged&#x3D;true -v &#x2F;home&#x2F;docs:&#x2F;src waterchestnut&#x2F;nodejs:0.12.02，临时关闭selinux：示例：su -c &quot;sete">
+  <meta name="description" content="docker 环境搭建ubuntu1234567891011121314151617181920docker 安装sudo apt-get updatesudo apt install docker.iosudo groupadd dockerdocker pssudo usermod -aG docker $USERsudo vim &#x2F;etc&#x2F;docker&#x2F;daemon.json	root@us">
 <meta property="og:type" content="article">
 <meta property="og:title" content="基础环境">
-<meta property="og:url" content="http://example.com/2021/05/15/devops/docker/%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83/index.html">
+<meta property="og:url" content="https://wuhaocn.github.io/2021/05/15/devops/docker/%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83/index.html">
 <meta property="og:site_name" content="wuhaocn">
-<meta property="og:description" content="docker 部署平台服务 需搭建-以 centos7 为例 部署服务器 10.10.21.4   基础环境备注1234567891，在运行容器的时候，给容器加特权：示例：docker run -i -t --privileged&#x3D;true -v &#x2F;home&#x2F;docs:&#x2F;src waterchestnut&#x2F;nodejs:0.12.02，临时关闭selinux：示例：su -c &quot;sete">
+<meta property="og:description" content="docker 环境搭建ubuntu1234567891011121314151617181920docker 安装sudo apt-get updatesudo apt install docker.iosudo groupadd dockerdocker pssudo usermod -aG docker $USERsudo vim &#x2F;etc&#x2F;docker&#x2F;daemon.json	root@us">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2021-05-15T04:08:19.160Z">
-<meta property="article:modified_time" content="2021-08-24T07:10:16.390Z">
+<meta property="article:modified_time" content="2021-08-31T12:00:21.650Z">
 <meta property="article:author" content="wuhao">
 <meta property="article:tag" content="docker">
 <meta name="twitter:card" content="summary">
   <!-- Canonical links -->
-  <link rel="canonical" href="http://example.com/2021/05/15/devops/docker/%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83/index.html">
+  <link rel="canonical" href="https://wuhaocn.github.io/2021/05/15/devops/docker/%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83/index.html">
   
     <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
   
@@ -219,7 +219,7 @@
   <div class="widget">
     <h3 class="widget-title">分类</h3>
     <div class="widget-body">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">15</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">7</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -229,7 +229,7 @@
   <div class="widget">
     <h3 class="widget-title">标签</h3>
     <div class="widget-body">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -239,7 +239,7 @@
   <div class="widget">
     <h3 class="widget-title">标签云</h3>
     <div class="widget-body tagcloud">
-      <a href="/tags/5G/" style="font-size: 13.5px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.25px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 14px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.75px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.5px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+      <a href="/tags/5G/" style="font-size: 13.4px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.2px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 13.8px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/atomic/" style="font-size: 13.4px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.6px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/sort/" style="font-size: 14px;">sort</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.4px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
     </div>
   </div>
 
@@ -248,7 +248,7 @@
   <div class="widget">
     <h3 class="widget-title">归档</h3>
     <div class="widget-body">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">22</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">24</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -264,13 +264,28 @@
             
             <div class="item-inner">
               <p class="item-category">
-                <a class="category-link" href="/categories/devops/">devops</a>
+                <a class="category-link" href="/categories/linux/">linux</a>
               </p>
               <p class="item-title">
-                <a href="/2021/08/24/devops/docker/ftp%E6%9C%8D%E5%8A%A1%E6%90%AD%E5%BB%BA/" class="title">ftp服务器搭建</a>
+                <a href="/2021/10/18/language/shell/Linux%E5%AE%9A%E6%97%B6%E4%BB%BB%E5%8A%A1%E7%94%A8%E6%B3%95%E4%B8%8E%E5%AE%9E%E4%BE%8B/" class="title">Linux定时任务用法与实例</a>
               </p>
               <p class="item-date">
-                <time datetime="2021-08-24T07:05:26.767Z" itemprop="datePublished">2021-08-24</time>
+                <time datetime="2021-10-18T03:19:43.244Z" itemprop="datePublished">2021-10-18</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/linux/">linux</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/10/18/language/shell/Linux%E6%97%A5%E6%9C%9F%E8%8E%B7%E5%8F%96/" class="title">Linux日期获取</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-10-18T03:19:29.345Z" itemprop="datePublished">2021-10-18</time>
               </p>
             </div>
           </li>
@@ -282,10 +297,10 @@
                 <a class="category-link" href="/categories/devops/">devops</a>
               </p>
               <p class="item-title">
-                <a href="/2021/08/24/devops/docker/nexus%E6%9C%8D%E5%8A%A1%E6%90%AD%E5%BB%BA/" class="title">nexus服务搭建</a>
+                <a href="/2021/10/15/tool/mac/brew%E5%B8%B8%E7%94%A8%E8%AE%BE%E7%BD%AE/" class="title">brew常用设置</a>
               </p>
               <p class="item-date">
-                <time datetime="2021-08-24T07:05:26.756Z" itemprop="datePublished">2021-08-24</time>
+                <time datetime="2021-10-15T06:08:00.262Z" itemprop="datePublished">2021-10-15</time>
               </p>
             </div>
           </li>
@@ -297,10 +312,10 @@
                 <a class="category-link" href="/categories/devops/">devops</a>
               </p>
               <p class="item-title">
-                <a href="/2021/08/24/devops/docker/%E6%95%B0%E6%8D%AE%E7%8E%AF%E5%A2%83/" class="title">数据环境</a>
+                <a href="/2021/10/14/devops/docker/docker%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" class="title">docker常用命令</a>
               </p>
               <p class="item-date">
-                <time datetime="2021-08-24T07:00:25.063Z" itemprop="datePublished">2021-08-24</time>
+                <time datetime="2021-10-14T02:20:08.920Z" itemprop="datePublished">2021-10-14</time>
               </p>
             </div>
           </li>
@@ -309,28 +324,13 @@
             
             <div class="item-inner">
               <p class="item-category">
-                <a class="category-link" href="/categories/5G/">5G</a>
+                
               </p>
               <p class="item-title">
-                <a href="/2021/08/04/network/protocol/SCTP%E6%A6%82%E8%A6%81/" class="title">SCTP概要</a>
+                <a href="/2021/10/01/tool/hexo-config/" class="title">hexo-配置</a>
               </p>
               <p class="item-date">
-                <time datetime="2021-08-04T06:25:13.672Z" itemprop="datePublished">2021-08-04</time>
-              </p>
-            </div>
-          </li>
-          
-          <li>
-            
-            <div class="item-inner">
-              <p class="item-category">
-                <a class="category-link" href="/categories/5G/">5G</a>
-              </p>
-              <p class="item-title">
-                <a href="/2021/08/04/network/dpdk/DPDK-%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/" class="title">DPDK-架构解析</a>
-              </p>
-              <p class="item-date">
-                <time datetime="2021-08-04T06:25:13.670Z" itemprop="datePublished">2021-08-04</time>
+                <time datetime="2021-10-01T13:12:11.461Z" itemprop="datePublished">2021-10-01</time>
               </p>
             </div>
           </li>
@@ -389,23 +389,19 @@
     </div>
     <div class="article-entry marked-body" itemprop="articleBody">
       
-        <h2 id="docker-部署平台服务"><a href="#docker-部署平台服务" class="headerlink" title="docker 部署平台服务"></a>docker 部署平台服务</h2><ul>
-<li>需搭建-以 centos7 为例</li>
-<li>部署服务器 10.10.21.4</li>
-<li></li>
-</ul>
-<h3 id="基础环境备注"><a href="#基础环境备注" class="headerlink" title="基础环境备注"></a>基础环境备注</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">1，在运行容器的时候，给容器加特权：</span><br><span class="line">示例：docker run -i -t --privileged=true -v /home/docs:/src waterchestnut/nodejs:0.12.0</span><br><span class="line">2，临时关闭selinux：</span><br><span class="line">示例：su -c &quot;setenforce 0&quot;</span><br><span class="line">之后执行：docker run -i -t -v /home/docs:/src waterchestnut/nodejs:0.12.0</span><br><span class="line">注意：之后要记得重新开启selinux，命令：su -c &quot;setenforce 1&quot;</span><br><span class="line">3，添加selinux规则，将要挂载的目录添加到白名单：</span><br><span class="line">示例：chcon -Rt svirt_sandbox_file_t /home/docs</span><br><span class="line">之后执行：docker run -i -t -v /home/docs:/src waterchestnut/nodejs:0.12.0</span><br></pre></td></tr></table></figure>
+        <h2 id="docker-环境搭建"><a href="#docker-环境搭建" class="headerlink" title="docker 环境搭建"></a>docker 环境搭建</h2><h3 id="ubuntu"><a href="#ubuntu" class="headerlink" title="ubuntu"></a>ubuntu</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">docker 安装</span><br><span class="line"></span><br><span class="line">sudo apt-get update</span><br><span class="line"></span><br><span class="line">sudo apt install docker.io</span><br><span class="line"></span><br><span class="line">sudo groupadd docker</span><br><span class="line"></span><br><span class="line">docker ps</span><br><span class="line"></span><br><span class="line">sudo usermod -aG docker $USER</span><br><span class="line"></span><br><span class="line">sudo vim /etc/docker/daemon.json</span><br><span class="line">	root@user1-virtual-machine:~# cat /etc/docker/daemon.json</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"> &quot;storage-driver&quot;:&quot;overlay&quot;,</span><br><span class="line"> &quot;insecure-registries&quot;: [&quot;10.10.208.193:5000&quot;]</span><br><span class="line">&#125;</span><br><span class="line">sudo service docker restart</span><br></pre></td></tr></table></figure>
 
-<h3 id="docker-环境搭建"><a href="#docker-环境搭建" class="headerlink" title="docker 环境搭建"></a>docker 环境搭建</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">1. 安装docker-yum</span><br><span class="line">    【centos7】</span><br><span class="line">    sudo yum install docker</span><br><span class="line">    【centos6】</span><br><span class="line">    修改yum源：参考/centos-6-yum源</span><br><span class="line"></span><br><span class="line">    #</span><br><span class="line">    yum install device-mapper-libs</span><br><span class="line">    yum upgrade device-mapper-libs yum update--skip-broke</span><br><span class="line">    rpm -Uvh http://ftp.riken.jp/Linux/fedora/epel/6Server/x86_64/epel-release-6-8.noarch.rpm</span><br><span class="line"></span><br><span class="line">    yum install docker-io</span><br><span class="line"></span><br><span class="line">    ubuntu:</span><br><span class="line">    apt-get update</span><br><span class="line">    apt-get install apt-transport-https ca-certificates</span><br><span class="line">    wget -qO- https://get.docker.com/ | sh</span><br><span class="line">    service docker start</span><br><span class="line">2. 指定私库</span><br><span class="line">    修改/etc/docker/daemon.json文件</span><br><span class="line">    #vi /etc/docker/daemon.json</span><br><span class="line">    &#123; &quot;insecure-registries&quot;: [&quot;10.10.208.193:5000&quot;] &#125;</span><br><span class="line"></span><br><span class="line">    #这个现网使用出错</span><br><span class="line">    #&#123;</span><br><span class="line">    # &quot;storage-driver&quot;:&quot;overlay&quot;,</span><br><span class="line">    # &quot;insecure-registries&quot;: [&quot;10.10.208.193:5000&quot;]</span><br><span class="line">    #&#125;</span><br><span class="line"></span><br><span class="line">    cent-os-6</span><br><span class="line">    /etc/sysconfig/docker</span><br><span class="line">    other_args=&#x27;--insecure-registry 10.10.208.193:5000&#x27;</span><br><span class="line">    DOCKER_CERT_PATH=/etc/docker</span><br><span class="line">    ADD_REGISTRY=&#x27;--add-registry 10.10.208.193:5000&#x27;</span><br><span class="line"></span><br><span class="line">    # Resolves: rhbz#1176302 (docker issue #407)</span><br><span class="line">    DOCKER_NOWARN_KERNEL_VERSION=1</span><br><span class="line">3. 修改存储位置</span><br><span class="line">    修改docker.service文件，使用-g参数指定存储位置</span><br><span class="line">    vi /usr/lib/systemd/system/docker.service</span><br><span class="line">    ExecStart=/usr/bin/dockerd --graph /data/docker</span><br><span class="line"></span><br><span class="line">4.配置生效</span><br><span class="line">    #reload配置文件</span><br><span class="line">    systemctl daemon-reload</span><br><span class="line">    #重启docker</span><br><span class="line">    systemctl restart docker.service</span><br><span class="line">    #查看 Docker Root Dir: /var/lib/docker是否改成设定的目录/new-path/docker</span><br><span class="line">    docker info</span><br><span class="line">    Docker Root Dir: /data/docker</span><br><span class="line"></span><br><span class="line">    #10.10.208.193</span><br><span class="line">    #systemctl daemon-reload</span><br><span class="line">    #</span><br></pre></td></tr></table></figure>
 
-<h4 id="ubuntu-配置"><a href="#ubuntu-配置" class="headerlink" title="ubuntu 配置"></a>ubuntu 配置</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">docker 安装</span><br><span class="line"></span><br><span class="line">1.  sudo apt-get update</span><br><span class="line"></span><br><span class="line">2.  sudo apt install docker.io</span><br><span class="line"></span><br><span class="line">3.  sudo groupadd docker</span><br><span class="line"></span><br><span class="line">4.  docker ps</span><br><span class="line"></span><br><span class="line">5.  sudo usermod -aG docker $USER</span><br><span class="line"></span><br><span class="line">6.  sudo vim /etc/docker/daemon.json</span><br><span class="line">	root@user1-virtual-machine:~# cat /etc/docker/daemon.json</span><br><span class="line"></span><br><span class="line">	&#123;</span><br><span class="line">	 &quot;storage-driver&quot;:&quot;overlay&quot;,</span><br><span class="line">	 &quot;insecure-registries&quot;: [&quot;10.10.208.193:5000&quot;]</span><br><span class="line">	&#125;</span><br><span class="line">9.  sudo service docker restart</span><br></pre></td></tr></table></figure>
+<h3 id="centos"><a href="#centos" class="headerlink" title="centos"></a>centos</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">简单安装：</span><br><span class="line">curl -sSL https://get.daocloud.io/docker | sh</span><br><span class="line"></span><br><span class="line">其他详细：</span><br><span class="line">1. 安装docker-yum</span><br><span class="line">   【centos7】</span><br><span class="line">   sudo yum install docker</span><br><span class="line">   【centos6】</span><br><span class="line">   修改yum源：参考/centos-6-yum源</span><br><span class="line"></span><br><span class="line">   #</span><br><span class="line">   yum install device-mapper-libs</span><br><span class="line">   yum upgrade device-mapper-libs yum update--skip-broke</span><br><span class="line">   rpm -Uvh http://ftp.riken.jp/Linux/fedora/epel/6Server/x86_64/epel-release-6-8.noarch.rpm</span><br><span class="line"></span><br><span class="line">   yum install docker-io</span><br><span class="line"></span><br><span class="line">   ubuntu:</span><br><span class="line">   apt-get update</span><br><span class="line">   apt-get install apt-transport-https ca-certificates</span><br><span class="line">   wget -qO- https://get.docker.com/ | sh</span><br><span class="line">   service docker start</span><br><span class="line">2. 指定私库</span><br><span class="line">   修改/etc/docker/daemon.json文件</span><br><span class="line">   #vi /etc/docker/daemon.json</span><br><span class="line">   &#123; &quot;insecure-registries&quot;: [&quot;10.10.208.193:5000&quot;] &#125;</span><br><span class="line"></span><br><span class="line">   #这个现网使用出错</span><br><span class="line">   #&#123;</span><br><span class="line">   # &quot;storage-driver&quot;:&quot;overlay&quot;,</span><br><span class="line">   # &quot;insecure-registries&quot;: [&quot;10.10.208.193:5000&quot;]</span><br><span class="line">   #&#125;</span><br><span class="line"></span><br><span class="line">   cent-os-6</span><br><span class="line">   /etc/sysconfig/docker</span><br><span class="line">   other_args=&#x27;--insecure-registry 10.10.208.193:5000&#x27;</span><br><span class="line">   DOCKER_CERT_PATH=/etc/docker</span><br><span class="line">   ADD_REGISTRY=&#x27;--add-registry 10.10.208.193:5000&#x27;</span><br><span class="line"></span><br><span class="line">   # Resolves: rhbz#1176302 (docker issue #407)</span><br><span class="line">   DOCKER_NOWARN_KERNEL_VERSION=1</span><br><span class="line">3. 修改存储位置</span><br><span class="line">   修改docker.service文件，使用-g参数指定存储位置</span><br><span class="line">   vi /usr/lib/systemd/system/docker.service</span><br><span class="line">   ExecStart=/usr/bin/dockerd --graph /data/docker</span><br><span class="line"></span><br><span class="line">4.配置生效</span><br><span class="line">    #reload配置文件</span><br><span class="line">    systemctl daemon-reload</span><br><span class="line">    #重启docker</span><br><span class="line">    systemctl restart docker</span><br><span class="line">    #查看 Docker Root Dir: /var/lib/docker是否改成设定的目录/new-path/docker</span><br><span class="line">    docker info</span><br><span class="line">    Docker Root Dir: /data/docker</span><br><span class="line"></span><br><span class="line">    #10.10.208.193</span><br><span class="line">    #systemctl daemon-reload</span><br><span class="line">    #</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<h3 id="docker-registry"><a href="#docker-registry" class="headerlink" title="docker registry"></a>docker registry</h3><h4 id="1-映射"><a href="#1-映射" class="headerlink" title="1.映射"></a>1.映射</h4><p>开发环境使用</p>
+<h2 id="docker-registry"><a href="#docker-registry" class="headerlink" title="docker registry"></a>docker registry</h2><h3 id="1-映射"><a href="#1-映射" class="headerlink" title="1.映射"></a>1.映射</h3><p>开发环境使用</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">docker run -itd --name registry --restart=always  -p 5000:5000 -v /registry:/var/lib/registry registry:2</span><br><span class="line">docker stop registry</span><br><span class="line">docker rm registry</span><br><span class="line">docker run -itd --name registry --restart=always  -p 5000:5000 registry:2</span><br><span class="line"></span><br><span class="line">docker stop registry-web</span><br><span class="line">docker rm registry-web</span><br><span class="line">docker run -d -p 15000:8080 --name registry-web --link registry -e REGISTRY_URL=http://registry:5000/v2 -e REGISTRY_NAME=localhost:5000 hyper/docker-registry-web</span><br><span class="line"></span><br><span class="line">docker run -p 8080:8080 -e REG1=http://10.3.4.111:5000/v2/ atcol/docker-registry-ui</span><br></pre></td></tr></table></figure>
 
-<h4 id="2-无映射"><a href="#2-无映射" class="headerlink" title="2.无映射"></a>2.无映射</h4><p>本机测试临时使用</p>
+<h3 id="2-无映射"><a href="#2-无映射" class="headerlink" title="2.无映射"></a>2.无映射</h3><p>本机测试临时使用</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker stop registry</span><br><span class="line">docker rm registry</span><br><span class="line">docker run -d --name registry --restart=always  -p 5000:5000 registry:2</span><br></pre></td></tr></table></figure>
 
+
+<h2 id="基础环境备注"><a href="#基础环境备注" class="headerlink" title="基础环境备注"></a>基础环境备注</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">1，在运行容器的时候，给容器加特权：</span><br><span class="line">示例：docker run -i -t --privileged=true -v /home/docs:/src waterchestnut/nodejs:0.12.0</span><br><span class="line">2，临时关闭selinux：</span><br><span class="line">示例：su -c &quot;setenforce 0&quot;</span><br><span class="line">之后执行：docker run -i -t -v /home/docs:/src waterchestnut/nodejs:0.12.0</span><br><span class="line">注意：之后要记得重新开启selinux，命令：su -c &quot;setenforce 1&quot;</span><br><span class="line">3，添加selinux规则，将要挂载的目录添加到白名单：</span><br><span class="line">示例：chcon -Rt svirt_sandbox_file_t /home/docs</span><br><span class="line">之后执行：docker run -i -t -v /home/docs:/src waterchestnut/nodejs:0.12.0</span><br></pre></td></tr></table></figure>
       
     </div>
     <div class="article-footer">
@@ -414,7 +410,7 @@
     
     <li class="post-copyright-link hidden-xs">
       <strong>本文链接：</strong>
-      <a href="http://example.com/2021/05/15/devops/docker/%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83/" title="基础环境" target="_blank" rel="external">http://example.com/2021/05/15/devops/docker/基础环境/</a>
+      <a href="https://wuhaocn.github.io/2021/05/15/devops/docker/%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83/" title="基础环境" target="_blank" rel="external">https://wuhaocn.github.io/2021/05/15/devops/docker/基础环境/</a>
     </li>
     
     <li class="post-copyright-license">
@@ -464,6 +460,10 @@
       <a href="/2021/06/15/language/shell/%E8%BF%9C%E7%A8%8B%E6%89%A7%E8%A1%8C/" title="Shell远程执行命令"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
     </li>
     
+    
+    <li class="next">
+      <a href="/2021/01/05/devops/docker/docker-package/docker-build-java/" title="(no title)"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
     
     
   </ul>
@@ -560,8 +560,8 @@ window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
     el: '#vcomments',
     verify: false,
     notify: false,
-    appId: '',
-    appKey: '',
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
     placeholder: 'Just go go',
     avatar: 'mm',
     meta: meta,
