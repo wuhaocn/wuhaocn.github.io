@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>Akka-Cluster原理分析 | Hexo</title>
+  <meta name="description" content="1. 概述 Akka remoting是Peer-to-Peer的，所以基于remote功能的cluster是一个去中心化的分布式集群。  Akka Cluster将多个JVM连接整合在一起，实现消息地址的透明化和统一化使用管理，集成一体化的消息驱动系统。最终目的是将一个大型程序分割成若干子程序，部署到很多JVM上去实现程序的分布式并行运算（单机也可以起很多节点构成集群）。更重要的是, Akka">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Akka-Cluster原理分析">
+<meta property="og:url" content="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Cluster%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="1. 概述 Akka remoting是Peer-to-Peer的，所以基于remote功能的cluster是一个去中心化的分布式集群。  Akka Cluster将多个JVM连接整合在一起，实现消息地址的透明化和统一化使用管理，集成一体化的消息驱动系统。最终目的是将一个大型程序分割成若干子程序，部署到很多JVM上去实现程序的分布式并行运算（单机也可以起很多节点构成集群）。更重要的是, Akka">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1634640556096-7864b5b3-0b57-4cb2-a8d7-0162dedcd781.png#clientId=ue5ae84ed-39d6-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=ufeec3256&margin=%5Bobject%20Object%5D&originHeight=343&originWidth=500&originalType=url&ratio=1&rotation=0&showTitle=false&status=done&style=none&taskId=u9d635c75-98c2-4f5a-9d85-28b8fa2397f&title=">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1634640555862-e792d563-5efe-4b7d-b944-8a881612e188.png#clientId=ue5ae84ed-39d6-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=u6af8fcee&margin=%5Bobject%20Object%5D&originHeight=2203&originWidth=1183&originalType=url&ratio=1&rotation=0&showTitle=false&status=done&style=none&taskId=u8237b388-ef54-4d92-bf52-5f1a3e062be&title=">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1634640555875-9a054789-d57a-4311-b6f9-8bdca2798653.png#clientId=ue5ae84ed-39d6-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=u9ab04293&margin=%5Bobject%20Object%5D&originHeight=504&originWidth=711&originalType=url&ratio=1&rotation=0&showTitle=false&status=done&style=none&taskId=u3a23d908-0c64-4373-b291-a07b093a28d&title=">
+<meta property="article:published_time" content="2021-12-03T08:21:48.776Z">
+<meta property="article:modified_time" content="2021-12-03T09:07:15.112Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="akka">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1634640556096-7864b5b3-0b57-4cb2-a8d7-0162dedcd781.png#clientId=ue5ae84ed-39d6-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=ufeec3256&margin=%5Bobject%20Object%5D&originHeight=343&originWidth=500&originalType=url&ratio=1&rotation=0&showTitle=false&status=done&style=none&taskId=u9d635c75-98c2-4f5a-9d85-28b8fa2397f&title=">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Cluster%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/akka/" rel="tag">akka</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.33px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.17px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 13.67px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/akka/" style="font-size: 14px;">akka</a> <a href="/tags/atomic/" style="font-size: 13.33px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.5px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/sort/" style="font-size: 13.83px;">sort</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.33px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">20</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">24</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-SLF4J%E6%89%93%E5%8D%B0%E6%97%A5%E5%BF%97/" class="title">Akka-SLF4J打印日志</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T09:08:28.304Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Remote-%E9%85%8D%E7%BD%AE/" class="title">Akka-Remote-配置</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:24:00.895Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-%E6%8C%81%E4%B9%85%E5%8C%96-%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E4%B8%8E%E6%8E%A5%E6%94%B6/" class="title">Akka-持久化-消息发送与接收</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:23:51.202Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Actor-DeadLetter%E7%9B%91%E5%90%AC/" class="title">Akka-Actor-DeadLetter监听</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:22:48.138Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Actor-%E7%9B%91%E7%AE%A1%E4%B8%8E%E5%AE%B9%E9%94%99/" class="title">Akka-Actor-监管与容错</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:22:40.247Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-network/akka/Akka-Cluster原理分析" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Akka-Cluster原理分析
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/12/03/network/akka/Akka-Cluster%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/" class="article-date">
+	  <time datetime="2021-12-03T08:21:48.776Z" itemprop="datePublished">2021-12-03</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/akka/" rel="tag">akka</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/12/03/network/akka/Akka-Cluster%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h2><pre><code> Akka remoting是Peer-to-Peer的，所以基于remote功能的cluster是一个去中心化的分布式集群。
+</code></pre>
+<p>Akka Cluster将多个JVM连接整合在一起，实现消息地址的透明化和统一化使用管理，集成一体化的消息驱动系统。最终目的是将一个大型程序分割成若干子程序，部署到很多JVM上去实现程序的分布式并行运算（单机也可以起很多节点构成集群）。更重要的是, Akka Cluster集群构建与Actor编程没有直接的联系，集群构建是在ActorSystem层面上，实现了Actor消息地址的透明化，无需考虑目标运行环节是否分布式，可以按照正常的Actor编程模式进行开发。我们知道，分布式集群是由若干节点组成的，那么节点的发现及状态管理是分布式系统一个比较重要的任务。Akka Cluster中将节点的生命周期划分为：<br><a target="_blank" rel="noopener" href="http://edisonxu.com/images/2018/10/member-states.png"><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1634640556096-7864b5b3-0b57-4cb2-a8d7-0162dedcd781.png#clientId=ue5ae84ed-39d6-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=ufeec3256&margin=%5Bobject%20Object%5D&originHeight=343&originWidth=500&originalType=url&ratio=1&rotation=0&showTitle=false&status=done&style=none&taskId=u9d635c75-98c2-4f5a-9d85-28b8fa2397f&title="></a></p>
+<ul>
+<li><strong>joining</strong> - 当尝试加入集群时的初始状态</li>
+<li><strong>up</strong> - 加入集群后的正常状态</li>
+<li><strong>leaving / exiting</strong> - 节点退出集群时的中间状态</li>
+<li><strong>down</strong> - 集群无法感知某节点后，将其标记为down</li>
+<li><strong>removed</strong> - 从集群中被删除，以后也无法再加入集群</li>
+</ul>
+<p>其实当参数akka.cluster.allow-weakly-up-members启用时(默认是启用的)，还有个weakly up，它是用于集群出现分裂时，集群无法收敛，则leader无法将状态置为up的临时状态。这个后面再解释。<br>图中还有两个特殊的名词：</p>
+<ul>
+<li><strong>fd</strong>* - 这个表示akka的错误检测机制Faiulre Detector被触发后，将节点标记为unreachable</li>
+<li><strong>unreachable</strong>* - unreachable不是一个真正的节点状态，更多的像是一个flag，用来描述集群无法与该节点进行通讯。当错误检测机制侦测到这个节点又能正常通讯时，会移除这个flag。</li>
+</ul>
+<p>市面上大多数产品的分布式管理一般用的是注册中心机制，例如zk、consul或etcd。其实是节点把自己的信息注册到所使用的注册中心里，而master通过接受注册中心的通知得知新节点信息。显然本质上是一种master/slave的架构。这种架构有两个问题：</p>
+<ol>
+<li>master节点一般是单一的，一旦挂了影响就比较大（所以很多master都采用了HA机制），也就是所谓的系统单点故障；</li>
+<li>通常节点的地址发现是要走master去获取的，当系统并发大时，master节点就可能成为性能瓶颈，即单点性能瓶颈。</li>
+</ol>
+<p>Akka可能就是考虑这两点，采用了P2P的模式，这样任何一个节点都可以作为”master”，任何的节点都可以用来寻找其他节点地址。那它是怎么做到的呢？答案是<a target="_blank" rel="noopener" href="http://en.wikipedia.org/wiki/Gossip_protocol">Gossip</a>协议和CRDT。</p>
+<h2 id="2-Akka-Gossip"><a href="#2-Akka-Gossip" class="headerlink" title="2.Akka Gossip"></a>2.Akka Gossip</h2><h3 id="2-1-基本介绍"><a href="#2-1-基本介绍" class="headerlink" title="2.1.基本介绍"></a>2.1.基本介绍</h3><h4 id="2-1-1-Gossip协议"><a href="#2-1-1-Gossip协议" class="headerlink" title="2.1.1.Gossip协议"></a>2.1.1.Gossip协议</h4><pre><code>Gossip协议简单来说，就是病毒式的将信息扩散到整个集群，无法确定何时完成完全扩散，但最终是会到达完全扩散状态的（最终一致性），即收敛。具体介绍可以参考我转载的一片文章——[P2P 网络核心技术：Gossip 协议](http://edisonxu.com/2018/11/02/gossip.html)，这里就不再重复叙述，着重介绍下Akka是怎么使用Gossip的。
+</code></pre>
+<h4 id="2-1-2-CRDT"><a href="#2-1-2-CRDT" class="headerlink" title="2.1.2.CRDT"></a>2.1.2.CRDT</h4><p>P2P的分布式系统中，理论上每个节点都能处理外部的请求，以及向其他节点发送请求。而系统中存在的共享变量，可能在同一时间会被两个不同节点的请求用到，即并发安全问题。一般解决方案是队列或自旋，后者本质上还是一种变相的队列。排队就牵扯到两个问题：</p>
+<ol>
+<li>“谁先来的”</li>
+</ol>
+<p>很多人下意识会觉得用时间戳就可以了嘛，但在分布式集群中，每个节点如果是一台单独的服务器，那么每个节点的时间戳未必相同（比如未开启Ntp）。</p>
+<ol>
+<li>“同时来的怎么办”</li>
+</ol>
+<p>就像git，能merge就merge，不能merge就解决冲突。<br>CRDT就是用于解决解决分布式事件的先后顺序及merge问题的数据结构的简称，即Conflict-Free Replicated Data Types的缩写，它的作用是保证最终一致性，出处参阅<a target="_blank" rel="noopener" href="http://hal.upmc.fr/docs/00/55/55/88/PDF/techreport.pdf">这份论文</a>。白话文 <a target="_blank" rel="noopener" href="http://liyu1981.github.io/what-is-CRDT/">谈谈CRDT</a> 和<a target="_blank" rel="noopener" href="https://lfwen.site/2018/06/09/crdt-counter/">CRDT介绍</a>这两篇文章讲的通俗易懂，多的就不再重复了。<br>Akka中节点的状态就是一个特殊的CRDT，使用向量时钟Vector Clock实现方案，关于向量时钟Vector Clock可以参见我转发的这篇文章<a target="_blank" rel="noopener" href="http://edisonxu.com/clocks">Vector Clock/Version Clock</a>。<br>Akka的gossip协议发送的具体内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">final case class Gossip(</span><br><span class="line">  members:    immutable.SortedSet[Member], // sorted set of members with their status, sorted by address</span><br><span class="line">  overview:   GossipOverview                       = GossipOverview(),</span><br><span class="line">  version:    VectorClock                          = VectorClock(), // vector clock version</span><br><span class="line">  tombstones: Map[UniqueAddress, Gossip.Timestamp] = Map.empty</span><br><span class="line">)</span><br><span class="line">final case class GossipOverview(</span><br><span class="line">  seen:         Set[UniqueAddress] = Set.empty,</span><br><span class="line">  reachability: Reachability       = Reachability.empty</span><br><span class="line">)</span><br><span class="line">class Reachability private (</span><br><span class="line">  val records:  immutable.IndexedSeq[Reachability.Record],</span><br><span class="line">  val versions: Map[UniqueAddress, Long]</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p><strong>members</strong> 存放该节点知道的其他节点</p>
+</li>
+<li><p><strong>seen</strong> 已经收到本次gossip的节点们，每个节点当接受到一个新的gossip消息时，会把自己放到seen里面，作为响应返回给发送者</p>
+</li>
+<li><p><strong>reachability</strong> 这个由错误检测机制Faiulre Detector的心跳模块来维护，用来判断节点是否存活。正常情况下records应该是空的，当有节点处于Unreachable时，才会有记录加到records里。</p>
+</li>
+<li><p><strong>version</strong> 向量时钟，用于冲突检测和处理</p>
+<h4 id="2-1-3-种子节点-SeedNode"><a href="#2-1-3-种子节点-SeedNode" class="headerlink" title="2.1.3.种子节点 SeedNode"></a>2.1.3.种子节点 SeedNode</h4><p>SeendNode一般是提前配置好的一组节点。它用于接受其他节点（可以是种子节点）的加入集群的请求。不同节点，在Akka Cluster中启动时会有不同的逻辑：</p>
+</li>
+<li><p>如果是种子节点，并且是排序后的种子节点数组中<strong>排第一</strong>的，它会在一个规定的时间内(默认5秒)去尝试加入已存在的集群，即发送InitJoin消息到其他种子节点。如果未能成功加入，则自己将<strong>创建一个新的Cluster</strong>。</p>
+</li>
+<li><p>如果是种子节点，但并不是数组中排第一的，则会向其他种子节点发送InitJoin消息，如果失败将不断重试，直到能成功加入<strong>第一个返回响应的已加入集群的种子节点</strong>对应的Cluster。</p>
+</li>
+<li><p>如果是普通节点，则会向其他种子节点发送InitJoin消息，如果失败将不断重试，直到能成功加入<strong>第一个返回响应的已加入集群的种子节点</strong>对应的Cluster。</p>
+</li>
+</ul>
+<p>这里有一点值得注意，为什么是加入第一个返回响应的种子节点所在的集群？这个问题后面再解释。</p>
+<h2 id="3-过程详解"><a href="#3-过程详解" class="headerlink" title="3.过程详解"></a>3.过程详解</h2><p>下面用一个简单的场景来解释整个交互过程，假定我们有两个节点n1和n2，其中n1是种子节点。我们让n2先启动。<br><a target="_blank" rel="noopener" href="http://edisonxu.com/images/2018/10/gossip-process.png"><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1634640555862-e792d563-5efe-4b7d-b944-8a881612e188.png#clientId=ue5ae84ed-39d6-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=u6af8fcee&margin=%5Bobject%20Object%5D&originHeight=2203&originWidth=1183&originalType=url&ratio=1&rotation=0&showTitle=false&status=done&style=none&taskId=u8237b388-ef54-4d92-bf52-5f1a3e062be&title="></a><br>上图中的T0、T1表示时间轴，但只是为了方便将步骤拆解，便于理解。其中T4和T5并没有必然的时间前后关系，这里只是假定T4在前，步骤基本是类似的，T5在前也只是稍有不同。<br>#T0、T1时刻只是为了表明n2在启动时，如果没有种子节点响应，则会一直等待重试<br>#T2时刻种子节点自己新建一个集群，由于新集群只有它自己，members和seen是一样的，所以把自己作为集群的leader。</p>
+<h4 id="3-1-leader"><a href="#3-1-leader" class="headerlink" title="3.1.leader"></a>3.1.leader</h4><ul>
+<li>Gossip协议中没有leader选举过程</li>
+<li>leader只是一个角色，任何节点均可以是leader</li>
+<li>leader的确定非常简单：<strong>集群收敛后，当前members队列按IP进行排序，排第一位置的节点就是整个集群的leader</strong></li>
+<li>leader并非一直不变，如果集群有新节点加入或某节点退出，导致发生Gossip过程，收敛后都会重新确定leader</li>
+<li>leader的职责是更新节点在集群中的状态以及将集群的成员移入或移出集群</li>
+</ul>
+<p>注意，这里有个地方容易被误解：“n1和n2构成一个集群，不是在T5才收敛吗？怎么在T2就确定leader了？”<br>其实当第一个种子节点新建cluster时，由于只有它一个，即seen和members里内容一样，它判断当前集群已收敛，就把自己当作leader了。所以才有了T2_2和T4。<br>#T3时刻是n1响应n2的InitJoin请求，具体交互过程如下：<br><a target="_blank" rel="noopener" href="http://edisonxu.com/images/2018/10/gossip-interact.png"><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1634640555875-9a054789-d57a-4311-b6f9-8bdca2798653.png#clientId=ue5ae84ed-39d6-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=u9ab04293&margin=%5Bobject%20Object%5D&originHeight=504&originWidth=711&originalType=url&ratio=1&rotation=0&showTitle=false&status=done&style=none&taskId=u3a23d908-0c64-4373-b291-a07b093a28d&title="></a><br>#T3_0种子节点收到n2的Join消息后，会做两件事：</p>
+<ol>
+<li>更新当前Gossip的向量时钟；</li>
+<li>清空当前Gossip的seen队列，然后把自己加进去。（后续发起Gossip交互时，会优先选择那些没在seen队列中的成员）</li>
+</ol>
+<p>#T4时刻因为作为fd能正常与n2进行心跳，n1作为leader就被通知将n2提升为Up状态<br>#T5时刻是一个CRDT的对比过程，对比两个Goissp的version，即VectorClock，比较的结果有三种：</p>
+<ul>
+<li><strong>Same</strong>: 相同，则进行seen队列合并就可以了</li>
+<li><strong>Before</strong>: 本地新，则向对端发送本地的Gossip，本地不变</li>
+<li><strong>After</strong>: 对端新，则更新本地的Gossip。如果对端的Gossip的seen里没有包含本地，则将自己添加到seen里发送给对端，以减少一次两者间的Gossip交互。</li>
+</ul>
+<p>#T5时刻最后集群达到了收敛</p>
+<h4 id="3-2-Gossip-收敛"><a href="#3-2-Gossip-收敛" class="headerlink" title="3.2 Gossip 收敛"></a>3.2 Gossip 收敛</h4><p>从上面的图里可以看到节点初始化时会把自己加入到members里，回传回去，同时，节点在收到新的Gossip时，会把自己加入到seen里面。那么，在一开始，members和seen中的节点数是不同的。<br>当Gossip传递的消息被整个集群都消化掉的时候，可以称作当前集群的Gossip收敛。靠以下条件判断Gossip收敛：</p>
+<ul>
+<li>集群中不存在unreachable的节点，或者unreachable的节点应该均处于down或exiting状态</li>
+<li>正常节点均处于up或leaving状态，且members里的节点都在seen里，即集群中所有的节点都收到过该Gossip<h2 id="4-代码演示"><a href="#4-代码演示" class="headerlink" title="4.代码演示"></a>4.代码演示</h2>说了那么多文字，Akka Cluster提供了监控ClusterEvent的方法，我们可以用代码来校验下上面的知识。<br>添加依赖<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;com.typesafe.akka&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;akka-cluster_2.12&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;2.5.17&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>首先编写application.conf配置文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">akka &#123;</span><br><span class="line">  actor &#123;</span><br><span class="line">    provider = &quot;cluster&quot;</span><br><span class="line">  &#125;</span><br><span class="line">  remote &#123;</span><br><span class="line">    netty.tcp &#123;</span><br><span class="line">      hostname = &quot;127.0.0.1&quot;</span><br><span class="line">      port = 0</span><br><span class="line">    &#125;</span><br><span class="line">    artery &#123;</span><br><span class="line">      enabled = on</span><br><span class="line">      canonical.hostname = &quot;127.0.0.1&quot;</span><br><span class="line">      canonical.port = 0</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  cluster &#123;</span><br><span class="line">    seed-nodes = [</span><br><span class="line">      &quot;akka://ClusterSystem@127.0.0.1:2552&quot;,</span><br><span class="line">      &quot;akka://ClusterSystem@127.0.0.1:2551&quot;</span><br><span class="line">    ]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后，编写Actor</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">public class SimpleClusterListener extends AbstractActor &#123;</span><br><span class="line"></span><br><span class="line">    LoggingAdapter log = Logging.getLogger(getContext().system(), this);</span><br><span class="line">    Cluster cluster = Cluster.get(getContext().system());</span><br><span class="line"></span><br><span class="line">    //subscribe to cluster changes</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void preStart() throws Exception &#123;</span><br><span class="line">        cluster.subscribe(self(), ClusterEvent.initialStateAsEvents(), ClusterEvent.MemberEvent.class, ClusterEvent.UnreachableMember.class);</span><br><span class="line">        log.info(&quot;I&#x27;m about to start! Code: &#123;&#125; &quot;, getSelf().hashCode());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void postStop() throws Exception &#123;</span><br><span class="line">        cluster.unsubscribe(self());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Receive createReceive() &#123;</span><br><span class="line">        return receiveBuilder()</span><br><span class="line">                .match(ClusterEvent.MemberUp.class, mUp-&gt;log.info(&quot;Member is Up: &#123;&#125;&quot;, mUp.member()))</span><br><span class="line">                .match(ClusterEvent.UnreachableMember.class, mUnreachable-&gt;log.info(&quot;Member detected as unreachable: &#123;&#125;&quot;, mUnreachable.member()))</span><br><span class="line">                .match(ClusterEvent.MemberRemoved.class, mRemoved-&gt;log.info(&quot;Member is Removed: &#123;&#125;&quot;, mRemoved.member()))</span><br><span class="line">                .match(ClusterEvent.LeaderChanged.class, msg-&gt;log.info(&quot;Leader is changed: &#123;&#125;&quot;, msg.getLeader()))</span><br><span class="line">                .match(ClusterEvent.RoleLeaderChanged.class, msg-&gt;log.info(&quot;RoleLeader is changed: &#123;&#125;&quot;, msg.getLeader()))</span><br><span class="line">                .match(ClusterEvent.MemberEvent.class, event-&gt;&#123;&#125;) //ignore</span><br><span class="line">                .build();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后是启动类</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">public class App </span><br><span class="line">&#123;</span><br><span class="line">    public static void main( String[] args )</span><br><span class="line">    &#123;</span><br><span class="line">        if(args.length==0)</span><br><span class="line">            startup(new String[] &#123;&quot;2551&quot;, &quot;2552&quot;, &quot;0&quot;&#125;);</span><br><span class="line">        else</span><br><span class="line">            startup(args);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void startup(String[] ports)&#123;</span><br><span class="line">        ExecutorService pool = Executors.newFixedThreadPool(ports.length);</span><br><span class="line">        for(String port : ports)&#123;</span><br><span class="line">            pool.submit(()-&gt;&#123;</span><br><span class="line">            // Using input port to start multiple instances</span><br><span class="line">                Config config = ConfigFactory.parseString(</span><br><span class="line">                        &quot;akka.remote.netty.tcp.port=&quot; + port + &quot;\n&quot; +</span><br><span class="line">                                &quot;akka.remote.artery.canonical.port=&quot; + port)</span><br><span class="line">                        .withFallback(ConfigFactory.load());</span><br><span class="line"></span><br><span class="line">                // Create an Akka system</span><br><span class="line">                ActorSystem system = ActorSystem.create(&quot;ClusterSystem&quot;, config);</span><br><span class="line"></span><br><span class="line">                // Create an</span><br><span class="line">                system.actorOf(Props.create(SimpleClusterListener.class), &quot;ClusterListener&quot;);</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里设置了2552和2551两个种子节点，及一个随机端口启动的普通节点。<strong>故意在配置中把2552放到2551前面去。</strong><br>带参数2551作为端口启动程序，命名为Node1，启动后，可以看到它会不断尝试连接提供的种子节点中排第一的2552</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[WARN] [11/07/2018 17:15:13.823] [ClusterSystem-akka.actor.default-dispatcher-5] [akka://ClusterSystem@127.0.0.1:2551/system/cluster/core/daemon/joinSeedNodeProcess-1] Couldn&#x27;t join seed nodes after [2] attempts, will try again. seed-nodes=[akka://ClusterSystem@127.0.0.1:2552]</span><br><span class="line">[WARN] [11/07/2018 17:15:18.835] [ClusterSystem-akka.actor.default-dispatcher-10] [akka://ClusterSystem@127.0.0.1:2551/system/cluster/core/daemon/joinSeedNodeProcess-1] Couldn&#x27;t join seed nodes after [3] attempts, will try again. seed-nodes=[akka://ClusterSystem@127.0.0.1:2552]</span><br></pre></td></tr></table></figure>
+<p>这时带参数2552启动程序，命名为Node2，命令行会打印</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[WARN] [11/07/2018 17:15:13.823] [ClusterSystem-akka.actor.default-dispatcher-5] [akka://ClusterSystem@127.0.0.1:2551/system/cluster/core/daemon/joinSeedNodeProcess-1] Couldn&#x27;t join seed nodes after [2] attempts, will try again. seed-nodes=[akka://ClusterSystem@127.0.0.1:2552]</span><br><span class="line">[WARN] [11/07/2018 17:15:18.835] [ClusterSystem-akka.actor.default-dispatcher-10] [akka://ClusterSystem@127.0.0.1:2551/system/cluster/core/daemon/joinSeedNodeProcess-1] Couldn&#x27;t join seed nodes after [3] attempts, will try again. seed-nodes=[akka://ClusterSystem@127.0.0.1:2552]</span><br></pre></td></tr></table></figure>
+<p>Node [akka://<a href="mailto:&#67;&#x6c;&#x75;&#x73;&#x74;&#101;&#114;&#83;&#x79;&#115;&#116;&#x65;&#x6d;&#64;&#x31;&#50;&#55;&#x2e;&#48;&#x2e;&#x30;&#x2e;&#49;">&#67;&#x6c;&#x75;&#x73;&#x74;&#101;&#114;&#83;&#x79;&#115;&#116;&#x65;&#x6d;&#64;&#x31;&#50;&#55;&#x2e;&#48;&#x2e;&#x30;&#x2e;&#49;</a>:2552] is JOINING itself (with roles [dc-default]) and forming new cluster 说明作为排第一的种子节点，它创建了集群并把自己加了进去。<br>Cluster Node [akka://<a href="mailto:&#x43;&#x6c;&#117;&#115;&#116;&#x65;&#114;&#83;&#121;&#x73;&#x74;&#101;&#x6d;&#x40;&#x31;&#x32;&#55;&#46;&#48;&#46;&#48;&#46;&#x31;">&#x43;&#x6c;&#117;&#115;&#116;&#x65;&#114;&#83;&#121;&#x73;&#x74;&#101;&#x6d;&#x40;&#x31;&#x32;&#55;&#46;&#48;&#46;&#48;&#46;&#x31;</a>:2552] dc [default] is the new leader 说明2552变成了leader。<br>Node [akka://<a href="mailto:&#67;&#108;&#117;&#x73;&#x74;&#x65;&#x72;&#83;&#121;&#x73;&#x74;&#x65;&#x6d;&#64;&#49;&#x32;&#55;&#46;&#x30;&#46;&#48;&#46;&#49;">&#67;&#108;&#117;&#x73;&#x74;&#x65;&#x72;&#83;&#121;&#x73;&#x74;&#x65;&#x6d;&#64;&#49;&#x32;&#55;&#46;&#x30;&#46;&#48;&#46;&#49;</a>:2551] is JOINING, roles [dc-default] 2551在尝试加入集群<br>Leader is moving node [akka://<a href="mailto:&#x43;&#108;&#x75;&#x73;&#116;&#101;&#114;&#83;&#121;&#115;&#x74;&#x65;&#109;&#64;&#49;&#x32;&#x37;&#x2e;&#x30;&#46;&#x30;&#x2e;&#x31;">&#x43;&#108;&#x75;&#x73;&#116;&#101;&#114;&#83;&#121;&#115;&#x74;&#x65;&#109;&#64;&#49;&#x32;&#x37;&#x2e;&#x30;&#46;&#x30;&#x2e;&#x31;</a>:2551] to [Up] 2551成功加入了集群，状态变为Up<br>Cluster Node [akka://<a href="mailto:&#x43;&#x6c;&#x75;&#x73;&#116;&#101;&#x72;&#83;&#121;&#x73;&#116;&#x65;&#109;&#x40;&#x31;&#50;&#x37;&#x2e;&#x30;&#46;&#x30;&#x2e;&#x31;">&#x43;&#x6c;&#x75;&#x73;&#116;&#101;&#x72;&#83;&#121;&#x73;&#116;&#x65;&#109;&#x40;&#x31;&#50;&#x37;&#x2e;&#x30;&#46;&#x30;&#x2e;&#x31;</a>:2552] dc [default] is no longer the leader 集群变化导致新一轮Goissp收敛后，leader重新选取，2551的IP比2552小，被选为新的leader。<br>可以从Node1的命令行看到证据：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">[INFO] [11/07/2018 17:18:25.755] [ClusterSystem-akka.actor.default-dispatcher-9] [akka.cluster.Cluster(akka://ClusterSystem)] Cluster Node [akka://ClusterSystem@127.0.0.1:2551] - Cluster Node [akka://ClusterSystem@127.0.0.1:2551] dc [default] is the new leader</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>我们再起一个参数为2900的，命名为Node3，等到正常启动，三个Node状态都为Up。</p>
+<ul>
+<li>2552是集群的创建者</li>
+<li>2551是集群的leader</li>
+</ul>
+<p>此时，我们把2552重启，会看到2551的命令行中出现Leader is removing unreachable node [akka://<a href="mailto:&#x43;&#x6c;&#117;&#x73;&#116;&#x65;&#x72;&#83;&#x79;&#x73;&#x74;&#101;&#109;&#x40;&#49;&#x32;&#x37;&#x2e;&#48;&#46;&#48;&#46;&#x31;">&#x43;&#x6c;&#117;&#x73;&#116;&#x65;&#x72;&#83;&#x79;&#x73;&#x74;&#101;&#109;&#x40;&#49;&#x32;&#x37;&#x2e;&#48;&#46;&#48;&#46;&#x31;</a>:2552]，等2552完全启动时，可以看到Welcome from [akka://<a href="mailto:&#x43;&#x6c;&#x75;&#115;&#116;&#101;&#114;&#x53;&#x79;&#115;&#x74;&#101;&#109;&#x40;&#49;&#50;&#55;&#x2e;&#x30;&#x2e;&#48;&#x2e;&#49;">&#x43;&#x6c;&#x75;&#115;&#116;&#101;&#114;&#x53;&#x79;&#115;&#x74;&#101;&#109;&#x40;&#49;&#50;&#55;&#x2e;&#x30;&#x2e;&#48;&#x2e;&#49;</a>:2551]说明2552向2551发送的加入集群的消息，2551给它发送了Welcome消息。2552不再自己创建新的集群。有兴趣的可以在关闭2552的情况下重启node3.</p>
+<h2 id="5-进阶"><a href="#5-进阶" class="headerlink" title="5.进阶"></a>5.进阶</h2><p>其实本来这部分应该放在上面，但是一上来讲理论非常不好消化，至少我个人是如此。所以，我宁愿把好理解的交互步骤放前面，把一些知识点穿插在里面，最后再把无法放进去的干巴巴的理论放最后。</p>
+<h3 id="5-1-Akka对于Gossip的优化"><a href="#5-1-Akka对于Gossip的优化" class="headerlink" title="5.1.Akka对于Gossip的优化"></a>5.1.Akka对于Gossip的优化</h3><ul>
+<li><p>如果gossiper(gossip的发送者)和recipient(goissp的接收者)拥有相同版本的Gossip(recipient已包含在seen列表里，并且version也与gossiper的完全一致)，这时Gossip的状态不用再发回给gossiper，减少交互。</p>
+</li>
+<li><p>akka使用的是push-pull类型gossip的变种，它每次发送的是一个digest值，而非真正的value，recipient收到后先比较版本，只有当它的版本较低时，才会去向gossiper请求真正的值。</p>
+</li>
+<li><p>默认情况下，集群每1秒进行一次gossip，但如果seen里的节点数少于整个集群1/2，则集群每秒钟会进行3轮gossip，以加速收敛。</p>
+</li>
+<li><p>在未收敛时，gossiper在选择目标节点时是随机的但带有偏向性(biased gossip)。gossiper会选择在当前版本下不在seen里的节点去交换gossip，并且选择的比例系数较高(经验值400个节点下配置为0.8)。该系数会随着轮数增加而减少，以防止单节点同时间收到过多的gossip请求。recipient对于gossip请求也是放到mailbox里的，在mailbox队列较长时，会移除较早的请求。</p>
+</li>
+<li><p>当收敛后，目标节点的选择就完全是随机的了，而且只发送非常小的gossip状态的消息。一旦集群发生变化，就会回到上一条所述的带有偏向性的biased gossip。</p>
+<h3 id="5-2-Failure-Detector机制"><a href="#5-2-Failure-Detector机制" class="headerlink" title="5.2.Failure Detector机制"></a>5.2.Failure Detector机制</h3></li>
+<li><p>职责是定期检查集群中节点是否可用</p>
+</li>
+<li><p>是<a target="_blank" rel="noopener" href="https://pdfs.semanticscholar.org/11ae/4c0c0d0c36dc177c1fff5eb84fa49aa3e1a8.pdf">The Phi Accrual Failure Detector</a>的实现，是一种解耦了观察与行为的增量式错误检测器。它不会简单的判断节点是否可用，而是通过收集各种数据计算出phi值，通过与设定好的threshold进行对比，判断是否出现错误。</p>
+</li>
+<li><p>每个节点会根据集群节点的hash有序环确定临近的几个节点进行监控（默认是5个），方便跨机房进行监控，保证集群节点的全覆盖。目标节点每1秒向这些节点发送心跳。</p>
+</li>
+<li><p>只要有一个monitor认为某节点是unreachable状态，那么该节点就会被集群认为是unreachable</p>
+</li>
+<li><p>被标记为unreachable的节点，只有在所有的monitor都认为它是reachable时，它才会被重新认为是reachable，leader会重新改变它的状态</p>
+<h3 id="5-3-网络分区与集群分区"><a href="#5-3-网络分区与集群分区" class="headerlink" title="5.3.网络分区与集群分区"></a>5.3.网络分区与集群分区</h3><p>当网络出现异常，比如一个跨两地机房的集群，机房间的网络断了。这时：</p>
+</li>
+<li><p>原创建集群的种子节点所在的集群，会重新发起biased gossip，直至收敛，确认新的leader，被隔开的那部分节点会被认为是unreachable而最终被踢掉</p>
+</li>
+<li><p>被隔开的那部分节点，会重新发起biased gossip，其中排序在最前面的种子节点会创建一个新的集群，并产生新的leader。原集群中的那部分失联节点会被认为是unreachable而最终被从新集群踢掉</p>
+</li>
+<li><p>两个集群最终都恢复正常能对外提供服务，即原来的一个集群在无人干涉的情况下，分裂成了两个集群</p>
+</li>
+<li><p>当网络恢复后，两个集群会重新发起biased gossip，尝试融合，恢复成一个大集群。</p>
+<h2 id="6-总结"><a href="#6-总结" class="headerlink" title="6.总结"></a>6.总结</h2><p>由此可见，从设计上来说，Akka Cluster是完全去中心化，无单点故障和单点性能瓶颈的，具有天然的分布式容错性和可扩容性。<br>​</p>
+</li>
+</ul>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="http://edisonxu.com/2018/11/07/akka-cluster.html">http://edisonxu.com/2018/11/07/akka-cluster.html</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Cluster%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/" title="Akka-Cluster原理分析" target="_blank" rel="external">https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Cluster原理分析/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/12/03/network/akka/Akka-Cluster-Bug%E5%88%86%E6%9E%90/" title="Akka-Cluster-Bug分析"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/12/03/network/akka/Akka-Actor-%E8%B0%83%E5%BA%A6%E5%99%A8/" title="Akka-Actor-调度器"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

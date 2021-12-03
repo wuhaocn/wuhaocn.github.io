@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>Akka-Actor-调度器 | Hexo</title>
+  <meta name="description" content="1.依赖调度器（Dispatchers）是 Akka 核心的一部分，这意味着它们也是akka-actor依赖的一部分：  1234567891011121314&lt;!-- Maven --&gt;&lt;dependency&gt;  &lt;groupId&gt;com.typesafe.akka&lt;&#x2F;groupId&gt;  &lt;artifactId&gt;akka-actor_2">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Akka-Actor-调度器">
+<meta property="og:url" content="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Actor-%E8%B0%83%E5%BA%A6%E5%99%A8/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="1.依赖调度器（Dispatchers）是 Akka 核心的一部分，这意味着它们也是akka-actor依赖的一部分：  1234567891011121314&lt;!-- Maven --&gt;&lt;dependency&gt;  &lt;groupId&gt;com.typesafe.akka&lt;&#x2F;groupId&gt;  &lt;artifactId&gt;akka-actor_2">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1638285321734-6c025b01-eee7-48df-bff2-19c82abde45e.png#clientId=uc750018c-c2cd-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=151&id=u72ec2b27&margin=%5Bobject%20Object%5D&name=image.png&originHeight=301&originWidth=802&originalType=binary&ratio=1&rotation=0&showTitle=false&size=118031&status=done&style=none&taskId=u95263b21-d346-4482-a6c9-c777d0bd6ff&title=&width=401">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1638285382292-6adbaa9f-52d4-4b6b-8a44-85ed51d9915d.png#clientId=uc750018c-c2cd-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=159&id=u8998c525&margin=%5Bobject%20Object%5D&name=image.png&originHeight=318&originWidth=801&originalType=binary&ratio=1&rotation=0&showTitle=false&size=127412&status=done&style=none&taskId=u30638a96-3a47-4552-8055-12c7fa362a7&title=&width=400.5">
+<meta property="article:published_time" content="2021-12-03T07:50:01.756Z">
+<meta property="article:modified_time" content="2021-12-03T09:07:15.160Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="akka">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1638285321734-6c025b01-eee7-48df-bff2-19c82abde45e.png#clientId=uc750018c-c2cd-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=151&id=u72ec2b27&margin=%5Bobject%20Object%5D&name=image.png&originHeight=301&originWidth=802&originalType=binary&ratio=1&rotation=0&showTitle=false&size=118031&status=done&style=none&taskId=u95263b21-d346-4482-a6c9-c777d0bd6ff&title=&width=401">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Actor-%E8%B0%83%E5%BA%A6%E5%99%A8/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/akka/" rel="tag">akka</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.33px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.17px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 13.67px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/akka/" style="font-size: 14px;">akka</a> <a href="/tags/atomic/" style="font-size: 13.33px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.5px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/sort/" style="font-size: 13.83px;">sort</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.33px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">20</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">24</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-SLF4J%E6%89%93%E5%8D%B0%E6%97%A5%E5%BF%97/" class="title">Akka-SLF4J打印日志</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T09:08:28.304Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Remote-%E9%85%8D%E7%BD%AE/" class="title">Akka-Remote-配置</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:24:00.895Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-%E6%8C%81%E4%B9%85%E5%8C%96-%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E4%B8%8E%E6%8E%A5%E6%94%B6/" class="title">Akka-持久化-消息发送与接收</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:23:51.202Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Actor-DeadLetter%E7%9B%91%E5%90%AC/" class="title">Akka-Actor-DeadLetter监听</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:22:48.138Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Actor-%E7%9B%91%E7%AE%A1%E4%B8%8E%E5%AE%B9%E9%94%99/" class="title">Akka-Actor-监管与容错</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:22:40.247Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-network/akka/Akka-Actor-调度器" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Akka-Actor-调度器
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/12/03/network/akka/Akka-Actor-%E8%B0%83%E5%BA%A6%E5%99%A8/" class="article-date">
+	  <time datetime="2021-12-03T07:50:01.756Z" itemprop="datePublished">2021-12-03</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/akka/" rel="tag">akka</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/12/03/network/akka/Akka-Actor-%E8%B0%83%E5%BA%A6%E5%99%A8/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="1-依赖"><a href="#1-依赖" class="headerlink" title="1.依赖"></a>1.依赖</h2><pre><code>调度器（Dispatchers）是 Akka 核心的一部分，这意味着它们也是akka-actor依赖的一部分：
+</code></pre>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- Maven --&gt;</span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">  &lt;groupId&gt;com.typesafe.akka&lt;/groupId&gt;</span><br><span class="line">  &lt;artifactId&gt;akka-actor_2.12&lt;/artifactId&gt;</span><br><span class="line">  &lt;version&gt;2.5.21&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">&lt;!-- Gradle --&gt;</span><br><span class="line">dependencies &#123;</span><br><span class="line">  compile group: &#x27;com.typesafe.akka&#x27;, name: &#x27;akka-actor_2.12&#x27;, version: &#x27;2.5.21&#x27;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&lt;!-- sbt --&gt;</span><br><span class="line">libraryDependencies += &quot;com.typesafe.akka&quot; %% &quot;akka-actor&quot; % &quot;2.5.21&quot;</span><br></pre></td></tr></table></figure>
+<h2 id="2-简介"><a href="#2-简介" class="headerlink" title="2.简介"></a>2.简介</h2><pre><code>  正如在「[Actor System](https://doc.akka.io/docs/akka/current/general/actor-systems.html)」中所解释的，每个 Actor 都是其子级的监督者，因此每个 Actor 定义了故障处理的监督策略。这一策略不能在 Actor 系统启动之后改变，因为它是 Actor 系统结构的一个组成部分。
+</code></pre>
+<p>Akka 的MessageDispatcher是 Akka Actor “tick”的原因，可以说，它是机器的引擎。所有MessageDispatcher实现也是一个ExecutionContext，这意味着它们可以用于执行任意代码，例如「<a target="_blank" rel="noopener" href="https://doc.akka.io/docs/akka/current/futures.html">Futures</a>」。<br>​</p>
+<h2 id="3-默认调度器"><a href="#3-默认调度器" class="headerlink" title="3.默认调度器"></a>3.默认调度器</h2><pre><code> 每个ActorSystem都将有一个默认的调度器，在没有为 Actor 配置其他内容的情况下使用该调度器。可以配置默认调度器，默认情况下是具有指定default-executor的Dispatcher。如果在传入ExecutionContext的情况下创建ActorSystem，则此ExecutionContext将用作此ActorSystem中所有调度程序的默认执行器。如果没有给定ExecutionContext，它将回退到在akka.actor.default-dispatcher.default-executor.fallback中指定的执行器。默认情况下，这是一个“fork-join-executor”，在大多数情况下，它提供了出色的性能。
+</code></pre>
+<p>​</p>
+<h2 id="4-查找调度器"><a href="#4-查找调度器" class="headerlink" title="4. 查找调度器"></a>4. 查找调度器</h2><p>调度器实现ExecutionContext接口，因此可以用于运行Future的调用等。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">// this is scala.concurrent.ExecutionContext</span><br><span class="line">// for use with Futures, Scheduler, etc.</span><br><span class="line">final ExecutionContext ex = system.dispatchers().lookup(&quot;my-dispatcher&quot;);</span><br></pre></td></tr></table></figure>
+<h2 id="5-为-Actor-设置调度器"><a href="#5-为-Actor-设置调度器" class="headerlink" title="5. 为 Actor 设置调度器"></a>5. 为 Actor 设置调度器</h2><p>  如果你想给你的 Actor 一个不同于默认的调度器，你需要做两件事，第一件事是配置调度器：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">my-dispatcher &#123;</span><br><span class="line">  # Dispatcher is the name of the event-based dispatcher</span><br><span class="line">  type = Dispatcher</span><br><span class="line">  # What kind of ExecutionService to use</span><br><span class="line">  executor = &quot;fork-join-executor&quot;</span><br><span class="line">  # Configuration for the fork join pool</span><br><span class="line">  fork-join-executor &#123;</span><br><span class="line">    # Min number of threads to cap factor-based parallelism number to</span><br><span class="line">    parallelism-min = 2</span><br><span class="line">    # Parallelism (threads) ... ceil(available processors * factor)</span><br><span class="line">    parallelism-factor = 2.0</span><br><span class="line">    # Max number of threads to cap factor-based parallelism number to</span><br><span class="line">    parallelism-max = 10</span><br><span class="line">  &#125;</span><br><span class="line">  # Throughput defines the maximum number of messages to be</span><br><span class="line">  # processed per actor before the thread jumps to the next actor.</span><br><span class="line">  # Set to 1 for as fair as possible.</span><br><span class="line">  throughput = 100</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>注释</strong>：请注意，parallelism-max不会在ForkJoinPool分配的线程总数上设置上限。这是一个设置，专门讨论池保持运行的热线程数，以减少处理新的传入任务的延迟。你可以在 JDK 的「<a target="_blank" rel="noopener" href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinPool.html">ForkJoinPool 文档</a>」中了解更多关于并行性的信息。</li>
+</ul>
+<p>另一个使用“thread-pool-executor”的示例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">blocking-io-dispatcher &#123;</span><br><span class="line">  type = Dispatcher</span><br><span class="line">  executor = &quot;thread-pool-executor&quot;</span><br><span class="line">  thread-pool-executor &#123;</span><br><span class="line">    fixed-pool-size = 32</span><br><span class="line">  &#125;</span><br><span class="line">  throughput = 1</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>注释</strong>：线程池执行器调度程序由java.util.concurrent.ThreadPoolExecutor实现。你可以在 JDK 的「<a target="_blank" rel="noopener" href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ThreadPoolExecutor.html">ThreadPoolExecutor 文档</a>」中了解更多关于它的信息。</li>
+</ul>
+<p>有关更多选项，请参阅「<a target="_blank" rel="noopener" href="https://doc.akka.io/docs/akka/current/general/configuration.html">配置</a>」的默认调度器部分。<br>然后你就可以像往常一样创建 Actor，并在部署配置中定义调度器。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ActorRef myActor = system.actorOf(Props.create(MyActor.class), &quot;myactor&quot;);</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">akka.actor.deployment &#123;</span><br><span class="line">  /myactor &#123;</span><br><span class="line">    dispatcher = my-dispatcher</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>部署配置的另一种选择是在代码中定义调度器。如果在部署配置中定义dispatcher，则将使用此值，而不是以编程方式提供的参数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ActorRef myActor =</span><br><span class="line">    system.actorOf(Props.create(MyActor.class).withDispatcher(&quot;my-dispatcher&quot;), &quot;myactor3&quot;);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p><strong>注释</strong>：在withDispatcher中指定的调度器和部署配置中的dispatcher属性实际上是进入配置的路径。所以在这个例子中，它是一个顶级部分，但是你可以把它作为一个子部分，在这里你可以用句点来表示子部分，就像这样：foo.bar.my-dispatcher</p>
+<h2 id="6-调度器类型"><a href="#6-调度器类型" class="headerlink" title="6.调度器类型"></a>6.调度器类型</h2><p>有 3 种不同类型的消息调度器：</p>
+</li>
+<li><p>Dispatcher:这是一个基于事件的调度程序,它将一组 Actor 绑定到线程池。如果未指定调度器,则使用默认调度器。 </p>
+<ul>
+<li>可共享性：Unlimited</li>
+<li>邮箱：任意，为每个 Actor 创建一个</li>
+<li>用例：默认调度器，Bulkheading</li>
+<li>驱动：java.util.concurrent.ExecutorService。使用fork-join-executor、thread-pool-executor或akka.dispatcher.ExecutorServiceConfigurator的FQCN指定的executor。</li>
+</ul>
+</li>
+<li><p>PinnedDispatcher：这个调度器为每个使用它的 Actor 指定唯一的线程；即每个 Actor 将拥有自己的线程池，池中只有一个线程。 </p>
+<ul>
+<li>可共享性：None</li>
+<li>邮箱：任意，为每个 Actor 创建一个</li>
+<li>用例：Bulkheading</li>
+<li>驱动：任何akka.dispatch.ThreadPoolExecutorConfigurator。默认情况下为thread-pool-executor。</li>
+</ul>
+</li>
+<li><p>CallingThreadDispatcher：此调度器仅在当前调用的线程上运行。这个调度器不创建任何新的线程，但是它可以从不同的线程并发地用于同一个 Actor。有关详细信息和限制，请参阅「<a target="_blank" rel="noopener" href="https://doc.akka.io/docs/akka/current/testing.html#callingthreaddispatcher">CallingThreadDispatcher</a>」。 </p>
+<ul>
+<li>可共享性：Unlimited</li>
+<li>邮箱：任意，为每个 Actor 创建一个（按需）</li>
+<li>用例：Testing</li>
+<li>驱动：调用线程（duh）<h2 id="7-更多调度器配置示例"><a href="#7-更多调度器配置示例" class="headerlink" title="7.更多调度器配置示例"></a>7.更多调度器配置示例</h2>配置具有固定线程池大小的调度器，例如，对于执行阻塞 IO 的 Actor：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">blocking-io-dispatcher &#123;</span><br><span class="line">  type = Dispatcher</span><br><span class="line">  executor = &quot;thread-pool-executor&quot;</span><br><span class="line">  thread-pool-executor &#123;</span><br><span class="line">    fixed-pool-size = 32</span><br><span class="line">  &#125;</span><br><span class="line">  throughput = 1</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+然后使用它：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ActorRef myActor =</span><br><span class="line">    system.actorOf(Props.create(MyActor.class).withDispatcher(&quot;blocking-io-dispatcher&quot;));</span><br></pre></td></tr></table></figure>
+另一个基于核（cores）数量使用线程池的示例，例如，对于 CPU 绑定的任务：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">my-thread-pool-dispatcher &#123;</span><br><span class="line">  # Dispatcher is the name of the event-based dispatcher</span><br><span class="line">  type = Dispatcher</span><br><span class="line">  # What kind of ExecutionService to use</span><br><span class="line">  executor = &quot;thread-pool-executor&quot;</span><br><span class="line">  # Configuration for the thread pool</span><br><span class="line">  thread-pool-executor &#123;</span><br><span class="line">    # minimum number of threads to cap factor-based core number to</span><br><span class="line">    core-pool-size-min = 2</span><br><span class="line">    # No of core threads ... ceil(available processors * factor)</span><br><span class="line">    core-pool-size-factor = 2.0</span><br><span class="line">    # maximum number of threads to cap factor-based number to</span><br><span class="line">    core-pool-size-max = 10</span><br><span class="line">  &#125;</span><br><span class="line">  # Throughput defines the maximum number of messages to be</span><br><span class="line">  # processed per actor before the thread jumps to the next actor.</span><br><span class="line">  # Set to 1 for as fair as possible.</span><br><span class="line">  throughput = 100</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+在保持某些内部状态的 Actor 数量相对较少的情况下，使用关联池（affinity pool）的不同类型的调度器可能会增加吞吐量。关联池尽可能的确保 Actor 总是被安排在同一线程上运行。这个 Actor 到线程的连接（pinning）旨在增加 CPU 缓存命中率，这可能使吞吐量显著提高。<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">affinity-pool-dispatcher &#123;</span><br><span class="line">  # Dispatcher is the name of the event-based dispatcher</span><br><span class="line">  type = Dispatcher</span><br><span class="line">  # What kind of ExecutionService to use</span><br><span class="line">  executor = &quot;affinity-pool-executor&quot;</span><br><span class="line">  # Configuration for the thread pool</span><br><span class="line">  affinity-pool-executor &#123;</span><br><span class="line">    # Min number of threads to cap factor-based parallelism number to</span><br><span class="line">    parallelism-min = 8</span><br><span class="line">    # Parallelism (threads) ... ceil(available processors * factor)</span><br><span class="line">    parallelism-factor = 1</span><br><span class="line">    # Max number of threads to cap factor-based parallelism number to</span><br><span class="line">    parallelism-max = 16</span><br><span class="line">  &#125;</span><br><span class="line">  # Throughput defines the maximum number of messages to be</span><br><span class="line">  # processed per actor before the thread jumps to the next actor.</span><br><span class="line">  # Set to 1 for as fair as possible.</span><br><span class="line">  throughput = 100</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+配置一个PinnedDispatcher：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">my-pinned-dispatcher &#123;</span><br><span class="line">  executor = &quot;thread-pool-executor&quot;</span><br><span class="line">  type = PinnedDispatcher</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+然后使用它：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ActorRef myActor =</span><br><span class="line">    system.actorOf(Props.create(MyActor.class).withDispatcher(&quot;my-pinned-dispatcher&quot;));</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+注意，根据上面的my-thread-pool-dispatcher示例，thread-pool-executor配置不适用（NOT applicable）。这是因为每个 Actor 在使用PinnedDispatcher时都有自己的线程池，而该池只有一个线程。<br>注意，不能保证随着时间的推移使用相同的线程，因为核心池超时用于PinnedDispatcher，以在空闲 Actor 的情况下保持资源使用率低。要始终使用同一线程，需要添加PinnedDispatcher的配置thread-pool-executor.allow-core-timeout=off。<br>​</li>
+</ul>
+</li>
+</ul>
+<h2 id="8-阻塞需要小心管理"><a href="#8-阻塞需要小心管理" class="headerlink" title="8.阻塞需要小心管理"></a>8.阻塞需要小心管理</h2><p>在某些情况下，不可避免地要执行阻塞操作，即让线程休眠一段不确定的时间，等待发生外部事件。例如，传统的 RDBMS 驱动程序或消息传递 API，其根本原因通常是（网络）I/O 发生在表面之下（occurs under the covers）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">class BlockingActor extends AbstractActor &#123;</span><br><span class="line"></span><br><span class="line">  @Override</span><br><span class="line">  public Receive createReceive() &#123;</span><br><span class="line">    return receiveBuilder()</span><br><span class="line">        .match(</span><br><span class="line">            Integer.class,</span><br><span class="line">            i -&gt; &#123;</span><br><span class="line">              Thread.sleep(5000); // block for 5 seconds, representing blocking I/O, etc</span><br><span class="line">              System.out.println(&quot;Blocking operation finished: &quot; + i);</span><br><span class="line">            &#125;)</span><br><span class="line">        .build();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>面对这种情况，你可能会试图将阻塞调用包装在Future，并改为使用它，但这种策略过于简单：当应用程序在增加的负载下运行时，很可能会发现瓶颈或内存或线程不足。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">class BlockingFutureActor extends AbstractActor &#123;</span><br><span class="line">  ExecutionContext ec = getContext().getDispatcher();</span><br><span class="line"></span><br><span class="line">  @Override</span><br><span class="line">  public Receive createReceive() &#123;</span><br><span class="line">    return receiveBuilder()</span><br><span class="line">        .match(</span><br><span class="line">            Integer.class,</span><br><span class="line">            i -&gt; &#123;</span><br><span class="line">              System.out.println(&quot;Calling blocking Future: &quot; + i);</span><br><span class="line">              Future&lt;Integer&gt; f =</span><br><span class="line">                  Futures.future(</span><br><span class="line">                      () -&gt; &#123;</span><br><span class="line">                        Thread.sleep(5000);</span><br><span class="line">                        System.out.println(&quot;Blocking future finished: &quot; + i);</span><br><span class="line">                        return i;</span><br><span class="line">                      &#125;,</span><br><span class="line">                      ec);</span><br><span class="line">            &#125;)</span><br><span class="line">        .build();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="8-1-问题：在默认调度器上阻塞"><a href="#8-1-问题：在默认调度器上阻塞" class="headerlink" title="8.1 问题：在默认调度器上阻塞"></a>8.1 问题：在默认调度器上阻塞</h3><p>在这里，关键的一行是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ExecutionContext ec = getContext().getDispatcher();</span><br></pre></td></tr></table></figure>
+<p>使用getContext().getDispatcher()作为调度器，在该调度器上阻塞Future的执行可能是一个问题，因为默认情况下，除非为 Actor 设置单独的调度器，否则此调度器也将用于所有其他 Actor。<br>如果所有可用的线程都被阻塞，那么同一调度器上的所有 Actor 都将因线程而发生饥饿，并且无法处理传入的消息。</p>
+<ul>
+<li><strong>注释</strong>：如果可能，还应避免阻塞 API。尝试寻找或构建Reactive API，以便将阻塞最小化，或者将其转移到专用的调度器。通常在与现有库或系统集成时，不可能避免阻塞 API，下面的解决方案解释了如何正确处理阻塞操作。请注意，同样的提示也适用于管理 Akka 中任何地方的阻塞操作，包括流、HTTP 和其他构建在其上的响应式库。</li>
+</ul>
+<p>让我们用上面的BlockingFutureActor和下面的PrintActor设置一个应用程序。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">class PrintActor extends AbstractActor &#123;</span><br><span class="line">  @Override</span><br><span class="line">  public Receive createReceive() &#123;</span><br><span class="line">    return receiveBuilder()</span><br><span class="line">        .match(</span><br><span class="line">            Integer.class,</span><br><span class="line">            i -&gt; &#123;</span><br><span class="line">              System.out.println(&quot;PrintActor: &quot; + i);</span><br><span class="line">            &#125;)</span><br><span class="line">        .build();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ActorRef actor1 = system.actorOf(Props.create(BlockingFutureActor.class));</span><br><span class="line">ActorRef actor2 = system.actorOf(Props.create(PrintActor.class));</span><br><span class="line"></span><br><span class="line">for (int i = 0; i &lt; 100; i++) &#123;</span><br><span class="line">  actor1.tell(i, ActorRef.noSender());</span><br><span class="line">  actor2.tell(i, ActorRef.noSender());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这里，应用程序向BlockingFutureActor和PrintActor发送 100 条消息，大量akka.actor.default-dispatcher线程正在处理请求。当你运行上述代码时，很可能会看到整个应用程序被卡在如下位置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt;　PrintActor: 44</span><br><span class="line">&gt;　PrintActor: 45</span><br></pre></td></tr></table></figure>
+<p>PrintActor被认为是非阻塞的，但是它不能继续处理剩余的消息，因为所有线程都被另一个阻塞 Actor 占用和阻塞，从而导致线程不足。<br>在下面的螺纹状态图中，颜色具有以下含义：</p>
+<ul>
+<li>天蓝色 - 休眠状态</li>
+<li>橙色 - 等待状态</li>
+<li>绿色 - 运行状态</li>
+</ul>
+<p>线程信息是使用YourKit profiler记录的，但是任何好的 JVM profiler都有这个特性，包括免费的和与 Oracle JDK VisualVM 捆绑的，以及 Oracle Flight Recorder。<br>线程的橙色部分表示它处于空闲状态。空闲线程很好，它们准备接受新的工作。然而，大量的天蓝色（阻塞，或者像我们的例子中那样休眠）线程是非常糟糕的，会导致线程饥饿。</p>
+<ul>
+<li><strong>注释</strong>：如果你订阅了 LightBend 的商业服务，你可以使用「<a target="_blank" rel="noopener" href="https://developer.lightbend.com/docs/akka-commercial-addons/current/starvation-detector.html">线程饥饿检测器</a>」，如果它检测到你的任何调度程序有饥饿和其他问题，它将发出警告日志语句。这是识别生产系统中发生的问题的有用步骤，然后你可以应用下面解释的建议解决方案。</li>
+</ul>
+<p><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1638285321734-6c025b01-eee7-48df-bff2-19c82abde45e.png#clientId=uc750018c-c2cd-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=151&id=u72ec2b27&margin=%5Bobject%20Object%5D&name=image.png&originHeight=301&originWidth=802&originalType=binary&ratio=1&rotation=0&showTitle=false&size=118031&status=done&style=none&taskId=u95263b21-d346-4482-a6c9-c777d0bd6ff&title=&width=401" alt="image.png"><br>在上面的示例中，我们通过向阻塞 Actor 发送数百条消息来加载代码，这会导致默认调度器的线程被阻塞。然后，Akka 中基于fork join池的调度器尝试通过向池中添加更多线程来补偿此阻塞（default-akka.actor.default-dispatcher 18,19,20,…）。但是，如果这些操作会立即被阻塞，并且最终阻塞操作将主宰整个调度器，那么这将无济于事。<br>实质上，Thread.sleep操作控制了所有线程，并导致在默认调度器上执行的任何操作都需要资源，包括尚未为其配置显式调度器的任何 Actor。</p>
+<h3 id="8-2-解决方案：用于阻塞操作的专用调度器"><a href="#8-2-解决方案：用于阻塞操作的专用调度器" class="headerlink" title="8.2 解决方案：用于阻塞操作的专用调度器"></a>8.2 解决方案：用于阻塞操作的专用调度器</h3><p>隔离阻塞行为以使其不影响系统其余部分的最有效方法之一是，为所有这些阻塞操作准备和使用专用调度器。这种技术通常被称为“bulk-heading”或简单的“isolating blocking”。<br>在application.conf中，专门用于阻塞行为的调度器应配置如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">my-blocking-dispatcher &#123;</span><br><span class="line">  type = Dispatcher</span><br><span class="line">  executor = &quot;thread-pool-executor&quot;</span><br><span class="line">  thread-pool-executor &#123;</span><br><span class="line">    fixed-pool-size = 16</span><br><span class="line">  &#125;</span><br><span class="line">  throughput = 1</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>基于thread-pool-executor的调度器允许我们对它将承载的线程数设置限制，这样我们就可以严格控制系统中最多有多少被阻塞的线程。<br>具体的大小应该根据你期望在此调度器上运行的工作负载以及运行应用程序的计算机的核数量（number of cores）进行微调。通常，核数周围的小数字是一个很好的默认值。<br>每当需要进行阻塞时，使用上面配置的调度器而不是默认调度程序：<br>​</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">class SeparateDispatcherFutureActor extends AbstractActor &#123;</span><br><span class="line">  ExecutionContext ec = getContext().getSystem().dispatchers().lookup(&quot;my-blocking-dispatcher&quot;);</span><br><span class="line"></span><br><span class="line">  @Override</span><br><span class="line">  public Receive createReceive() &#123;</span><br><span class="line">    return receiveBuilder()</span><br><span class="line">        .match(</span><br><span class="line">            Integer.class,</span><br><span class="line">            i -&gt; &#123;</span><br><span class="line">              System.out.println(&quot;Calling blocking Future on separate dispatcher: &quot; + i);</span><br><span class="line">              Future&lt;Integer&gt; f =</span><br><span class="line">                  Futures.future(</span><br><span class="line">                      () -&gt; &#123;</span><br><span class="line">                        Thread.sleep(5000);</span><br><span class="line">                        System.out.println(&quot;Blocking future finished: &quot; + i);</span><br><span class="line">                        return i;</span><br><span class="line">                      &#125;,</span><br><span class="line">                      ec);</span><br><span class="line">            &#125;)</span><br><span class="line">        .build();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>线程池行为如下图所示：<br><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1638285382292-6adbaa9f-52d4-4b6b-8a44-85ed51d9915d.png#clientId=uc750018c-c2cd-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=159&id=u8998c525&margin=%5Bobject%20Object%5D&name=image.png&originHeight=318&originWidth=801&originalType=binary&ratio=1&rotation=0&showTitle=false&size=127412&status=done&style=none&taskId=u30638a96-3a47-4552-8055-12c7fa362a7&title=&width=400.5" alt="image.png"><br>发送给SeparateDispatcherFutureActor和PrintActor的消息由默认调度器处理，绿线表示实际执行。<br>在my-blocking-dispatcher上运行阻塞操作时，它使用线程（达到配置的限制）来处理这些操作。在这种情况下，休眠与这个调度器很好地隔离开来，默认的调度器不受影响，允许应用程序的其余部分继续运行，就好像没有发生什么不好的事情一样。经过一段时间的空闲之后，由这个调度程序启动的线程将被关闭。<br>在这种情况下，其他 Actor 的吞吐量没有受到影响，它们仍然在默认调度器上工作。<br>这是处理响应式应用程序中任何类型的阻塞的推荐方法。<br>有关 Akka HTTP 的类似讨论，请参阅「<a target="_blank" rel="noopener" href="https://doc.akka.io/docs/akka-http/current/handling-blocking-operations-in-akka-http-routes.html?language=java#handling-blocking-operations-in-akka-http">Handling blocking operations in Akka HTTP</a>」。</p>
+<h3 id="8-3-阻止操作的可用解决方案"><a href="#8-3-阻止操作的可用解决方案" class="headerlink" title="8.3. 阻止操作的可用解决方案"></a>8.3. 阻止操作的可用解决方案</h3><p>针对“阻塞问题”的充分解决方案的非详尽清单包括以下建议：</p>
+<ul>
+<li>在由路由器管理的 Actor（或一组 Actor）内执行阻塞调用，确保配置专门用于此目的或足够大的线程池。</li>
+<li>在Future上执行阻塞调用，确保在任何时间点对此类调用的数量上限，提交无限数量的此类任务将耗尽内存或线程限制。</li>
+<li>在Future执行阻塞调用，为线程池提供一个线程数上限，该上限适用于运行应用程序的硬件，如本节中详细介绍的那样。</li>
+<li>指定一个线程来管理一组阻塞资源（例如，驱动多个通道的 NIO 选择器），并在事件作为 Actor 消息发生时分派它们。</li>
+</ul>
+<p>第一种可能性特别适用于本质上是单线程的资源，例如<a target="_blank" rel="noopener" href="https://cloud.tencent.com/solution/database?from=10680">数据库</a>句柄，传统上一次只能执行一个未完成的查询，并使用内部同步来确保这一点。一种常见的模式是为N个 Actor 创建一个路由器，每个 Actor 包装一个 DB 连接，并处理发送到路由器的查询。然后，必须根据最大吞吐量调整数量N，这将根据部署在哪个硬件上的 DBMS 而有所不同。</p>
+<ul>
+<li><strong>注释</strong>：配置线程池是一项最适合授权给 Akka 的任务，在application.conf中对其进行配置，并通过ActorSystem进行实例化。</li>
+</ul>
+<p>​</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1435517">https://cloud.tencent.com/developer/article/1435517</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Actor-%E8%B0%83%E5%BA%A6%E5%99%A8/" title="Akka-Actor-调度器" target="_blank" rel="external">https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Actor-调度器/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/12/03/network/akka/Akka-Cluster%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/" title="Akka-Cluster原理分析"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/12/03/network/akka/Akka-Remote-%E9%97%AE%E9%A2%98%E6%B1%87%E6%80%BB/" title="Akka-Remote-问题汇总"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

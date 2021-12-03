@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>Akka-Mailboxes | Hexo</title>
+  <meta name="description" content="1.依赖为了使用邮箱（Mailboxes），你需要将以下依赖添加到你的项目中： 1234567891011121314&lt;!-- Maven --&gt;&lt;dependency&gt;  &lt;groupId&gt;com.typesafe.akka&lt;&#x2F;groupId&gt;  &lt;artifactId&gt;akka-actor_2.12&lt;&#x2F;artifactId&amp;gt">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Akka-Mailboxes">
+<meta property="og:url" content="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Mailboxes/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="1.依赖为了使用邮箱（Mailboxes），你需要将以下依赖添加到你的项目中： 1234567891011121314&lt;!-- Maven --&gt;&lt;dependency&gt;  &lt;groupId&gt;com.typesafe.akka&lt;&#x2F;groupId&gt;  &lt;artifactId&gt;akka-actor_2.12&lt;&#x2F;artifactId&amp;gt">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-12-03T08:22:13.665Z">
+<meta property="article:modified_time" content="2021-12-03T09:07:15.151Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="akka">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Mailboxes/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/akka/" rel="tag">akka</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.33px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.17px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 13.67px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/akka/" style="font-size: 14px;">akka</a> <a href="/tags/atomic/" style="font-size: 13.33px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.5px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/sort/" style="font-size: 13.83px;">sort</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.33px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">20</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">24</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-SLF4J%E6%89%93%E5%8D%B0%E6%97%A5%E5%BF%97/" class="title">Akka-SLF4J打印日志</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T09:08:28.304Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Remote-%E9%85%8D%E7%BD%AE/" class="title">Akka-Remote-配置</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:24:00.895Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-%E6%8C%81%E4%B9%85%E5%8C%96-%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E4%B8%8E%E6%8E%A5%E6%94%B6/" class="title">Akka-持久化-消息发送与接收</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:23:51.202Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Actor-DeadLetter%E7%9B%91%E5%90%AC/" class="title">Akka-Actor-DeadLetter监听</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:22:48.138Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Actor-%E7%9B%91%E7%AE%A1%E4%B8%8E%E5%AE%B9%E9%94%99/" class="title">Akka-Actor-监管与容错</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:22:40.247Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-network/akka/Akka-Mailboxes" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Akka-Mailboxes
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/12/03/network/akka/Akka-Mailboxes/" class="article-date">
+	  <time datetime="2021-12-03T08:22:13.665Z" itemprop="datePublished">2021-12-03</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/akka/" rel="tag">akka</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/12/03/network/akka/Akka-Mailboxes/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="1-依赖"><a href="#1-依赖" class="headerlink" title="1.依赖"></a>1.依赖</h1><p>为了使用邮箱（<code>Mailboxes</code>），你需要将以下依赖添加到你的项目中：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- Maven --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.typesafe.akka<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>akka-actor_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.5.21<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- Gradle --&gt;</span></span><br><span class="line">dependencies &#123;</span><br><span class="line">  compile group: &#x27;com.typesafe.akka&#x27;, name: &#x27;akka-actor_2.12&#x27;, version: &#x27;2.5.21&#x27;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- sbt --&gt;</span></span><br><span class="line">libraryDependencies += &quot;com.typesafe.akka&quot; %% &quot;akka-actor&quot; % &quot;2.5.21&quot;</span><br></pre></td></tr></table></figure>
+<h2 id="2-简介"><a href="#2-简介" class="headerlink" title="2.简介"></a>2.简介</h2><p>Akka 的邮箱中保存着发给 Actor 的信息。通常，每个 Actor 都有自己的邮箱，但也有例外，如使用<code>BalancingPool</code>，则所有路由器（<code>routees</code>）将共享一个邮箱实例。</p>
+<h2 id="3-邮箱选择"><a href="#3-邮箱选择" class="headerlink" title="3.邮箱选择"></a>3.邮箱选择</h2><h3 id="3-1-指定-Actor-的消息队列类型"><a href="#3-1-指定-Actor-的消息队列类型" class="headerlink" title="3.1 指定 Actor 的消息队列类型"></a>3.1 指定 Actor 的消息队列类型</h3><p>通过让某个 Actor 实现参数化接口<code>RequiresMessageQueue</code>，可以为某个 Actor 类型指定某种类型的消息队列。下面是一个例子：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> akka.dispatch.BoundedMessageQueueSemantics;</span><br><span class="line"><span class="keyword">import</span> akka.dispatch.RequiresMessageQueue;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyBoundedActor</span> <span class="keyword">extends</span> <span class="title">MyActor</span></span></span><br><span class="line"><span class="class">       <span class="keyword">implements</span> <span class="title">RequiresMessageQueue</span>&lt;<span class="title">BoundedMessageQueueSemantics</span>&gt; </span>&#123;&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p><code>RequiresMessageQueue</code>接口的类型参数需要映射到配置中的邮箱，如下所示：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">bounded-mailbox &#123;</span><br><span class="line">  mailbox-type = <span class="string">&quot;akka.dispatch.NonBlockingBoundedMailbox&quot;</span></span><br><span class="line">  mailbox-capacity = <span class="number">1000</span> </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">akka.actor.mailbox.requirements &#123;</span><br><span class="line">  <span class="string">&quot;akka.dispatch.BoundedMessageQueueSemantics&quot;</span> = bounded-mailbox</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>现在，每次创建<code>MyBoundedActor</code>类型的 Actor 时，它都会尝试获取一个有界邮箱。如果 Actor 在部署中配置了不同的邮箱，可以直接配置，也可以通过具有指定邮箱类型的调度器（<code>dispatcher</code>）配置，那么这将覆盖此映射。</p>
+<ul>
+<li><strong>注释</strong>：接口中的所需类型为 Actor 创建的邮箱中的队列类型，如果队列未实现所需类型，则 Actor 创建将失败。</li>
+</ul>
+<h3 id="3-2-指定调度器的消息队列类型"><a href="#3-2-指定调度器的消息队列类型" class="headerlink" title="3.2.指定调度器的消息队列类型"></a>3.2.指定调度器的消息队列类型</h3><p>调度器还可能需要运行在其上的 Actor 使用的邮箱类型。例如，<code>BalancingDispatcher</code>需要一个消息队列，该队列对于多个并发使用者是线程安全的。这需要对调度器进行配置，如下所示：</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">my-dispatcher</span> &#123;</span><br><span class="line">  <span class="string">mailbox-requirement</span> <span class="string">=</span> <span class="string">org.example.MyInterface</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>给定的需求命名一个类或接口，然后确保该类或接口是消息队列实现的父类型。如果发生冲突，例如，如果 Actor 需要不满足此要求的邮箱类型，则 Actor 创建将失败。</p>
+<h3 id="3-3-如何选择邮箱类型"><a href="#3-3-如何选择邮箱类型" class="headerlink" title="3.3.如何选择邮箱类型"></a>3.3.如何选择邮箱类型</h3><p>创建 Actor 时，<code>ActorRefProvider</code>首先确定执行它的调度器。然后确定邮箱如下：</p>
+<ol>
+<li>如果 Actor 的部署配置节（<code>section</code>）包含<code>mailbox</code>键，那么它将命名一个描述要使用的邮箱类型的配置节。</li>
+<li>如果 Actor 的<code>Props</code>包含邮箱选择（<code>mailbox selection</code>），即对其调用了<code>withMailbox</code>，则该属性将命名一个描述要使用的邮箱类型的配置节。请注意，这需要绝对配置路径，例如<code>myapp.special-mailbox</code>，并且不嵌套在<code>akka</code>命名空间中。</li>
+<li>如果调度器的配置节包含<code>mailbox-type</code>键，则将使用相同的节来配置邮箱类型。</li>
+<li>如果 Actor 需要如上所述的邮箱类型，则将使用该要求（<code>requirement</code>）的映射来确定要使用的邮箱类型；如果失败，则尝试使用调度器的要求（如果有）。</li>
+<li>如果调度器需要如上所述的邮箱类型，那么将使用该要求的映射来确定要使用的邮箱类型。</li>
+<li>将使用默认邮箱<code>akka.actor.default-mailbox</code>。<h3 id="3-4-默认邮箱"><a href="#3-4-默认邮箱" class="headerlink" title="3.4.默认邮箱"></a>3.4.默认邮箱</h3></li>
+</ol>
+<p>如果未按上述说明指定邮箱，则使用默认邮箱。默认情况下，它是一个无边界的邮箱，由<code>java.util.concurrent.ConcurrentLinkedQueue</code>支持。</p>
+<p><code>SingleConsumerOnlyUnboundedMailbox</code>是一个效率更高的邮箱，它可以用作默认邮箱，但不能与<code>BalancingDispatcher</code>一起使用。</p>
+<p>将<code>SingleConsumerOnlyUnboundedMailbox</code>配置为默认邮箱：</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">akka.actor.default-mailbox</span> &#123;</span><br><span class="line">  <span class="string">mailbox-type</span> <span class="string">=</span> <span class="string">&quot;akka.dispatch.SingleConsumerOnlyUnboundedMailbox&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="3-5-将哪个配置传递到邮箱类型"><a href="#3-5-将哪个配置传递到邮箱类型" class="headerlink" title="3.5.将哪个配置传递到邮箱类型"></a>3.5.将哪个配置传递到邮箱类型</h3><p>每个邮箱类型都由一个扩展<code>MailboxType</code>并接受两个构造函数参数的类实现：<code>ActorSystem.Settings</code>对象和<code>Config</code>部分。后者是通过从 Actor 系统的配置中获取命名的配置节、用邮箱类型的配置路径覆盖其<code>id</code>键并添加回退（<code>fall-back</code>）到默认邮箱配置节来计算的。</p>
+<h2 id="4-内置邮箱实现"><a href="#4-内置邮箱实现" class="headerlink" title="4.内置邮箱实现"></a>4.内置邮箱实现</h2><p>Akka 附带了许多邮箱实现：</p>
+<ul>
+<li><code>UnboundedMailbox</code>（默认） <ul>
+<li>默认邮箱</li>
+<li>由<code>java.util.concurrent.ConcurrentLinkedQueue</code>支持</li>
+<li>是否阻塞：<code>No</code></li>
+<li>是否有界：<code>No</code></li>
+<li>配置名称：<code>unbounded</code>或<code>akka.dispatch.UnboundedMailbox</code></li>
+</ul>
+</li>
+<li><code>SingleConsumerOnlyUnboundedMailbox</code>，此队列可能比默认队列快，也可能不比默认队列快，具体取决于你的用例，请确保正确地进行基准测试！ <ul>
+<li>由多个生产商单个使用者队列支持，不能与BalancingDispatcher一起使用</li>
+<li>是否阻塞：<code>No</code></li>
+<li>是否有界：<code>No</code></li>
+<li>配置名称：<code>akka.dispatch.SingleConsumerOnlyUnboundedMailbox</code></li>
+</ul>
+</li>
+<li><code>NonBlockingBoundedMailbox</code> <ul>
+<li>由一个非常高效的”多生产者，单消费者“队列支持</li>
+<li>是否阻塞：<code>No</code>（将溢出的消息丢弃为<code>deadLetters</code>）</li>
+<li>是否有界：<code>Yes</code></li>
+<li>配置名称：<code>akka.dispatch.NonBlockingBoundedMailbox</code></li>
+</ul>
+</li>
+<li><code>UnboundedControlAwareMailbox</code> <ul>
+<li>传递以更高优先级扩展<code>akka.dispatch.ControlMessage</code>的消息</li>
+<li>由两个<code>java.util.concurrent.ConcurrentLinkedQueue</code>支持</li>
+<li>是否阻塞：<code>No</code></li>
+<li>是否有界：<code>No</code></li>
+<li>配置名称：<code>akka.dispatch.UnboundedControlAwareMailbox</code></li>
+</ul>
+</li>
+<li><code>UnboundedPriorityMailbox</code> <ul>
+<li>由<code>java.util.concurrent.PriorityBlockingQueue</code>支持</li>
+<li>等优先级邮件的传递顺序未定义，与<code>UnboundedStablePriorityMailbox</code>相反</li>
+<li>是否阻塞：<code>No</code></li>
+<li>是否有界：<code>No</code></li>
+<li>配置名称：<code>akka.dispatch.UnboundedPriorityMailbox</code></li>
+</ul>
+</li>
+<li><code>UnboundedStablePriorityMailbox</code><ul>
+<li>由包装在<code>akka.util.PriorityQueueStabilizer</code>中的<code>java.util.concurrent.PriorityBlockingQueue</code>提供支持</li>
+<li>对于优先级相同的消息保留<code>FIFO</code>顺序，与<code>UnboundedPriorityMailbox</code>相反</li>
+<li>是否阻塞：<code>No</code></li>
+<li>是否有界：<code>No</code></li>
+<li>配置名称：<code>akka.dispatch.UnboundedStablePriorityMailbox</code></li>
+</ul>
+</li>
+</ul>
+<p>其他有界邮箱实现，如果达到容量并配置了非零<code>mailbox-push-timeout-time</code>超时时间，则会阻止发件人。特别地，以下邮箱只能与零<code>mailbox-push-timeout-time</code>一起使用。</p>
+<ul>
+<li><code>BoundedMailbox</code> <ul>
+<li>由<code>java.util.concurrent.LinkedBlockingQueue</code>支持</li>
+<li>是否阻塞：如果与非零<code>mailbox-push-timeout-time</code>一起使用，则为<code>Yes</code>，否则为<code>NO</code></li>
+<li>是否有界：<code>Yes</code></li>
+<li>配置名称：<code>bounded</code>或<code>akka.dispatch.BoundedMailbox</code></li>
+</ul>
+</li>
+<li><code>BoundedPriorityMailbox</code> <ul>
+<li>由包装在<code>akka.util.BoundedBlockingQueue</code>中的<code>java.util.PriorityQueue</code>提供支持</li>
+<li>优先级相同的邮件的传递顺序未定义，与<code>BoundedStablePriorityMailbox</code>相反</li>
+<li>是否阻塞：如果与非零<code>mailbox-push-timeout-time</code>一起使用，则为<code>Yes</code>，否则为<code>NO</code></li>
+<li>是否有界：<code>Yes</code></li>
+<li>配置名称：<code>akka.dispatch.BoundedPriorityMailbox</code></li>
+</ul>
+</li>
+<li><code>BoundedStablePriorityMailbox</code> <ul>
+<li>由包装在<code>akka.util.PriorityQueueStabilizer</code>和<code>akka.util.BoundedBlockingQueue</code>中的<code>java.util.PriorityQueue</code>提供支持</li>
+<li>对于优先级相同的消息保留<code>FIFO</code>顺序，与<code>BoundedPriorityMailbox</code>相反</li>
+<li>是否阻塞：如果与非零<code>mailbox-push-timeout-time</code>一起使用，则为<code>Yes</code>，否则为<code>NO</code></li>
+<li>是否有界：<code>Yes</code></li>
+<li>配置名称：<code>akka.dispatch.BoundedStablePriorityMailbox</code></li>
+</ul>
+</li>
+<li><code>BoundedControlAwareMailbox</code> <ul>
+<li>传递以更高优先级扩展<code>akka.dispatch.ControlMessage</code>的消息</li>
+<li>由两个<code>java.util.concurrent.ConcurrentLinkedQueue</code>支持，如果达到容量，则在排队时阻塞</li>
+<li>是否阻塞：如果与非零<code>mailbox-push-timeout-time</code>一起使用，则为<code>Yes</code>，否则为<code>NO</code></li>
+<li>是否有界：<code>Yes</code></li>
+<li>配置名称：<code>akka.dispatch.BoundedControlAwareMailbox</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="5-邮箱配置示例"><a href="#5-邮箱配置示例" class="headerlink" title="5.邮箱配置示例"></a>5.邮箱配置示例</h2><h3 id="5-1-PriorityMailbox"><a href="#5-1-PriorityMailbox" class="headerlink" title="5.1.PriorityMailbox"></a>5.1.PriorityMailbox</h3><p>如何创建<code>PriorityMailbox</code>:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">MyPrioMailbox</span> <span class="keyword">extends</span> <span class="title">UnboundedStablePriorityMailbox</span> </span>&#123;</span><br><span class="line">  <span class="comment">// needed for reflective instantiation</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="title">MyPrioMailbox</span><span class="params">(ActorSystem.Settings settings, Config config)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Create a new PriorityGenerator, lower prio means more important</span></span><br><span class="line">    <span class="keyword">super</span>(</span><br><span class="line">        <span class="keyword">new</span> PriorityGenerator() &#123;</span><br><span class="line">          <span class="meta">@Override</span></span><br><span class="line">          <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">gen</span><span class="params">(Object message)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">if</span> (message.equals(<span class="string">&quot;highpriority&quot;</span>))</span><br><span class="line">              <span class="keyword">return</span> <span class="number">0</span>; <span class="comment">// &#x27;highpriority messages should be treated first if possible</span></span><br><span class="line">            <span class="keyword">else</span> <span class="keyword">if</span> (message.equals(<span class="string">&quot;lowpriority&quot;</span>))</span><br><span class="line">              <span class="keyword">return</span> <span class="number">2</span>; <span class="comment">// &#x27;lowpriority messages should be treated last if possible</span></span><br><span class="line">            <span class="keyword">else</span> <span class="keyword">if</span> (message.equals(PoisonPill.getInstance()))</span><br><span class="line">              <span class="keyword">return</span> <span class="number">3</span>; <span class="comment">// PoisonPill when no other left</span></span><br><span class="line">            <span class="keyword">else</span> <span class="keyword">return</span> <span class="number">1</span>; <span class="comment">// By default they go between high and low prio</span></span><br><span class="line">          &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>然后将其添加到配置中：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">prio-dispatcher &#123;</span><br><span class="line">  mailbox-type = <span class="string">&quot;docs.dispatcher.DispatcherDocSpec$MyPrioMailbox&quot;</span></span><br><span class="line">  <span class="comment">//Other dispatcher configuration goes here</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>下面是一个关于如何使用它的示例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Demo</span> <span class="keyword">extends</span> <span class="title">AbstractActor</span> </span>&#123;</span><br><span class="line">  LoggingAdapter log = Logging.getLogger(getContext().getSystem(), <span class="keyword">this</span>);</span><br><span class="line"></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">for</span> (Object msg :</span><br><span class="line">        <span class="keyword">new</span> Object[] &#123;</span><br><span class="line">          <span class="string">&quot;lowpriority&quot;</span>,</span><br><span class="line">          <span class="string">&quot;lowpriority&quot;</span>,</span><br><span class="line">          <span class="string">&quot;highpriority&quot;</span>,</span><br><span class="line">          <span class="string">&quot;pigdog&quot;</span>,</span><br><span class="line">          <span class="string">&quot;pigdog2&quot;</span>,</span><br><span class="line">          <span class="string">&quot;pigdog3&quot;</span>,</span><br><span class="line">          <span class="string">&quot;highpriority&quot;</span>,</span><br><span class="line">          PoisonPill.getInstance()</span><br><span class="line">        &#125;) &#123;</span><br><span class="line">      getSelf().tell(msg, getSelf());</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> Receive <span class="title">createReceive</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> receiveBuilder()</span><br><span class="line">        .matchAny(</span><br><span class="line">            message -&gt; &#123;</span><br><span class="line">              log.info(message.toString());</span><br><span class="line">            &#125;)</span><br><span class="line">        .build();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// We create a new Actor that just prints out what it processes</span></span><br><span class="line">ActorRef myActor =</span><br><span class="line">    system.actorOf(Props.create(Demo.class, <span class="keyword">this</span>).withDispatcher(<span class="string">&quot;prio-dispatcher&quot;</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">Logs:</span></span><br><span class="line"><span class="comment">  &#x27;highpriority</span></span><br><span class="line"><span class="comment">  &#x27;highpriority</span></span><br><span class="line"><span class="comment">  &#x27;pigdog</span></span><br><span class="line"><span class="comment">  &#x27;pigdog2</span></span><br><span class="line"><span class="comment">  &#x27;pigdog3</span></span><br><span class="line"><span class="comment">  &#x27;lowpriority</span></span><br><span class="line"><span class="comment">  &#x27;lowpriority</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+
+
+<p>也可以这样直接配置邮箱类型（这是顶级配置项）：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">prio-mailbox &#123;</span><br><span class="line">  mailbox-type = <span class="string">&quot;docs.dispatcher.DispatcherDocSpec$MyPrioMailbox&quot;</span></span><br><span class="line">  <span class="comment">//Other mailbox configuration goes here</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">akka.actor.deployment &#123;</span><br><span class="line">  /priomailboxactor &#123;</span><br><span class="line">    mailbox = prio-mailbox</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>然后从这样的部署中使用它：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ActorRef myActor = system.actorOf(Props.create(MyActor.class), <span class="string">&quot;priomailboxactor&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+
+<p>或者这样的代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ActorRef myActor = system.actorOf(Props.create(MyActor.class).withMailbox(<span class="string">&quot;prio-mailbox&quot;</span>));</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="5-2-ControlAwareMailbox"><a href="#5-2-ControlAwareMailbox" class="headerlink" title="5.2.ControlAwareMailbox"></a>5.2.ControlAwareMailbox</h3><p>如果 Actor 需要立即接收控制消息，无论邮箱中已经有多少其他消息，<code>ControlAwareMailbox</code>都非常有用。</p>
+<p>可以这样配置：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">control-aware-dispatcher &#123;</span><br><span class="line">  mailbox-type = <span class="string">&quot;akka.dispatch.UnboundedControlAwareMailbox&quot;</span></span><br><span class="line">  <span class="comment">//Other dispatcher configuration goes here</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>控制消息需要扩展<code>ControlMessage</code>特性：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">MyControlMessage</span> <span class="keyword">implements</span> <span class="title">ControlMessage</span> </span>&#123;&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>下面是一个关于如何使用它的示例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Demo</span> <span class="keyword">extends</span> <span class="title">AbstractActor</span> </span>&#123;</span><br><span class="line">  LoggingAdapter log = Logging.getLogger(getContext().getSystem(), <span class="keyword">this</span>);</span><br><span class="line"></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">for</span> (Object msg :</span><br><span class="line">        <span class="keyword">new</span> Object[] &#123;<span class="string">&quot;foo&quot;</span>, <span class="string">&quot;bar&quot;</span>, <span class="keyword">new</span> MyControlMessage(), PoisonPill.getInstance()&#125;) &#123;</span><br><span class="line">      getSelf().tell(msg, getSelf());</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> Receive <span class="title">createReceive</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> receiveBuilder()</span><br><span class="line">        .matchAny(</span><br><span class="line">            message -&gt; &#123;</span><br><span class="line">              log.info(message.toString());</span><br><span class="line">            &#125;)</span><br><span class="line">        .build();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// We create a new Actor that just prints out what it processes</span></span><br><span class="line">ActorRef myActor =</span><br><span class="line">    system.actorOf(Props.create(Demo.class, <span class="keyword">this</span>).withDispatcher(<span class="string">&quot;control-aware-dispatcher&quot;</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">Logs:</span></span><br><span class="line"><span class="comment">  &#x27;MyControlMessage</span></span><br><span class="line"><span class="comment">  &#x27;foo</span></span><br><span class="line"><span class="comment">  &#x27;bar</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+
+
+<h2 id="6-创建自己的邮箱类型"><a href="#6-创建自己的邮箱类型" class="headerlink" title="6.创建自己的邮箱类型"></a>6.创建自己的邮箱类型</h2><p>示例如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Marker interface used for mailbox requirements mapping</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">MyUnboundedMessageQueueSemantics</span> </span>&#123;&#125;</span><br></pre></td></tr></table></figure>
+
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> akka.actor.ActorRef;</span><br><span class="line"><span class="keyword">import</span> akka.actor.ActorSystem;</span><br><span class="line"><span class="keyword">import</span> akka.dispatch.Envelope;</span><br><span class="line"><span class="keyword">import</span> akka.dispatch.MailboxType;</span><br><span class="line"><span class="keyword">import</span> akka.dispatch.MessageQueue;</span><br><span class="line"><span class="keyword">import</span> akka.dispatch.ProducesMessageQueue;</span><br><span class="line"><span class="keyword">import</span> com.typesafe.config.Config;</span><br><span class="line"><span class="keyword">import</span> java.util.concurrent.ConcurrentLinkedQueue;</span><br><span class="line"><span class="keyword">import</span> java.util.Queue;</span><br><span class="line"><span class="keyword">import</span> scala.Option;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyUnboundedMailbox</span></span></span><br><span class="line"><span class="class">    <span class="keyword">implements</span> <span class="title">MailboxType</span>, <span class="title">ProducesMessageQueue</span>&lt;<span class="title">MyUnboundedMailbox</span>.<span class="title">MyMessageQueue</span>&gt; </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// This is the MessageQueue implementation</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">MyMessageQueue</span> <span class="keyword">implements</span> <span class="title">MessageQueue</span>, <span class="title">MyUnboundedMessageQueueSemantics</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Queue&lt;Envelope&gt; queue = <span class="keyword">new</span> ConcurrentLinkedQueue&lt;Envelope&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// these must be implemented; queue used as example</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">enqueue</span><span class="params">(ActorRef receiver, Envelope handle)</span> </span>&#123;</span><br><span class="line">      queue.offer(handle);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Envelope <span class="title">dequeue</span><span class="params">()</span> </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> queue.poll();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">numberOfMessages</span><span class="params">()</span> </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> queue.size();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">hasMessages</span><span class="params">()</span> </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> !queue.isEmpty();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">cleanUp</span><span class="params">(ActorRef owner, MessageQueue deadLetters)</span> </span>&#123;</span><br><span class="line">      <span class="keyword">for</span> (Envelope handle : queue) &#123;</span><br><span class="line">        deadLetters.enqueue(owner, handle);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// This constructor signature must exist, it will be called by Akka</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="title">MyUnboundedMailbox</span><span class="params">(ActorSystem.Settings settings, Config config)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// put your initialization code here</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// The create method is called to create the MessageQueue</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> MessageQueue <span class="title">create</span><span class="params">(Option&lt;ActorRef&gt; owner, Option&lt;ActorSystem&gt; system)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> MyMessageQueue();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>然后，将<code>MailboxType</code>的 FQCN 指定为调度器配置或邮箱配置中<code>mailbox-type</code>的值。</p>
+<ul>
+<li><strong>注释</strong>：请确保包含一个采用<code>akka.actor.ActorSystem.Settings</code>和<code>com.typesafe.config.Config</code>参数的构造函数，因为此构造函数是通过反射调用来构造邮箱类型的。作为第二个参数传入的配置是配置中描述使用此邮箱类型的调度器或邮箱设置的部分；邮箱类型将为使用它的每个调度器或邮箱设置实例化一次。</li>
+</ul>
+<p>你还可以使用邮箱作为调度器的要求（<code>requirement</code>），如下所示：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">custom-dispatcher &#123;</span><br><span class="line">  mailbox-requirement =</span><br><span class="line">  <span class="string">&quot;jdocs.dispatcher.MyUnboundedMessageQueueSemantics&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">akka.actor.mailbox.requirements &#123;</span><br><span class="line">  <span class="string">&quot;jdocs.dispatcher.MyUnboundedMessageQueueSemantics&quot;</span> =</span><br><span class="line">  custom-dispatcher-mailbox</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">custom-dispatcher-mailbox &#123;</span><br><span class="line">  mailbox-type = <span class="string">&quot;jdocs.dispatcher.MyUnboundedMailbox&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>或者像这样定义 Actor 类的要求：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">MySpecialActor</span> <span class="keyword">extends</span> <span class="title">AbstractActor</span></span></span><br><span class="line"><span class="class">    <span class="keyword">implements</span> <span class="title">RequiresMessageQueue</span>&lt;<span class="title">MyUnboundedMessageQueueSemantics</span>&gt; </span>&#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="7-system-actorOf-的特殊语义"><a href="#7-system-actorOf-的特殊语义" class="headerlink" title="7.system.actorOf 的特殊语义"></a>7.system.actorOf 的特殊语义</h2><p>为了使<code>system.actorOf</code>既同步又不阻塞，同时保持返回类型<code>ActorRef</code>（以及返回的<code>ref</code>完全起作用的语义），对这种情况进行了特殊处理。在幕后，构建了一种空的 Actor 引用，将其发送给系统的守护者 Actor，该 Actor 实际上创建了 Actor 及其上下文，并将其放入引用中。在这之前，发送到<code>ActorRef</code>的消息将在本地排队，只有在交换真正的填充之后，它们才会被传输到真正的邮箱中。因此，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> Props props = ...</span><br><span class="line"><span class="comment">// this actor uses MyCustomMailbox, which is assumed to be a singleton</span></span><br><span class="line">system.actorOf(props.withDispatcher(<span class="string">&quot;myCustomMailbox&quot;</span>).tell(<span class="string">&quot;bang&quot;</span>, sender);</span><br><span class="line"><span class="keyword">assert</span>(MyCustomMailbox.getInstance().getLastEnqueued().equals(<span class="string">&quot;bang&quot;</span>));</span><br></pre></td></tr></table></figure>
+
+
+<p>可能会失败；你必须留出一段时间通过并重试检查<code>TestKit.awaitCond</code>。<br>​</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1435522">https://cloud.tencent.com/developer/article/1435522</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Mailboxes/" title="Akka-Mailboxes" target="_blank" rel="external">https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Mailboxes/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/12/03/network/akka/Akka-Actor-%E7%9B%91%E7%AE%A1%E4%B8%8E%E5%AE%B9%E9%94%99/" title="Akka-Actor-监管与容错"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/12/03/network/akka/Akka-Cluster-Bug%E5%88%86%E6%9E%90/" title="Akka-Cluster-Bug分析"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

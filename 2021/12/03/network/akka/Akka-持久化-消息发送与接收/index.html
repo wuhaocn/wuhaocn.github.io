@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>Akka-持久化-消息发送与接收 | Hexo</title>
+  <meta name="description" content="1.概述  在《使用Akka持久化——持久化与快照》一文中介绍了如何使用Akka持久化消息及生成快照。对于集群应用来说，发送者发出消息，只有当收到了接受者的成功回复才应当认为是一次完整的请求和应答（一些RPC框架只提供了远程调用、序列化&#x2F;反序列化的机制，但是具体调用的成功与否实际是抛给了开发者本人），利用Akka的应答机制很容易实现这些功能。特殊情况下发送者发送了消息，但是最终接受者却没有接收到消">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Akka-持久化-消息发送与接收">
+<meta property="og:url" content="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-%E6%8C%81%E4%B9%85%E5%8C%96-%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E4%B8%8E%E6%8E%A5%E6%94%B6/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="1.概述  在《使用Akka持久化——持久化与快照》一文中介绍了如何使用Akka持久化消息及生成快照。对于集群应用来说，发送者发出消息，只有当收到了接受者的成功回复才应当认为是一次完整的请求和应答（一些RPC框架只提供了远程调用、序列化&#x2F;反序列化的机制，但是具体调用的成功与否实际是抛给了开发者本人），利用Akka的应答机制很容易实现这些功能。特殊情况下发送者发送了消息，但是最终接受者却没有接收到消">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1638194881274-1090ae0e-f718-4fe7-a8cb-ad75517df01d.png#clientId=ue70c9369-308a-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=39&id=u3b7e7e90&margin=%5Bobject%20Object%5D&name=image.png&originHeight=78&originWidth=550&originalType=binary&ratio=1&rotation=0&showTitle=false&size=19614&status=done&style=none&taskId=ua51cf7ee-a6c2-4f6b-bccc-9a3501e200c&title=&width=275">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1638194890814-0fbb271f-c805-4aeb-ad6e-ea273e911cf1.png#clientId=ue70c9369-308a-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=24&id=u6a72b8d4&margin=%5Bobject%20Object%5D&name=image.png&originHeight=47&originWidth=632&originalType=binary&ratio=1&rotation=0&showTitle=false&size=14867&status=done&style=none&taskId=u00ac55c8-ef21-4ed2-9762-df9011bbf7e&title=&width=316">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1638194898363-0b3dbc2e-6a80-416f-935c-9eb838483a5d.png#clientId=ue70c9369-308a-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=32&id=ufbd72f03&margin=%5Bobject%20Object%5D&name=image.png&originHeight=63&originWidth=631&originalType=binary&ratio=1&rotation=0&showTitle=false&size=19173&status=done&style=none&taskId=u48fb0c4c-13df-4868-b07e-969da1367c6&title=&width=315.5">
+<meta property="article:published_time" content="2021-12-03T08:23:51.202Z">
+<meta property="article:modified_time" content="2021-12-03T08:41:18.473Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="akka">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1638194881274-1090ae0e-f718-4fe7-a8cb-ad75517df01d.png#clientId=ue70c9369-308a-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=39&id=u3b7e7e90&margin=%5Bobject%20Object%5D&name=image.png&originHeight=78&originWidth=550&originalType=binary&ratio=1&rotation=0&showTitle=false&size=19614&status=done&style=none&taskId=ua51cf7ee-a6c2-4f6b-bccc-9a3501e200c&title=&width=275">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-%E6%8C%81%E4%B9%85%E5%8C%96-%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E4%B8%8E%E6%8E%A5%E6%94%B6/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/akka/" rel="tag">akka</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.33px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.17px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 13.67px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/akka/" style="font-size: 14px;">akka</a> <a href="/tags/atomic/" style="font-size: 13.33px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.5px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/sort/" style="font-size: 13.83px;">sort</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.33px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">20</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">24</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-SLF4J%E6%89%93%E5%8D%B0%E6%97%A5%E5%BF%97/" class="title">Akka-SLF4J打印日志</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T09:08:28.304Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Remote-%E9%85%8D%E7%BD%AE/" class="title">Akka-Remote-配置</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:24:00.895Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-%E6%8C%81%E4%B9%85%E5%8C%96-%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E4%B8%8E%E6%8E%A5%E6%94%B6/" class="title">Akka-持久化-消息发送与接收</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:23:51.202Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Actor-DeadLetter%E7%9B%91%E5%90%AC/" class="title">Akka-Actor-DeadLetter监听</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:22:48.138Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Actor-%E7%9B%91%E7%AE%A1%E4%B8%8E%E5%AE%B9%E9%94%99/" class="title">Akka-Actor-监管与容错</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:22:40.247Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-network/akka/Akka-持久化-消息发送与接收" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Akka-持久化-消息发送与接收
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/12/03/network/akka/Akka-%E6%8C%81%E4%B9%85%E5%8C%96-%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E4%B8%8E%E6%8E%A5%E6%94%B6/" class="article-date">
+	  <time datetime="2021-12-03T08:23:51.202Z" itemprop="datePublished">2021-12-03</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/akka/" rel="tag">akka</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/12/03/network/akka/Akka-%E6%8C%81%E4%B9%85%E5%8C%96-%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E4%B8%8E%E6%8E%A5%E6%94%B6/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1.概述"></a>1.概述</h2><pre><code>  在《使用Akka持久化——持久化与快照》一文中介绍了如何使用Akka持久化消息及生成快照。对于集群应用来说，发送者发出消息，只有当收到了接受者的成功回复才应当认为是一次完整的请求和应答（一些RPC框架只提供了远程调用、序列化/反序列化的机制，但是具体调用的成功与否实际是抛给了开发者本人），利用Akka的应答机制很容易实现这些功能。特殊情况下发送者发送了消息，但是最终接受者却没有接收到消息，导致这一情况发生的因素很多（例如：发送者调用完发送接口后，发送者所在进程奔溃了；网络故障；接收者不存在等）。如果这些消息的成功接收与处理对于整个应用而言具有强一致性的要求，那么这些都会导致很多困扰，好在我们可以使用Akka的持久化机制。
+</code></pre>
+<p>​</p>
+<p> 发送者在发送消息之前先对消息进行持久化，那么无论任何原因导致没有收到接收者的成功回复时，我们总能有办法从持久化信息中找出那些未被成功回复的消息进行重发（这说明接收者接到的消息有可能会重复，此时需要保证接收者的实现是冥等的）。当接收者收到消息进行处理后需要向发送者发送成功回复，发送者收到回复后的第一个动作应当是对回复内容的持久化，否则有可能在还未真正对成功回复处理时宕机或进程奔溃导致回复消息丢失（在持久化与收到消息之间仍然会存在宕机和进程奔溃的情况，只不过这个时间非常短，因此丢失回复的可能会很低），当持久化回复消息完成后，可以自己慢慢来处理这些确认信息，而不用担心它们丢失了。<br>​</p>
+<p> 本文将根据Akka官网的例子，对其做一些适应性改造后，向大家展示Akka持久化的另一个强大武器——At least once delivery！<br><a target="_blank" rel="noopener" href="https://blog.csdn.net/beliefer/article/details/53929751">
+</a></p>
+<h2 id="2-消息投递规则"><a href="#2-消息投递规则" class="headerlink" title="2.消息投递规则"></a>2.消息投递规则</h2><p> 一般而言，消息投递有下面三种情况：</p>
+<ul>
+<li><p>at-most-once 意味着每条应用了这种机制的消息会被投递0次或1次。可以说这条消息可能会丢失。</p>
+</li>
+<li><p>at-least-once 意味着每条应用了这种机制的消息潜在的存在多次投递尝试并保证至少会成功一次。就是说这条消息可能会重复但是不会丢失。</p>
+</li>
+<li><p>exactly-once 意味着每条应用了这种机制的消息只会向接收者准确的发送一次。换言之，这种消息既不会丢失也不会重复。</p>
+<pre><code>at-most-once的成本最低且性能最高，因为它在发送完消息后不会尝试去记录任何状态，然后这条消息将被他抛之脑后。at-least-once需要发送者必须认识它所发送过的消息，并对没有收到回复的消息进行发送重试。exactly-once的成本是三者中最高的而且性能却又是三者中最差的，它除了要求发送者有记忆和重试能力，还要求接收者能够认识接收过的消息并能过滤出那些重复的消息投递。Akka的Actor模型一般提供的消息都属于at-most-once，那是因为大多数场景都不需要有状态的消息投递，例如web服务器请求。当你有强一致性需求时，才应该启用Akka的at-least-once机制，那就是你的Actor不再继承自UntypedActor，而是继承自UntypedPersistentActorWithAtLeastOnceDelivery。
+</code></pre>
+<h2 id="3-配置"><a href="#3-配置" class="headerlink" title="3.配置"></a>3.配置</h2><p>如果要使用，那么需要在中增加以下的一些配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">at-least-once-delivery &#123;</span><br><span class="line">  redeliver-interval = 20000</span><br><span class="line">  redelivery-burst-limit = 100</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> redeliver-interval用于配置重新进行投递尝试的时间间隔，单位是毫秒。redelivery-burst-limit用于配置每次重新执行投递尝试时发送的最大消息条数。<br>​</p>
+</li>
+</ul>
+<h2 id="4-一致性消息例子"><a href="#4-一致性消息例子" class="headerlink" title="4.一致性消息例子"></a>4.一致性消息例子</h2><p> 我们首先来看看本例中用到的消息体MsgSent、Msg、Confirm及MsgConfirmed。MsgSent代表将要发送的消息，但是只用于持久化，持久化完成后会将MsgSent转换为Msg进行发送。也就是说Msg才会被真正用于消息发送。接收者收到Msg消息后将向发送者回复Confirm消息，需要注意的是Msg和Confirm都有属性deliveryId，此deliveryId由发送者的持久化功能生成，一条Msg消息和其对应的Confirm回复的deliveryId必须一致，否则在利用UntypedPersistentActorWithAtLeastOnceDelivery对回复消息进行确认时会产生严重的bug。发送者收到接收者的Confirm回复后首先将其转换为MsgConfirmed，然后对MsgConfirmed进行持久化，最后调用UntypedPersistentActorWithAtLeastOnceDelivery提供的confirmDelivery方法对回复进行确认。MsgSent、Msg、Confirm及MsgConfirmed的代码实现如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">public interface Persistence &#123;</span><br><span class="line"> </span><br><span class="line">	public static class Msg implements Serializable &#123;</span><br><span class="line">		private static final long serialVersionUID = 1L;</span><br><span class="line">		public final long deliveryId;</span><br><span class="line">		public final String s;</span><br><span class="line"> </span><br><span class="line">		public Msg(long deliveryId, String s) &#123;</span><br><span class="line">			this.deliveryId = deliveryId;</span><br><span class="line">			this.s = s;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"> </span><br><span class="line">	public static class Confirm implements Serializable &#123;</span><br><span class="line">		private static final long serialVersionUID = 1L;</span><br><span class="line">		public final long deliveryId;</span><br><span class="line"> </span><br><span class="line">		public Confirm(long deliveryId) &#123;</span><br><span class="line">			this.deliveryId = deliveryId;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"> </span><br><span class="line">	public static class MsgSent implements Serializable &#123;</span><br><span class="line">		private static final long serialVersionUID = 1L;</span><br><span class="line">		public final String s;</span><br><span class="line"> </span><br><span class="line">		public MsgSent(String s) &#123;</span><br><span class="line">			this.s = s;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"> </span><br><span class="line">	public static class MsgConfirmed implements Serializable &#123;</span><br><span class="line">		private static final long serialVersionUID = 1L;</span><br><span class="line">		public final long deliveryId;</span><br><span class="line"> </span><br><span class="line">		public MsgConfirmed(long deliveryId) &#123;</span><br><span class="line">			this.deliveryId = deliveryId;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="4-1-服务端"><a href="#4-1-服务端" class="headerlink" title="4.1.服务端"></a>4.1.服务端</h3><p>本例中的服务端非常简单，是一个接收处理Msg消息，并向发送者回复Confirm消息的Actor，代码如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">@Named(&quot;MyDestination&quot;)</span><br><span class="line">@Scope(&quot;prototype&quot;)</span><br><span class="line">public class MyDestination extends UntypedActor &#123;</span><br><span class="line">	</span><br><span class="line">	LoggingAdapter log = Logging.getLogger(getContext().system(), this);</span><br><span class="line">	</span><br><span class="line">	public void onReceive(Object message) throws Exception &#123;</span><br><span class="line">		if (message instanceof Msg) &#123;</span><br><span class="line">			Msg msg = (Msg) message;</span><br><span class="line">			log.info(&quot;receive msg : &quot; + msg.s + &quot;, deliveryId : &quot; + msg.deliveryId);</span><br><span class="line">			getSender().tell(new Confirm(msg.deliveryId), getSelf());</span><br><span class="line">		&#125; else &#123;</span><br><span class="line">			unhandled(message);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>服务端的启动代码如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">logger.info(&quot;Start myDestination&quot;);</span><br><span class="line">final ActorRef myDestination = actorSystem.actorOf(springExt.props(&quot;MyDestination&quot;), &quot;myDestination&quot;);</span><br><span class="line">logger.info(&quot;Started myDestination&quot;);</span><br></pre></td></tr></table></figure>
+<h3 id="4-2-客户端"><a href="#4-2-客户端" class="headerlink" title="4.2.客户端"></a>4.2.客户端</h3><p>具体介绍客户端之前，先来列出其实现，代码如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line">@Named(&quot;MyPersistentActor&quot;)</span><br><span class="line">@Scope(&quot;prototype&quot;)</span><br><span class="line">public class MyPersistentActor extends UntypedPersistentActorWithAtLeastOnceDelivery &#123;</span><br><span class="line">	</span><br><span class="line">	LoggingAdapter log = Logging.getLogger(getContext().system(), this);</span><br><span class="line">	</span><br><span class="line">	private final ActorSelection destination;</span><br><span class="line"> </span><br><span class="line">	@Override</span><br><span class="line">	public String persistenceId() &#123;</span><br><span class="line">		return &quot;persistence-id&quot;;</span><br><span class="line">	&#125;</span><br><span class="line"> </span><br><span class="line">	public MyPersistentActor(ActorSelection destination) &#123;</span><br><span class="line">		this.destination = destination;</span><br><span class="line">	&#125;</span><br><span class="line"> </span><br><span class="line">	@Override</span><br><span class="line">	public void onReceiveCommand(Object message) &#123;</span><br><span class="line">		if (message instanceof String) &#123;</span><br><span class="line">			String s = (String) message;</span><br><span class="line">			log.info(&quot;receive msg : &quot; + s);</span><br><span class="line">			persist(new MsgSent(s), new Procedure&lt;MsgSent&gt;() &#123;</span><br><span class="line">				public void apply(MsgSent evt) &#123;</span><br><span class="line">					updateState(evt);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;);</span><br><span class="line">		&#125; else if (message instanceof Confirm) &#123;</span><br><span class="line">			Confirm confirm = (Confirm) message;</span><br><span class="line">			log.info(&quot;receive confirm with deliveryId : &quot; + confirm.deliveryId);</span><br><span class="line">			persist(new MsgConfirmed(confirm.deliveryId), new Procedure&lt;MsgConfirmed&gt;() &#123;</span><br><span class="line">				public void apply(MsgConfirmed evt) &#123;</span><br><span class="line">					updateState(evt);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;);</span><br><span class="line">		&#125; else if (message instanceof UnconfirmedWarning) &#123;</span><br><span class="line">			log.info(&quot;receive unconfirmed warning : &quot; + message);</span><br><span class="line">			// After a number of delivery attempts a AtLeastOnceDelivery.UnconfirmedWarning message will be sent to self. The re-sending will still continue, but you can choose to call confirmDelivery to cancel the re-sending. </span><br><span class="line">			List&lt;UnconfirmedDelivery&gt; list = ((UnconfirmedWarning) message).getUnconfirmedDeliveries();</span><br><span class="line">			for (UnconfirmedDelivery unconfirmedDelivery : list) &#123;</span><br><span class="line">				Msg msg = (Msg) unconfirmedDelivery.getMessage();</span><br><span class="line">				confirmDelivery(msg.deliveryId);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125; else &#123;</span><br><span class="line">			unhandled(message);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"> </span><br><span class="line">	@Override</span><br><span class="line">	public void onReceiveRecover(Object event) &#123;</span><br><span class="line">		updateState(event);</span><br><span class="line">	&#125;</span><br><span class="line"> </span><br><span class="line">	void updateState(Object event) &#123;</span><br><span class="line">		if (event instanceof MsgSent) &#123;</span><br><span class="line">			final MsgSent evt = (MsgSent) event;</span><br><span class="line">			deliver(destination, new Function&lt;Long, Object&gt;() &#123;</span><br><span class="line">				public Object apply(Long deliveryId) &#123;</span><br><span class="line">					return new Msg(deliveryId, evt.s);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;);</span><br><span class="line">		&#125; else if (event instanceof MsgConfirmed) &#123;</span><br><span class="line">			final MsgConfirmed evt = (MsgConfirmed) event;</span><br><span class="line">			confirmDelivery(evt.deliveryId);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>正如我们之前所述——要使用at-least-once的能力，就必须继承UntypedPersistentActorWithAtLeastOnceDelivery。有关MsgSent、Msg、Confirm及MsgConfirmed等消息的处理过程已经介绍过，这里不再赘述。我们注意到onReceiveCommand方法还处理了一种名为UnconfirmedWarning的消息，这类消息将在at-least-once机制下进行无限或者一定数量的投递尝试后发送给当前Actor，这里的数量可以通过在at-least-once-delivery配置中增加配置项warn-after-number-of-unconfirmed-attempts来调整，例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">at-least-once-delivery &#123;</span><br><span class="line">  redeliver-interval = 20000</span><br><span class="line">  redelivery-burst-limit = 100</span><br><span class="line">  warn-after-number-of-unconfirmed-attempts = 6</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>当你收到UnconfirmedWarning的消息时，说明已经超出了你期望的最大重试次数，此时可以做一些控制了，例如：对于这些消息发送报警、丢弃等。本例中选择了丢弃。<br>​</p>
+<p>UntypedPersistentActorWithAtLeastOnceDelivery的状态由那些尚未被确认的消息和一个序列号组成。UntypedPersistentActorWithAtLeastOnceDelivery本身不会存储这些状态，依然需要你在调用deliver方法投递消息之前，调用persist方法持久化这些事件或消息，以便于当持久化Actor能够在恢复阶段恢复。在恢复阶段，deliver方法并不会将发出消息，此时持久化Actor一面恢复，一面只能等待接收回复。当恢复完成，deliver将发送那些被缓存的消息（除了收到回复，并调用confirmDelivery方法的消息）。</p>
+<h3 id="4-3-运行例子"><a href="#4-3-运行例子" class="headerlink" title="4.3.运行例子"></a>4.3.运行例子</h3><p>本文将率先启动客户端并向服务端发送hello-1，hello-2，hello-3这三消息，但是由于服务端此时并未启动，所以客户端会不断重试，直到重试达到上限或者受到回复并确认。服务端发送消息的代码如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">logger.info(&quot;Start myPersistentActor&quot;);</span><br><span class="line">final String path = &quot;akka.tcp://metadataAkkaSystem@127.0.0.1:2551/user/myDestination&quot;;</span><br><span class="line">final ActorSelection destination = actorSystem.actorSelection(path);</span><br><span class="line">final ActorRef myPersistentActor = actorSystem.actorOf(springExt.props(&quot;MyPersistentActor&quot;, destination), &quot;myPersistentActor&quot;);</span><br><span class="line">actorMap.put(&quot;myPersistentActor&quot;, myPersistentActor);</span><br><span class="line">logger.info(&quot;Started myPersistentActor&quot;);</span><br><span class="line">myPersistentActor.tell(&quot;hello-1&quot;, null);</span><br><span class="line">myPersistentActor.tell(&quot;hello-2&quot;, null);</span><br><span class="line">myPersistentActor.tell(&quot;hello-3&quot;, null);</span><br></pre></td></tr></table></figure>
+
+<p>客户端发送三条消息后，日志中立马打印出了以下内容：<br><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1638194881274-1090ae0e-f718-4fe7-a8cb-ad75517df01d.png#clientId=ue70c9369-308a-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=39&id=u3b7e7e90&margin=%5Bobject%20Object%5D&name=image.png&originHeight=78&originWidth=550&originalType=binary&ratio=1&rotation=0&showTitle=false&size=19614&status=done&style=none&taskId=ua51cf7ee-a6c2-4f6b-bccc-9a3501e200c&title=&width=275" alt="image.png"><br>但是一直未受到回复信息，然后我们启动服务端，不一会就看到了以下日志输出：<br><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1638194890814-0fbb271f-c805-4aeb-ad6e-ea273e911cf1.png#clientId=ue70c9369-308a-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=24&id=u6a72b8d4&margin=%5Bobject%20Object%5D&name=image.png&originHeight=47&originWidth=632&originalType=binary&ratio=1&rotation=0&showTitle=false&size=14867&status=done&style=none&taskId=u00ac55c8-ef21-4ed2-9762-df9011bbf7e&title=&width=316" alt="image.png"><br>我们再来看看客户端，发现已经收到了回复，内容如下：<br><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1638194898363-0b3dbc2e-6a80-416f-935c-9eb838483a5d.png#clientId=ue70c9369-308a-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=32&id=ufbd72f03&margin=%5Bobject%20Object%5D&name=image.png&originHeight=63&originWidth=631&originalType=binary&ratio=1&rotation=0&showTitle=false&size=19173&status=done&style=none&taskId=u48fb0c4c-13df-4868-b07e-969da1367c6&title=&width=315.5" alt="image.png"></p>
+<h3 id="4-4-总结"><a href="#4-4-总结" class="headerlink" title="4.4.总结"></a>4.4.总结</h3><p>通过使用UntypedPersistentActorWithAtLeastOnceDelivery提供的persist、deliver及confirmDelivery等方法可以对整个应用的at-least-once需求，轻松实现在框架层面上一致的实现。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>​<a target="_blank" rel="noopener" href="https://blog.csdn.net/beliefer/article/details/53929751">https://blog.csdn.net/beliefer/article/details/53929751</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-%E6%8C%81%E4%B9%85%E5%8C%96-%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E4%B8%8E%E6%8E%A5%E6%94%B6/" title="Akka-持久化-消息发送与接收" target="_blank" rel="external">https://wuhaocn.github.io/2021/12/03/network/akka/Akka-持久化-消息发送与接收/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/12/03/network/akka/Akka-Remote-%E9%85%8D%E7%BD%AE/" title="Akka-Remote-配置"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/12/03/network/akka/Akka-Actor-DeadLetter%E7%9B%91%E5%90%AC/" title="Akka-Actor-DeadLetter监听"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

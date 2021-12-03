@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>Akka-Actor-Actor发消息 | Hexo</title>
+  <meta name="description" content="1.概述1.1 示例   前面两简单介绍了ActorSystem、actor以及dispatcher和mailbox的创建，下面我们就来看一下actor发消息的内部机制。 123val system &#x3D; ActorSystem(&quot;firstActorSystem&quot;,ConfigFactory.load())val helloActor &#x3D; system.actorOf(Prop">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Akka-Actor-Actor发消息">
+<meta property="og:url" content="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Actor-Actor%E5%8F%91%E6%B6%88%E6%81%AF/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="1.概述1.1 示例   前面两简单介绍了ActorSystem、actor以及dispatcher和mailbox的创建，下面我们就来看一下actor发消息的内部机制。 123val system &#x3D; ActorSystem(&quot;firstActorSystem&quot;,ConfigFactory.load())val helloActor &#x3D; system.actorOf(Prop">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-12-03T07:49:33.192Z">
+<meta property="article:modified_time" content="2021-12-03T09:07:15.120Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="akka">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Actor-Actor%E5%8F%91%E6%B6%88%E6%81%AF/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/akka/" rel="tag">akka</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.33px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.17px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 13.67px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/akka/" style="font-size: 14px;">akka</a> <a href="/tags/atomic/" style="font-size: 13.33px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.5px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/sort/" style="font-size: 13.83px;">sort</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.33px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">20</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">24</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-SLF4J%E6%89%93%E5%8D%B0%E6%97%A5%E5%BF%97/" class="title">Akka-SLF4J打印日志</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T09:08:28.304Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Remote-%E9%85%8D%E7%BD%AE/" class="title">Akka-Remote-配置</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:24:00.895Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-%E6%8C%81%E4%B9%85%E5%8C%96-%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E4%B8%8E%E6%8E%A5%E6%94%B6/" class="title">Akka-持久化-消息发送与接收</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:23:51.202Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Actor-DeadLetter%E7%9B%91%E5%90%AC/" class="title">Akka-Actor-DeadLetter监听</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:22:48.138Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Actor-%E7%9B%91%E7%AE%A1%E4%B8%8E%E5%AE%B9%E9%94%99/" class="title">Akka-Actor-监管与容错</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:22:40.247Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-network/akka/Akka-Actor-Actor发消息" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Akka-Actor-Actor发消息
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/12/03/network/akka/Akka-Actor-Actor%E5%8F%91%E6%B6%88%E6%81%AF/" class="article-date">
+	  <time datetime="2021-12-03T07:49:33.192Z" itemprop="datePublished">2021-12-03</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/akka/" rel="tag">akka</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/12/03/network/akka/Akka-Actor-Actor%E5%8F%91%E6%B6%88%E6%81%AF/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1.概述"></a>1.概述</h2><h3 id="1-1-示例"><a href="#1-1-示例" class="headerlink" title="1.1 示例"></a>1.1 示例</h3><p>   前面两简单介绍了ActorSystem、actor以及dispatcher和mailbox的创建，下面我们就来看一下actor发消息的内部机制。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">val system = ActorSystem(&quot;firstActorSystem&quot;,ConfigFactory.load())</span><br><span class="line">val helloActor = system.actorOf(Props(new HelloActor),&quot;HelloActor&quot;)</span><br><span class="line">helloActor ! &quot;Hello&quot;</span><br></pre></td></tr></table></figure>
+<p>   同样还是回到一个简单的akka应用，通过之前的分析我们知道，helloActor应该是一个RepointableActorRef类型的对象，那么调用 ！ 应该也是调用RepointableActorRef对应的 ！ 方法。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">def !(message: Any)(implicit sender: ActorRef = Actor.noSender) = underlying.sendMessage(message, sender)</span><br></pre></td></tr></table></figure>
+<h3 id="1-2-解析"><a href="#1-2-解析" class="headerlink" title="1.2 解析"></a>1.2 解析</h3><p>   上面是RepointableActorRef对！方法的实现，其实就是调用underlying.sendMessage。怎么样，underliying是不是似曾相似呢？再来看看underliying的定义，它是一个Cell类，不过获取过程稍显复杂啊。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">/*</span><br><span class="line">  * H E R E   B E   D R A G O N S !</span><br><span class="line">  *</span><br><span class="line">  * There are two main functions of a Cell: message queueing and child lookup.</span><br><span class="line">  * When switching out the UnstartedCell for its real replacement, the former</span><br><span class="line">  * must be switched after all messages have been drained from the temporary</span><br><span class="line">  * queue into the real mailbox, while the latter must be switched before</span><br><span class="line">  * processing the very first message (i.e. before Cell.start()). Hence there</span><br><span class="line">  * are two refs here, one for each function, and they are switched just so.</span><br><span class="line">  */</span><br><span class="line"> @volatile private var _cellDoNotCallMeDirectly: Cell = _</span><br><span class="line"> @volatile private var _lookupDoNotCallMeDirectly: Cell = _</span><br><span class="line"> </span><br><span class="line"> def underlying: Cell = Unsafe.instance.getObjectVolatile(this, cellOffset).asInstanceOf[Cell]</span><br><span class="line"> def lookup = Unsafe.instance.getObjectVolatile(this, lookupOffset).asInstanceOf[Cell]</span><br><span class="line"> </span><br><span class="line"> @tailrec final def swapCell(next: Cell): Cell = &#123;</span><br><span class="line">   val old = underlying</span><br><span class="line">   if (Unsafe.instance.compareAndSwapObject(this, cellOffset, old, next)) old else swapCell(next)</span><br><span class="line"> &#125;</span><br><span class="line"> </span><br><span class="line"> @tailrec final def swapLookup(next: Cell): Cell = &#123;</span><br><span class="line">   val old = lookup</span><br><span class="line">   if (Unsafe.instance.compareAndSwapObject(this, lookupOffset, old, next)) old else swapLookup(next)</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<pre><code> 从官网源码的注释来看，这两个cell的功能进行了严格区分。一个用来消息的出队、入队，一个用来查找child。不过从initialize的逻辑来看，刚开始underlying是一个UnstartedCell实例。
+</code></pre>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">def sendMessage(msg: Envelope): Unit = &#123;</span><br><span class="line">   if (lock.tryLock(timeout.length, timeout.unit)) &#123;</span><br><span class="line">     try &#123;</span><br><span class="line">       val cell = self.underlying</span><br><span class="line">       if (cellIsReady(cell)) &#123;</span><br><span class="line">         cell.sendMessage(msg)</span><br><span class="line">       &#125; else if (!queue.offer(msg)) &#123;</span><br><span class="line">         system.eventStream.publish(Warning(self.path.toString, getClass, &quot;dropping message of type &quot; + msg.message.getClass + &quot; due to enqueue failure&quot;))</span><br><span class="line">         system.deadLetters.tell(DeadLetter(msg.message, msg.sender, self), msg.sender)</span><br><span class="line">       &#125; else if (Mailbox.debug) println(s&quot;$self temp queueing $&#123;msg.message&#125; from $&#123;msg.sender&#125;&quot;)</span><br><span class="line">     &#125; finally lock.unlock()</span><br><span class="line">   &#125; else &#123;</span><br><span class="line">     system.eventStream.publish(Warning(self.path.toString, getClass, &quot;dropping message of type&quot; + msg.message.getClass + &quot; due to lock timeout&quot;))</span><br><span class="line">     system.deadLetters.tell(DeadLetter(msg.message, msg.sender, self), msg.sender)</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<pre><code> 上面是UnstartedCell的sendMessage的具体实现。从代码来看如果underlying已经ready的话，就调用相应的sendMessage方法否则就把消息暂存到JLinkedList里面，其实就是java的LinkedList；如果暂存失败，则把消息发送到eventStream，并转发给deadLetters。那么underlying怎么判断是ready呢？
+</code></pre>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">private[this] final def cellIsReady(cell: Cell): Boolean = (cell ne this) &amp;&amp; (cell ne null)</span><br></pre></td></tr></table></figure>
+<pre><code> 这判断方法也挺简单，就是判断RepointableActorRef的underlying和当前的cell指针是不是相同。还记得underlying是怎么初始化的吗？没错，就是一个UnstartedCell。那么underlying什么时候被修改了呢，或者说什么时候ready了呢？这个就要研究RepointableActorRef中用到underlying字段的地方了。
+</code></pre>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">def point(catchFailures: Boolean): this.type =</span><br><span class="line">    underlying match &#123;</span><br><span class="line">      case u: UnstartedCell ⇒</span><br><span class="line">        val cell =</span><br><span class="line">          try newCell(u)</span><br><span class="line">          catch &#123;</span><br><span class="line">            case NonFatal(ex) if catchFailures ⇒</span><br><span class="line">              val safeDispatcher = system.dispatchers.defaultGlobalDispatcher</span><br><span class="line">              new ActorCell(system, this, props, safeDispatcher, supervisor).initWithFailure(ex)</span><br><span class="line">          &#125;</span><br><span class="line">        /*</span><br><span class="line">         * The problem here was that if the real actor (which will start running</span><br><span class="line">         * at cell.start()) creates children in its constructor, then this may</span><br><span class="line">         * happen before the swapCell in u.replaceWith, meaning that those</span><br><span class="line">         * children cannot be looked up immediately, e.g. if they shall become</span><br><span class="line">         * routees.</span><br><span class="line">         */</span><br><span class="line">        swapLookup(cell)</span><br><span class="line">        cell.start()</span><br><span class="line">        u.replaceWith(cell)</span><br><span class="line">        this</span><br><span class="line">      case null ⇒ throw new IllegalStateException(&quot;underlying cell is null&quot;)</span><br><span class="line">      case _    ⇒ this // this happens routinely for things which were created async=false</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<pre><code>   还记得initialize最后调用了point么，我们来看看这个函数是干啥的？看到没，它在判断underlying的类型，如果是UnstartedCell做了什么呢？简单来说就是它创建了一个新的ActorCell，然后调用新ActorCell的start函数，最后调用UnstartedCell的replaceWith函数。那么replaceWith做了什么呢？
+</code></pre>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">def replaceWith(cell: Cell): Unit = locked &#123;</span><br><span class="line">  try &#123;</span><br><span class="line">    def drainSysmsgQueue(): Unit = &#123;</span><br><span class="line">      // using while in case a sys msg enqueues another sys msg</span><br><span class="line">      while (sysmsgQueue.nonEmpty) &#123;</span><br><span class="line">        var sysQ = sysmsgQueue.reverse</span><br><span class="line">        sysmsgQueue = SystemMessageList.LNil</span><br><span class="line">        while (sysQ.nonEmpty) &#123;</span><br><span class="line">          val msg = sysQ.head</span><br><span class="line">          sysQ = sysQ.tail</span><br><span class="line">          msg.unlink()</span><br><span class="line">          cell.sendSystemMessage(msg)</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    drainSysmsgQueue()</span><br><span class="line"> </span><br><span class="line">    while (!queue.isEmpty) &#123;</span><br><span class="line">      cell.sendMessage(queue.poll())</span><br><span class="line">      // drain sysmsgQueue in case a msg enqueues a sys msg</span><br><span class="line">      drainSysmsgQueue()</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; finally &#123;</span><br><span class="line">    self.swapCell(cell)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code>   代码也比较简单，就是先把系统消息取出发送给新的Cell，然后把原来暂存的消息通过sendMessage转发给新Cell。最后调用了原来的swapCell函数，用刚才新创建的ActorCell替换underlying。
+</code></pre>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">   * This is called by activate() to obtain the cell which is to replace the</span><br><span class="line">   * unstarted cell. The cell must be fully functional.</span><br><span class="line">   */</span><br><span class="line">  def newCell(old: UnstartedCell): Cell =</span><br><span class="line">    new ActorCell(system, this, props, dispatcher, supervisor).init(sendSupervise = false, mailboxType)</span><br></pre></td></tr></table></figure>
+<pre><code>     我们来看看新ActorCell的创建代码，也比较简单，就是new了一个ActorCell，然后调用init进行初始化。其实分析到这里，基本也就清楚了，helloActor ! &quot;Hello&quot;最终调用了ActorCell的sendMessage方法。不过在ActorCell里面并没有直接找到sendMessage的方法，这是为啥呢？是不是我们分析错了呢。在分析一下newCell方法我们会发现，它并没有直接返回ActorCell，而是返回了ActorCell调用你init之后的对象，我们似乎没有分析init，那就继续看吧。
+</code></pre>
+<p>通过追踪代码我们发现，init这是ActorCell从Dispatch继承的方法。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">   * Initialize this cell, i.e. set up mailboxes and supervision. The UID must be</span><br><span class="line">   * reasonably different from the previous UID of a possible actor with the same path,</span><br><span class="line">   * which can be achieved by using ThreadLocalRandom.current.nextInt().</span><br><span class="line">   */</span><br><span class="line">  final def init(sendSupervise: Boolean, mailboxType: MailboxType): this.type = &#123;</span><br><span class="line">    /*</span><br><span class="line">     * Create the mailbox and enqueue the Create() message to ensure that</span><br><span class="line">     * this is processed before anything else.</span><br><span class="line">     */</span><br><span class="line">    val mbox = dispatcher.createMailbox(this, mailboxType)</span><br><span class="line"> </span><br><span class="line">    /*</span><br><span class="line">     * The mailboxType was calculated taking into account what the MailboxType</span><br><span class="line">     * has promised to produce. If that was more than the default, then we need</span><br><span class="line">     * to reverify here because the dispatcher may well have screwed it up.</span><br><span class="line">     */</span><br><span class="line">    // we need to delay the failure to the point of actor creation so we can handle</span><br><span class="line">    // it properly in the normal way</span><br><span class="line">    val actorClass = props.actorClass</span><br><span class="line">    val createMessage = mailboxType match &#123;</span><br><span class="line">      case _: ProducesMessageQueue[_] if system.mailboxes.hasRequiredType(actorClass) ⇒</span><br><span class="line">        val req = system.mailboxes.getRequiredType(actorClass)</span><br><span class="line">        if (req isInstance mbox.messageQueue) Create(None)</span><br><span class="line">        else &#123;</span><br><span class="line">          val gotType = if (mbox.messageQueue == null) &quot;null&quot; else mbox.messageQueue.getClass.getName</span><br><span class="line">          Create(Some(ActorInitializationException(</span><br><span class="line">            self,</span><br><span class="line">            s&quot;Actor [$self] requires mailbox type [$req] got [$gotType]&quot;)))</span><br><span class="line">        &#125;</span><br><span class="line">      case _ ⇒ Create(None)</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    swapMailbox(mbox)</span><br><span class="line">    mailbox.setActor(this)</span><br><span class="line"> </span><br><span class="line">    // ➡➡➡ NEVER SEND THE SAME SYSTEM MESSAGE OBJECT TO TWO ACTORS ⬅⬅⬅</span><br><span class="line">    mailbox.systemEnqueue(self, createMessage)</span><br><span class="line"> </span><br><span class="line">    if (sendSupervise) &#123;</span><br><span class="line">      // ➡➡➡ NEVER SEND THE SAME SYSTEM MESSAGE OBJECT TO TWO ACTORS ⬅⬅⬅</span><br><span class="line">      parent.sendSystemMessage(akka.dispatch.sysmsg.Supervise(self, async = false))</span><br><span class="line">    &#125;</span><br><span class="line">    this</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+
+<pre><code>  首先用dispatcher创建了mailbox，那么dispatcher从哪里来的呢？从Dispatch的定义我们看出，继承Dispatch的一定子类必定是一个ActorCell，那么很明显，这个Dispatch就是子类ActorCell的的dispatcher字段。
+</code></pre>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">private[akka] trait Dispatch &#123; this: ActorCell ⇒</span><br></pre></td></tr></table></figure>
+<p>从前面的分析我们知道dispatcher是akka.dispatch.Dispatcher的一个实例，下面是createMailbox函数的具体实现。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * INTERNAL API</span><br><span class="line"> */</span><br><span class="line">protected[akka] def createMailbox(actor: akka.actor.Cell, mailboxType: MailboxType): Mailbox = &#123;</span><br><span class="line">  new Mailbox(mailboxType.create(Some(actor.self), Some(actor.system))) with DefaultSystemMessageQueue</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下面是Mailbox的定义，它继承了ForkJoinTask[Unit] 、SystemMessageQueue、Runnable，这好像可以放到线程池去执行的，不过我们先略过不作分析。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Mailbox and InternalMailbox is separated in two classes because ActorCell is needed for implementation,</span><br><span class="line"> * but can&#x27;t be exposed to user defined mailbox subclasses.</span><br><span class="line"> *</span><br><span class="line"> * INTERNAL API</span><br><span class="line"> */</span><br><span class="line">private[akka] abstract class Mailbox(val messageQueue: MessageQueue)</span><br><span class="line">  extends ForkJoinTask[Unit] with SystemMessageQueue with Runnable</span><br></pre></td></tr></table></figure>
+
+
+<p>继续分析init我们发现，它通过swapMailbox方法把新创建的mbox赋值给了mailbox，然后又通过setActor把ActorCell与mailbox进行关联，最后给mailBox发送了一个createMessage。这也不再深入分析，继续回到Dispatch特质。<br>我们发现ActorCell虽然没有实现sendMessage，但它继承的Dispatch实现了这个方法。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">def sendMessage(msg: Envelope): Unit =</span><br><span class="line">    try &#123;</span><br><span class="line">      val msgToDispatch =</span><br><span class="line">        if (system.settings.SerializeAllMessages) serializeAndDeserialize(msg)</span><br><span class="line">        else msg</span><br><span class="line"> </span><br><span class="line">      dispatcher.dispatch(this, msgToDispatch)</span><br><span class="line">    &#125; catch handleException</span><br></pre></td></tr></table></figure>
+<p>很明显，最终调用了dispatcher的dispatch方法，把消息发送出去了。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">  * INTERNAL API</span><br><span class="line">  */</span><br><span class="line"> protected[akka] def dispatch(receiver: ActorCell, invocation: Envelope): Unit = &#123;</span><br><span class="line">   val mbox = receiver.mailbox</span><br><span class="line">   mbox.enqueue(receiver.self, invocation)</span><br><span class="line">   registerForExecution(mbox, true, false)</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>上面是dispatch的方法，它调用receiver.mailbox的enqueue方法，把消息入队列，然后调用registerForExecution。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Returns if it was registered</span><br><span class="line"> *</span><br><span class="line"> * INTERNAL API</span><br><span class="line"> */</span><br><span class="line">protected[akka] override def registerForExecution(mbox: Mailbox, hasMessageHint: Boolean, hasSystemMessageHint: Boolean): Boolean = &#123;</span><br><span class="line">  if (mbox.canBeScheduledForExecution(hasMessageHint, hasSystemMessageHint)) &#123; //This needs to be here to ensure thread safety and no races</span><br><span class="line">    if (mbox.setAsScheduled()) &#123;</span><br><span class="line">      try &#123;</span><br><span class="line">        executorService execute mbox</span><br><span class="line">        true</span><br><span class="line">      &#125; catch &#123;</span><br><span class="line">        case e: RejectedExecutionException ⇒</span><br><span class="line">          try &#123;</span><br><span class="line">            executorService execute mbox</span><br><span class="line">            true</span><br><span class="line">          &#125; catch &#123; //Retry once</span><br><span class="line">            case e: RejectedExecutionException ⇒</span><br><span class="line">              mbox.setAsIdle()</span><br><span class="line">              eventStream.publish(Error(e, getClass.getName, getClass, &quot;registerForExecution was rejected twice!&quot;))</span><br><span class="line">              throw e</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; else false</span><br><span class="line">  &#125; else false</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>registerForExecution做了什么呢？很明显它修改了Mailbox的状态使其变成_Scheduled_ 。如果设置成功，则把该Mailbox放到executorService去调度。还记不记得Mailbox都实现了哪些接口呢：ForkJoinTask[Unit] 、SystemMessageQueue、Runnable。它当然是可以被线程池调度的啊。<br>至此消息的发送就已经分析完毕了，通过上面的分析我们知道，发送消息的过程大概就是先把消息通过Mailbox的enque进入队列，当然这默认实现就是akka.dispatch.UnboundedMailbox。Mailbox会在ForkJoinPool（默认是这样的）线程池中申请一个线程进行调度，执行最终的run方法。<br>​</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">override final def run(): Unit = &#123;</span><br><span class="line">   try &#123;</span><br><span class="line">     if (!isClosed) &#123; //Volatile read, needed here</span><br><span class="line">       processAllSystemMessages() //First, deal with any system messages</span><br><span class="line">       processMailbox() //Then deal with messages</span><br><span class="line">     &#125;</span><br><span class="line">   &#125; finally &#123;</span><br><span class="line">     setAsIdle() //Volatile write, needed here</span><br><span class="line">     dispatcher.registerForExecution(this, false, false)</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>下面是run方法的具体实现，也比较简单，就是调用processAllSystemMessages/processMailbox分别处理系统消息和用户发送的消息，当然不会全部把消息处理完毕，会有一定的限制（dispatch的吞吐量参数）。最后设置mailbox状态为idle，然后又调用了dispatcher.registerForExecution，进入下一次线程调度。mailbox这样以循环的方式对队列中的消息进行处理。<br>由于时间关系，今天就先分析到这里。我们已经知道了 ！ 的内部细节，它只是把消息放到了mailbox的队列中，然后mailbox被线程池异步调度，循环处理队列中的数据。当然考虑到多线程，这个队列是一个一致性队列，线程安全。下一篇博文，我们会详细介绍processMailbox的功能，下面只是简单的贴出这个函数的源码，读者也可以先简单分析一下。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">  * Process the messages in the mailbox</span><br><span class="line">  */</span><br><span class="line"> @tailrec private final def processMailbox(</span><br><span class="line">   left:       Int  = java.lang.Math.max(dispatcher.throughput, 1),</span><br><span class="line">   deadlineNs: Long = if (dispatcher.isThroughputDeadlineTimeDefined == true) System.nanoTime + dispatcher.throughputDeadlineTime.toNanos else 0L): Unit =</span><br><span class="line">   if (shouldProcessMessage) &#123;</span><br><span class="line">     val next = dequeue()</span><br><span class="line">     if (next ne null) &#123;</span><br><span class="line">       if (Mailbox.debug) println(actor.self + &quot; processing message &quot; + next)</span><br><span class="line">       actor invoke next</span><br><span class="line">       if (Thread.interrupted())</span><br><span class="line">         throw new InterruptedException(&quot;Interrupted while processing actor messages&quot;)</span><br><span class="line">       processAllSystemMessages()</span><br><span class="line">       if ((left &gt; 1) &amp;&amp; ((dispatcher.isThroughputDeadlineTimeDefined == false) || (System.nanoTime - deadlineNs) &lt; 0))</span><br><span class="line">         processMailbox(left - 1, deadlineNs)</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Actor-Actor%E5%8F%91%E6%B6%88%E6%81%AF/" title="Akka-Actor-Actor发消息" target="_blank" rel="external">https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Actor-Actor发消息/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/12/03/network/akka/Akka-Remote-%E9%97%AE%E9%A2%98%E6%B1%87%E6%80%BB/" title="Akka-Remote-问题汇总"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/12/03/network/akka/Akka-Remote-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/" title="Akka-Remote-生命周期"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

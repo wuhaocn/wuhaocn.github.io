@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>Akka-Actor-ActorSystem | Hexo</title>
+  <meta name="description" content="1.ActorSystem-创建使用Akka首先要创建的一个对象就是ActorSystem，那么我们就先分析这个类及其相关的技术细节。 1234567891011String clusterName &#x3D; &quot;test&quot;;Config config &#x3D; ConfigFactory.defaultReference();config &#x3D; ConfigFactory.parseMap(">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Akka-Actor-ActorSystem">
+<meta property="og:url" content="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Actor-ActorSystem/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="1.ActorSystem-创建使用Akka首先要创建的一个对象就是ActorSystem，那么我们就先分析这个类及其相关的技术细节。 1234567891011String clusterName &#x3D; &quot;test&quot;;Config config &#x3D; ConfigFactory.defaultReference();config &#x3D; ConfigFactory.parseMap(">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1634281544005-af8c6561-fb3a-47c9-9a30-573afd919e9e.png#clientId=u0bf93ba4-028a-4&from=paste&height=339&id=u9b348c8e&margin=%5Bobject%20Object%5D&name=image.png&originHeight=416&originWidth=860&originalType=binary&ratio=1&size=196446&status=done&style=none&taskId=u749292b0-2ae8-4541-90ad-b42138b2788&width=700">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1632368165109-1889528d-e2ed-4f90-9427-9e495cab29a5.png#clientId=ude74a75a-5503-4&from=paste&id=u13243b5e&margin=%5Bobject%20Object%5D&originHeight=1266&originWidth=1004&originalType=url&ratio=1&status=done&style=none&taskId=u14ce8a30-8dc7-4d0f-8473-dd515d9b788">
+<meta property="article:published_time" content="2021-12-03T06:15:06.161Z">
+<meta property="article:modified_time" content="2021-12-03T09:07:15.172Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="akka">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1634281544005-af8c6561-fb3a-47c9-9a30-573afd919e9e.png#clientId=u0bf93ba4-028a-4&from=paste&height=339&id=u9b348c8e&margin=%5Bobject%20Object%5D&name=image.png&originHeight=416&originWidth=860&originalType=binary&ratio=1&size=196446&status=done&style=none&taskId=u749292b0-2ae8-4541-90ad-b42138b2788&width=700">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Actor-ActorSystem/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/akka/" rel="tag">akka</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.33px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.17px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 13.67px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/akka/" style="font-size: 14px;">akka</a> <a href="/tags/atomic/" style="font-size: 13.33px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.5px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/sort/" style="font-size: 13.83px;">sort</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.33px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">20</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">24</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-SLF4J%E6%89%93%E5%8D%B0%E6%97%A5%E5%BF%97/" class="title">Akka-SLF4J打印日志</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T09:08:28.304Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Remote-%E9%85%8D%E7%BD%AE/" class="title">Akka-Remote-配置</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:24:00.895Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-%E6%8C%81%E4%B9%85%E5%8C%96-%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E4%B8%8E%E6%8E%A5%E6%94%B6/" class="title">Akka-持久化-消息发送与接收</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:23:51.202Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Actor-DeadLetter%E7%9B%91%E5%90%AC/" class="title">Akka-Actor-DeadLetter监听</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:22:48.138Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Actor-%E7%9B%91%E7%AE%A1%E4%B8%8E%E5%AE%B9%E9%94%99/" class="title">Akka-Actor-监管与容错</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:22:40.247Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-network/akka/Akka-Actor-ActorSystem" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Akka-Actor-ActorSystem
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/12/03/network/akka/Akka-Actor-ActorSystem/" class="article-date">
+	  <time datetime="2021-12-03T06:15:06.161Z" itemprop="datePublished">2021-12-03</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/akka/" rel="tag">akka</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/12/03/network/akka/Akka-Actor-ActorSystem/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="1-ActorSystem-创建"><a href="#1-ActorSystem-创建" class="headerlink" title="1.ActorSystem-创建"></a>1.ActorSystem-创建</h2><p>使用Akka首先要创建的一个对象就是ActorSystem，那么我们就先分析这个类及其相关的技术细节。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">String clusterName = <span class="string">&quot;test&quot;</span>;</span><br><span class="line">Config config = ConfigFactory.defaultReference();</span><br><span class="line">config = ConfigFactory.parseMap(<span class="keyword">new</span> HashMap&lt;String, Object&gt;() &#123;&#123;</span><br><span class="line">    put(<span class="string">&quot;akka.actor.provider&quot;</span>, <span class="string">&quot;akka.remote.RemoteActorRefProvider&quot;</span>);</span><br><span class="line">    put(<span class="string">&quot;akka.remote.netty.tcp.hostname&quot;</span>, ip);</span><br><span class="line">    put(<span class="string">&quot;akka.remote.netty.tcp.port&quot;</span>, port);</span><br><span class="line">    put(<span class="string">&quot;akka.remote.netty.tcp.maximum-frame-size&quot;</span>, <span class="number">100</span> * <span class="number">1024</span> * <span class="number">1024</span>);</span><br><span class="line">    <span class="keyword">final</span> String serializer = <span class="string">&quot;protostuff&quot;</span>;</span><br><span class="line">    put(<span class="string">&quot;akka.actor.serializers.&quot;</span> + serializer, ProtoStuffer.class.getName());</span><br><span class="line">&#125;&#125;).withFallback(config);</span><br><span class="line">ActorSystem actorSystem = ActorSystem.create(clusterName, config, ClassUtils.getClassLoader());</span><br></pre></td></tr></table></figure>
+<p>第一步就是创建ActorSystem,以Java调用为例需要如下配置：</p>
+<ul>
+<li>指定系统集群名称：此处为actor路径的一部分</li>
+<li>指定akka配置：配置服务地址及端口以及序列化方式等</li>
+<li>指定类加载器</li>
+</ul>
+<p>配置好上述配置后调用 <strong>ActorSystem.create</strong>创建对象。</p>
+<h3 id="1-1-构建方式"><a href="#1-1-构建方式" class="headerlink" title="1.1. 构建方式"></a>1.1. 构建方式</h3><pre><code>ActorSystem创建主要包含集群名称，配置，类加载器，扩展上下文等。
+</code></pre>
+<p><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1634281544005-af8c6561-fb3a-47c9-9a30-573afd919e9e.png#clientId=u0bf93ba4-028a-4&from=paste&height=339&id=u9b348c8e&margin=%5Bobject%20Object%5D&name=image.png&originHeight=416&originWidth=860&originalType=binary&ratio=1&size=196446&status=done&style=none&taskId=u749292b0-2ae8-4541-90ad-b42138b2788&width=700" alt="image.png"></p>
+<h3 id="1-2-抽象定义"><a href="#1-2-抽象定义" class="headerlink" title="1.2. 抽象定义"></a>1.2. 抽象定义</h3><pre><code>   我们来看ActorSystem类，这是一个抽象类，它继承了ActorRefFactory特质，下面是源码中对该特质的描述。很明显，这个特质是用来创建Actor实例的。我们常用的actorFor和actorSelection是该特质提供的比较重要的方法，当然还有与创建actor有关的其他函数和字段。ActorSystem是一个抽象类，除了继承ActorRefFactory特质的函数和字段之外，定义了一些其他字段和方法，但也都没有具体的实现。
+</code></pre>
+<p><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1632368165109-1889528d-e2ed-4f90-9427-9e495cab29a5.png#clientId=ude74a75a-5503-4&from=paste&id=u13243b5e&margin=%5Bobject%20Object%5D&originHeight=1266&originWidth=1004&originalType=url&ratio=1&status=done&style=none&taskId=u14ce8a30-8dc7-4d0f-8473-dd515d9b788"><br>通过跟踪AcotSystem的apply我们发现最终调用了以下代码，主要涉及了两个对象：ActorSystemSetup、ActorSystemImpl。</p>
+<ul>
+<li><p>ActorSystemSetup</p>
+<pre><code>描述是“_A set of setup settings for programmatic configuration of the actor system._”很明显主要是提供一些可编程的配置，我们不再深入这个类。
+</code></pre>
+</li>
+<li><p>ActorSystemImpl</p>
+<pre><code>是我们需要关心的类，因为ActorSystem.apply最终创建了这个类的实例。
+</code></pre>
+<h3 id="1-3-抽象实现"><a href="#1-3-抽象实现" class="headerlink" title="1.3. 抽象实现"></a>1.3. 抽象实现</h3><p>  ActorSystemImpl由继承了ExtendedActorSystem，ExtendedActorSystem抽象类提供了有限的几个函数，暴露了ActorRefFactory中本来是protected的函数，也并没有具体的实现，我们也暂时忽略。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Scala API: Creates a new actor system with the specified name and settings</span></span><br><span class="line"><span class="comment"> * The core actor system settings are defined in [[BootstrapSetup]]</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function">def <span class="title">apply</span><span class="params">(name: String, setup: ActorSystemSetup)</span>: ActorSystem </span>= &#123;</span><br><span class="line">    val bootstrapSettings = setup.get[BootstrapSetup]</span><br><span class="line">        val cl = bootstrapSettings.flatMap(_.classLoader).getOrElse(findClassLoader())</span><br><span class="line">        val appConfig = bootstrapSettings.flatMap(_.config).getOrElse(ConfigFactory.load(cl))</span><br><span class="line">        val defaultEC = bootstrapSettings.flatMap(_.defaultExecutionContext)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">new</span> ActorSystemImpl(name, appConfig, cl, defaultEC, None, setup).start()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="2-启动分析"><a href="#2-启动分析" class="headerlink" title="2. 启动分析"></a>2. 启动分析</h2><p>   由于ActorSystemImpl代码比较多，如果从头到尾读一遍代码效率比较低。而且从上面代码可以看出，apply在创建ActorSystemImpl实例之后，调用了start函数，那么我们就从start切入，看看做了哪些操作。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> lazy val _start: <span class="keyword">this</span>.type = <span class="keyword">try</span> &#123;</span><br><span class="line">  registerOnTermination(stopScheduler())</span><br><span class="line">  <span class="comment">// the provider is expected to start default loggers, LocalActorRefProvider does this</span></span><br><span class="line">  provider.init(<span class="keyword">this</span>)</span><br><span class="line">  <span class="keyword">if</span> (settings.LogDeadLetters &gt; <span class="number">0</span>)</span><br><span class="line">    logDeadLetterListener = Some(systemActorOf(Props[DeadLetterListener], <span class="string">&quot;deadLetterListener&quot;</span>))</span><br><span class="line">  eventStream.startUnsubscriber()</span><br><span class="line">  loadExtensions()</span><br><span class="line">  <span class="keyword">if</span> (LogConfigOnStart) logConfiguration()</span><br><span class="line">  <span class="keyword">this</span></span><br><span class="line">&#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">  <span class="function"><span class="keyword">case</span> <span class="title">NonFatal</span><span class="params">(e)</span> ⇒</span></span><br><span class="line"><span class="function">    <span class="keyword">try</span> <span class="title">terminate</span><span class="params">()</span> <span class="keyword">catch</span> </span>&#123; <span class="function"><span class="keyword">case</span> <span class="title">NonFatal</span><span class="params">(_)</span> ⇒ <span class="title">Try</span><span class="params">(stopScheduler()</span>) &#125;</span></span><br><span class="line"><span class="function">    throw e</span></span><br><span class="line"><span class="function">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>其实start的代码还是比较清晰的:主要包含</p>
+</li>
+<li><p>registerOnTermination(stopScheduler())</p>
+</li>
+<li><p>provider.init(this)</p>
+</li>
+<li><p>logDeadLetterListener</p>
+</li>
+<li><p>loadExtensions()eventStream.startUnsubscriber()</p>
+</li>
+<li><p>logConfiguration()</p>
+<h3 id="2-1-注册回调"><a href="#2-1-注册回调" class="headerlink" title="2.1 注册回调"></a>2.1 注册回调</h3><pre><code> 首先用registerOnTermination注册了stopScheduler()，也就是给ActorSystem的退出注册了一个回调函数stopScheduler()，这一点也不再具体分析。
+</code></pre>
+<h3 id="2-2-Provider初始化"><a href="#2-2-Provider初始化" class="headerlink" title="2.2. Provider初始化"></a>2.2. Provider初始化</h3><p>  provider.init(this)这段代码比较重要，从provider的类型来看，它是一个ActorRefProvider，前面我们已经分析过，这是一个用来创建actor的工厂类。provider初始化完成意味着就可以创建actor了，源码注释中也明确的说明了这一点。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">val provider: ActorRefProvider = <span class="keyword">try</span> &#123;</span><br><span class="line">    val arguments = Vector(</span><br><span class="line">        classOf[String] → name,</span><br><span class="line">        classOf[Settings] → settings,</span><br><span class="line">        classOf[EventStream] → eventStream,</span><br><span class="line">        classOf[DynamicAccess] → dynamicAccess)</span><br><span class="line"></span><br><span class="line">        dynamicAccess.createInstanceFor[ActorRefProvider](ProviderClass, arguments).get</span><br><span class="line">&#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">    <span class="function"><span class="keyword">case</span> <span class="title">NonFatal</span><span class="params">(e)</span> ⇒</span></span><br><span class="line"><span class="function">        <span class="title">Try</span><span class="params">(stopScheduler()</span>)</span></span><br><span class="line"><span class="function">        throw e</span></span><br><span class="line"><span class="function">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>   上面是provider的创建过程，最重要的一段代码是dynamicAccess.createInstanceFor[ActorRefProvider](ProviderClass, arguments).get，它使用DynamicAccess创建了ActorRefProvider对象的实例。跟踪dynamicAccess创建我们发现这是一个ReflectiveDynamicAccess实例，其实这个类也比较简单，就是从ClassLoader中根据ProviderClass字段加载对应的类并创建对应的实例。ProviderClass定义如下，这是配置文件中经常看到的配置。目前的provider一共有三种：LocalActorRefProvider、akka.remote.RemoteActorRefProvider、akka.cluster.ClusterActorRefProvider，当然我们也可以自定义。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> val ProviderClass: String =</span><br><span class="line">      setup.get[BootstrapSetup]</span><br><span class="line">        .flatMap(_.actorRefProvider).map(_.identifier)</span><br><span class="line">        .getOrElse(getString(<span class="string">&quot;akka.actor.provider&quot;</span>)) match &#123;</span><br><span class="line">          <span class="keyword">case</span> <span class="string">&quot;local&quot;</span>   ⇒ classOf[LocalActorRefProvider].getName</span><br><span class="line">          <span class="comment">// these two cannot be referenced by class as they may not be on the classpath</span></span><br><span class="line">          <span class="keyword">case</span> <span class="string">&quot;remote&quot;</span>  ⇒ <span class="string">&quot;akka.remote.RemoteActorRefProvider&quot;</span></span><br><span class="line">          <span class="keyword">case</span> <span class="string">&quot;cluster&quot;</span> ⇒ <span class="string">&quot;akka.cluster.ClusterActorRefProvider&quot;</span></span><br><span class="line">          <span class="keyword">case</span> fqcn      ⇒ fqcn</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<p>   自此provider创建结束，简单来说就是根据配置，通过Class._forName_加载了对应的ActorRefProvider实现类，并把当前的参数传给它，调用对应的构造函数，完成实例的创建。provider创建完成后调用init完成初始化，就可以创建actor了。</p>
+<h3 id="2-3-logDeadLetterListener"><a href="#2-3-logDeadLetterListener" class="headerlink" title="2.3. logDeadLetterListener"></a>2.3. logDeadLetterListener</h3><pre><code>start函数还创建了一个DeadLetterListener类型的actor，这也是我们经常会遇到的。如果给一个不存在的目标actor发消息，或者发送消息超时，都会把消息转发给这个DeadLetter。这就是一个普通的actor，主要用来接收没有发送成功的消息，并把消息打印出来。
+</code></pre>
+<h3 id="2-4-eventStream-startUnsubscriber"><a href="#2-4-eventStream-startUnsubscriber" class="headerlink" title="2.4. eventStream.startUnsubscriber()"></a>2.4. eventStream.startUnsubscriber()</h3><pre><code>后面还调用了eventStream.startUnsubscriber()，由于eventStream也不是我们关注的重点，先忽略。
+</code></pre>
+<h3 id="2-5-loadExtensions"><a href="#2-5-loadExtensions" class="headerlink" title="2.5. loadExtensions()"></a>2.5. loadExtensions()</h3><p>   loadExtensions()功能也比较单一，就是根据配置加载ActorSystem的扩展类，并进行注册。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> def <span class="title">loadExtensions</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> throwOnLoadFail Throw exception when an extension fails to load (needed for backwards compatibility)</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function">def <span class="title">loadExtensions</span><span class="params">(key: String, throwOnLoadFail: Boolean)</span>: Unit </span>= &#123;</span><br><span class="line">      immutableSeq(settings.config.getStringList(key)) foreach &#123; fqcn ⇒</span><br><span class="line">        dynamicAccess.getObjectFor[AnyRef](fqcn) recoverWith &#123; <span class="keyword">case</span> _ ⇒ dynamicAccess.createInstanceFor[AnyRef](fqcn, Nil) &#125; match &#123;</span><br><span class="line">          <span class="function"><span class="keyword">case</span> <span class="title">Success</span><span class="params">(p: ExtensionIdProvider)</span> ⇒ <span class="title">registerExtension</span><span class="params">(p.lookup()</span>)</span></span><br><span class="line"><span class="function">          <span class="keyword">case</span> <span class="title">Success</span><span class="params">(p: ExtensionId[_])</span>      ⇒ <span class="title">registerExtension</span><span class="params">(p)</span></span></span><br><span class="line"><span class="function">          <span class="keyword">case</span> <span class="title">Success</span><span class="params">(other)</span> ⇒</span></span><br><span class="line"><span class="function">            <span class="title">if</span> <span class="params">(!throwOnLoadFail)</span> log.<span class="title">error</span><span class="params">(<span class="string">&quot;[&#123;&#125;] is not an &#x27;ExtensionIdProvider&#x27; or &#x27;ExtensionId&#x27;, skipping...&quot;</span>, fqcn)</span></span></span><br><span class="line"><span class="function">            <span class="keyword">else</span> throw new <span class="title">RuntimeException</span><span class="params">(s<span class="string">&quot;[$fqcn] is not an &#x27;ExtensionIdProvider&#x27; or &#x27;ExtensionId&#x27;&quot;</span>)</span></span></span><br><span class="line"><span class="function">          <span class="keyword">case</span> <span class="title">Failure</span><span class="params">(problem)</span> ⇒</span></span><br><span class="line"><span class="function">            <span class="title">if</span> <span class="params">(!throwOnLoadFail)</span> log.<span class="title">error</span><span class="params">(problem, <span class="string">&quot;While trying to load extension [&#123;&#125;], skipping...&quot;</span>, fqcn)</span></span></span><br><span class="line"><span class="function">            <span class="keyword">else</span> throw new <span class="title">RuntimeException</span><span class="params">(s<span class="string">&quot;While trying to load extension [$fqcn]&quot;</span>, problem)</span></span></span><br><span class="line"><span class="function">        &#125;</span></span><br><span class="line"><span class="function">      &#125;</span></span><br><span class="line"><span class="function">    &#125;</span></span><br><span class="line"><span class="function"> </span></span><br><span class="line"><span class="function">    <span class="comment">// eager initialization of CoordinatedShutdown</span></span></span><br><span class="line"><span class="function">    <span class="title">CoordinatedShutdown</span><span class="params">(<span class="keyword">this</span>)</span></span></span><br><span class="line"><span class="function"> </span></span><br><span class="line"><span class="function">    <span class="title">loadExtensions</span><span class="params">(<span class="string">&quot;akka.library-extensions&quot;</span>, throwOnLoadFail = <span class="keyword">true</span>)</span></span></span><br><span class="line"><span class="function">    <span class="title">loadExtensions</span><span class="params">(<span class="string">&quot;akka.extensions&quot;</span>, throwOnLoadFail = <span class="keyword">false</span>)</span></span></span><br><span class="line"><span class="function">  &#125;</span></span><br></pre></td></tr></table></figure>
+<p>    至此，我们就对ActorSystem的创建和启动分析完毕，但还有一些细节需要说明。</p>
+<h3 id="2-6-变量初始化"><a href="#2-6-变量初始化" class="headerlink" title="2.6. 变量初始化"></a>2.6. 变量初始化</h3><pre><code>在start之前还是有一些其他字段的初始化。由于这些字段同样重要，且初始化的顺序没有太大关联，我就按照代码结构从上至下依次分析几个重要的字段。主要包含如下：
+</code></pre>
+</li>
+<li><p>threadFactory</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> val threadFactory: MonitorableThreadFactory =</span><br><span class="line">    MonitorableThreadFactory(name, settings.Daemonicity, Option(classLoader), uncaughtExceptionHandler)</span><br></pre></td></tr></table></figure>
+<p>   threadFactory这是一个线程工厂类，默认是MonitorableThreadFactory，我们只需要记住这是一个线程工厂类，默认创建ForkJoinWorkerThread的线程就好了。</p>
+</li>
+<li><p>scheduler调度器</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">val scheduler: Scheduler = createScheduler()</span><br></pre></td></tr></table></figure>
+<p>   scheduler是一个调度器，主要用来定时发送一些消息，这个我们也会经常遇到，但不是此次分析的重点，略过就好。</p>
+</li>
+<li><p>mailboxes</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">val mailboxes: Mailboxes = <span class="keyword">new</span> Mailboxes(settings, eventStream, dynamicAccess, deadLetters)</span><br></pre></td></tr></table></figure></li>
+</ul>
+<pre><code>  mailboxes是一个非常重要的字段，它是Mailboxes一个实例，用来创建对应的Mailbox，Mailbox用来接收消息，并通过dispatcher分发给对应的actor。
+</code></pre>
+<ul>
+<li>dispatchers<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">val dispatchers: Dispatchers = <span class="keyword">new</span> Dispatchers(settings, DefaultDispatcherPrerequisites(</span><br><span class="line">    threadFactory, eventStream, scheduler, dynamicAccess, settings, mailboxes, defaultExecutionContext))</span><br><span class="line"> </span><br><span class="line">  val dispatcher: ExecutionContextExecutor = dispatchers.defaultGlobalDispatcher</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>dispatchers是Dispatchers的一个实例，它用来创建、查询对应的MessageDispatcher。它有一个默认的全局dispatcher，从代码来看，它从配置中读取akka.actor.default-dispatcher，并创建MessageDispatcher实例。MessageDispatcher也是一个非常重要的类，我们后面再具体分析。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * The one and only default dispatcher.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line">def defaultGlobalDispatcher: MessageDispatcher = lookup(DefaultDispatcherId)</span><br></pre></td></tr></table></figure>
+
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">object Dispatchers &#123;</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * The id of the default dispatcher, also the full key of the</span></span><br><span class="line"><span class="comment">   * configuration of the default dispatcher.</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">final</span> val DefaultDispatcherId = <span class="string">&quot;akka.actor.default-dispatcher&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code> 到这里我们就算分析完了ActorSystem的创建过程及其技术细节，当然ActorSystem创建只是第一步，后面需要创建actor，actor如何收到dispatcher的消息，还是需要进一步研究的。
+</code></pre>
+<p>​</p>
+<h2 id="3-参考"><a href="#3-参考" class="headerlink" title="3.参考"></a>3.参考</h2><p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/gabry/p/9336477.html">https://www.cnblogs.com/gabry/p/9336477.html</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Actor-ActorSystem/" title="Akka-Actor-ActorSystem" target="_blank" rel="external">https://wuhaocn.github.io/2021/12/03/network/akka/Akka-Actor-ActorSystem/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/12/03/network/akka/Akka-Actor-Actor%E5%88%9B%E5%BB%BA/" title="Akka-Actor-Actor创建"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/12/03/network/akka/Akka-%E6%BA%90%E7%A0%81%E6%9E%84%E5%BB%BA/" title="Akka-源码构建"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>
