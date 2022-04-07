@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>Redis命令汇总 | Hexo</title>
+  <meta name="description" content="1.Key（键）   命令 描述 示例 备注    DEL      DUMP      EXISTS      EXPIRE      EXPIREAT      KEYS      MIGRATE      MOVE      OBJECT      PERSIST      PEXPIRE      PEXPIREAT      PTTL      RANDOMKEY      RENAME">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis命令汇总">
+<meta property="og:url" content="https://wuhaocn.github.io/2022/04/07/data/redis/Redis%E5%91%BD%E4%BB%A4%E6%B1%87%E6%80%BB/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="1.Key（键）   命令 描述 示例 备注    DEL      DUMP      EXISTS      EXPIRE      EXPIREAT      KEYS      MIGRATE      MOVE      OBJECT      PERSIST      PEXPIRE      PEXPIREAT      PTTL      RANDOMKEY      RENAME">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-04-07T01:21:38.754Z">
+<meta property="article:modified_time" content="2022-04-07T01:21:38.754Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="redis">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2022/04/07/data/redis/Redis%E5%91%BD%E4%BB%A4%E6%B1%87%E6%80%BB/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">21</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/redis/">redis</a><span class="category-list-count">23</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/akka/" rel="tag">akka</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/log4j/" rel="tag">log4j</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a><span class="tag-list-count">23</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.29px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.14px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 13.57px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/akka/" style="font-size: 13.86px;">akka</a> <a href="/tags/atomic/" style="font-size: 13.29px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.43px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/log4j/" style="font-size: 13px;">log4j</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/redis/" style="font-size: 14px;">redis</a> <a href="/tags/sort/" style="font-size: 13.71px;">sort</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.29px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/04/">四月 2022</a><span class="archive-list-count">24</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">21</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">24</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">16</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2022/04/07/platform/framework/" class="title">云平台建设草稿</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-04-07T01:21:38.762Z" itemprop="datePublished">2022-04-07</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/redis/">redis</a>
+              </p>
+              <p class="item-title">
+                <a href="/2022/04/07/data/redis/command/cluster%E8%B0%83%E7%94%A8%E9%93%BE/" class="title">redis-cluster调用链</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-04-07T01:21:38.761Z" itemprop="datePublished">2022-04-07</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/redis/">redis</a>
+              </p>
+              <p class="item-title">
+                <a href="/2022/04/07/data/redis/command/expire%E8%B0%83%E7%94%A8%E9%93%BE/" class="title">redis-expire调用链</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-04-07T01:21:38.761Z" itemprop="datePublished">2022-04-07</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/redis/">redis</a>
+              </p>
+              <p class="item-title">
+                <a href="/2022/04/07/data/redis/command/set%E8%B0%83%E7%94%A8%E9%93%BE/" class="title">redis-set调用链</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-04-07T01:21:38.761Z" itemprop="datePublished">2022-04-07</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/redis/">redis</a>
+              </p>
+              <p class="item-title">
+                <a href="/2022/04/07/data/redis/code/2.3.%E5%86%99%E6%95%B0%E6%8D%AE%E6%B5%81%E7%A8%8B%E6%A6%82%E8%BF%B0/" class="title">2.3.redis-写数据流程概述</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-04-07T01:21:38.760Z" itemprop="datePublished">2022-04-07</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-data/redis/Redis命令汇总" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Redis命令汇总
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2022/04/07/data/redis/Redis%E5%91%BD%E4%BB%A4%E6%B1%87%E6%80%BB/" class="article-date">
+	  <time datetime="2022-04-07T01:21:38.754Z" itemprop="datePublished">2022-04-07</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/redis/" rel="tag">redis</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2022/04/07/data/redis/Redis%E5%91%BD%E4%BB%A4%E6%B1%87%E6%80%BB/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="1-Key（键）"><a href="#1-Key（键）" class="headerlink" title="1.Key（键）"></a>1.Key（键）</h2><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>描述</th>
+<th>示例</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DEL</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>DUMP</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>EXISTS</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>EXPIRE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>EXPIREAT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>KEYS</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>MIGRATE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>MOVE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>OBJECT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>PERSIST</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>PEXPIRE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>PEXPIREAT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>PTTL</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>RANDOMKEY</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>RENAME</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>RENAMENX</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>RESTORE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SORT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>TTL</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>TYPE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SCAN</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="2-String-字符串"><a href="#2-String-字符串" class="headerlink" title="2.String(字符串)"></a>2.String(字符串)</h2><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>描述</th>
+<th>示例</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>APPEND</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>BITCOUNT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>BITOP</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>DECR</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>DECRBY</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>GET</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>GETBIT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>GETRANGE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>GETSET</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>INCR</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>INCRBY</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>INCRBYFLOAT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>MGET</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>MSET</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>MSETNX</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>PSETEX</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SET</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SETBIT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SETEX</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SETNX</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SETRANGE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>STRLEN</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="3-Hash-哈希表"><a href="#3-Hash-哈希表" class="headerlink" title="3.Hash(哈希表)"></a>3.Hash(哈希表)</h2><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>描述</th>
+<th>示例</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HDEL</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>HEXISTS</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>HGET</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>HGETALL</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>HINCRBY</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>HINCRBYFLOAT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>HKEYS</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>HLEN</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>HMGET</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>HMSET</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>HSET</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>HSETNX</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>HVALS</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>HSCAN</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="4-List（列表）"><a href="#4-List（列表）" class="headerlink" title="4.List（列表）"></a>4.List（列表）</h2><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>描述</th>
+<th>示例</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>BLPOP</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>BRPOP</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>BRPOPLPUSH</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LINDEX</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LINSERT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LLEN</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LPOP</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LPUSH</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LPUSHX</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LRANGE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LREM</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LSET</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LTRIM</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>RPOP</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>RPOPLPUSH</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>RPUSH</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>RPUSHX</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="5-Set（集合）"><a href="#5-Set（集合）" class="headerlink" title="5.Set（集合）"></a>5.Set（集合）</h2><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>描述</th>
+<th>示例</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SADD</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SCARD</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SDIFF</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SDIFFSTORE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SINTER</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SINTERSTORE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SISMEMBER</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SMEMBERS</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SMOVE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SPOP</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SRANDMEMBER</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SREM</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SUNION</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SUNIONSTORE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SSCAN</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="6-SortedSet（有序集合）"><a href="#6-SortedSet（有序集合）" class="headerlink" title="6.SortedSet（有序集合）"></a>6.SortedSet（有序集合）</h2><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>描述</th>
+<th>示例</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ZADD</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ZCARD</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ZCOUNT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ZINCRBY</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ZRANGE</td>
+<td>有序集合按(索引)score递增(小—&gt;大)</td>
+<td>ZRANGE salary 1 2 WITHSCORES</td>
+<td>ZRANGE key start stop [WITHSCORES]</td>
+</tr>
+<tr>
+<td>ZRANGEBYSCORE</td>
+<td>有序集合按(分数)score递增(小-&gt;大)</td>
+<td>ZRANGEBYSCORE salary -inf +inf WITHSCORES</td>
+<td>ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]</td>
+</tr>
+<tr>
+<td>ZRANK</td>
+<td>有序集合中member排名(小-大)</td>
+<td>ZRANK salary tom   (0开始计数)</td>
+<td>ZRANK key member</td>
+</tr>
+<tr>
+<td>ZREM</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ZREMRANGEBYRANK</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ZREMRANGEBYSCORE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ZREVRANGE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ZREVRANGEBYSCORE</td>
+<td>有序集合按score递减(大-&gt;小)</td>
+<td>ZREVRANGEBYSCORE salary 10000 2000</td>
+<td>ZREVRANGEBYSCORE key max min [WITHSCORES] [LIMIT offset count]</td>
+</tr>
+<tr>
+<td>ZREVRANK</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ZSCORE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ZUNIONSTORE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ZINTERSTORE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ZSCAN</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="7-Pub-Sub（发布-订阅）"><a href="#7-Pub-Sub（发布-订阅）" class="headerlink" title="7.Pub/Sub（发布/订阅）"></a>7.Pub/Sub（发布/订阅）</h2><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>描述</th>
+<th>示例</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PSUBSCRIBE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>PUBLISH</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>PUBSUB</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>PUNSUBSCRIBE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SUBSCRIBE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>UNSUBSCRIBE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="8-Transaction（事务）"><a href="#8-Transaction（事务）" class="headerlink" title="8.Transaction（事务）"></a>8.Transaction（事务）</h2><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>描述</th>
+<th>示例</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DISCARD</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>EXEC</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>MULTI</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>UNWATCH</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>WATCH</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="9-Script（脚本）"><a href="#9-Script（脚本）" class="headerlink" title="9.Script（脚本）"></a>9.Script（脚本）</h2><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>描述</th>
+<th>示例</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>EVAL</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>EVALSHA</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SCRIPT EXISTS</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SCRIPT FLUSH</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SCRIPT KILL</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SCRIPT LOAD</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="10-Connection（连接）"><a href="#10-Connection（连接）" class="headerlink" title="10.Connection（连接）"></a>10.Connection（连接）</h2><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>描述</th>
+<th>示例</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AUTH</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ECHO</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>PING</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>QUIT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SELECT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="11-Server（服务器）"><a href="#11-Server（服务器）" class="headerlink" title="11.Server（服务器）"></a>11.Server（服务器）</h2><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>描述</th>
+<th>示例</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>BGREWRITEAOF</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>BGSAVE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CLIENT GETNAME</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CLIENT KILL</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CLIENT LIST</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CLIENT SETNAME</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CONFIG GET</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CONFIG RESETSTAT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CONFIG REWRITE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CONFIG SET</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>DBSIZE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>DEBUG OBJECT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>DEBUG SEGFAULT</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>FLUSHALL</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>FLUSHDB</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>INFO</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LASTSAVE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>MONITOR</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>PSYNC</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SAVE</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SHUTDOWN</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SLAVEOF</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SLOWLOG</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SYNC</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>TIME</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="12-Cluster-集群"><a href="#12-Cluster-集群" class="headerlink" title="12.Cluster(集群)"></a>12.Cluster(集群)</h2><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>描述</th>
+<th>示例</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CLUSTER HELP</td>
+<td>支持命令及描述</td>
+<td>CLUSTER HELP</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER ADDSLOTS</td>
+<td>为当前节点分配槽位</td>
+<td>CLUSTER ADDSLOTS 0 5</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER BUMPEPOCH</td>
+<td>推进集群配置纪元</td>
+<td>CLUSTER BUMPEPOCH</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER COUNT-failure-reports</td>
+<td>返回的失败报告数量</td>
+<td>CLUSTER COUNT-failure-reports node-id</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER COUNTKEYSINSLOT</td>
+<td>返回&lt;槽位&gt;中的键数</td>
+<td>CLUSTER COUNTKEYSINSLOT 1</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER DELSLOTS</td>
+<td>删除当前节点的槽位信息</td>
+<td>CLUSTER DELSLOTS 2 5</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER FAILOVER</td>
+<td>集群故障转移</td>
+<td>CLUSTER FAILOVER</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER FORGET</td>
+<td>删除节点</td>
+<td>CLUSTER FORGET node-id</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER GETKEYSINSLOT</td>
+<td>返回当前节点存储在slot中的键名</td>
+<td>CLUSTER GETKEYSINSLOT 1000 3</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER FLUSHSLOTS</td>
+<td>删除当前节点自己的槽位信息</td>
+<td>CLUSTER FLUSHSLOTS</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER INFO</td>
+<td>返回集群信息</td>
+<td>CLUSTER INFO</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER KEYSLOT</td>
+<td>返回的哈希槽</td>
+<td>CLUSTER KEYSLOT 1</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER MEET</td>
+<td>将节点连接到一个工作集群</td>
+<td>CLUSTER MEET 10.3.4.111 7001</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER MYID</td>
+<td>返回当前节点ID</td>
+<td>CLUSTER MYID</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER NODES</td>
+<td>返回集群节点信息</td>
+<td>CLUSTER NODES</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER REPLICATE</td>
+<td>将当前节点配置为副本</td>
+<td>CLUSTER REPLICATE node-id</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER RESET</td>
+<td>重置当前节点</td>
+<td>CLUSTER RESET</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER SETSLOT</td>
+<td>修改接受节点中哈希槽的状态</td>
+<td>CLUSTER SETSLOT 1  MIGRATING node-id</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER REPLICAS</td>
+<td>返回节点REPLICAS</td>
+<td>CLUSTER REPLICAS node-id</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER SET-CONFIG-EPOCH</td>
+<td>修改接受节点中哈希槽的状态</td>
+<td>CLUSTER SET-CONFIG-EPOCH 1</td>
+<td></td>
+</tr>
+<tr>
+<td>CLUSTER SLOTS</td>
+<td>返回节点槽位</td>
+<td>CLUSTER SLOTS</td>
+<td></td>
+</tr>
+</tbody></table>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2022/04/07/data/redis/Redis%E5%91%BD%E4%BB%A4%E6%B1%87%E6%80%BB/" title="Redis命令汇总" target="_blank" rel="external">https://wuhaocn.github.io/2022/04/07/data/redis/Redis命令汇总/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2022/04/07/data/redis/Redis%E5%90%84%E7%89%88%E6%9C%AC%E7%89%B9%E6%80%A7/" title="Redis各版本特性"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2022/04/07/data/redis/Redis%E5%93%A8%E5%85%B5/" title="RedisSentinel原理"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

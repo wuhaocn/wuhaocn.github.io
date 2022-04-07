@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>2.5.redis-主从流程 | Hexo</title>
+  <meta name="description" content="1.主从同步流程1.1.保活 请求123*1$4PING 应答1+PONG  1.2.上报监听端口 请求1234567*3$8REPLCONF$14listening-port$549314 应答1+OK  1.3.上报地址 请求1234567*3$8REPLCONF$10ip-address$9127.0.0.1 应答1+OK  1.4.上报信息 请求1234567*3$8REPLCONF$4c">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2.5.redis-主从流程">
+<meta property="og:url" content="https://wuhaocn.github.io/2022/04/07/data/redis/code/2.5.%E4%B8%BB%E4%BB%8E%E6%B5%81%E7%A8%8B/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="1.主从同步流程1.1.保活 请求123*1$4PING 应答1+PONG  1.2.上报监听端口 请求1234567*3$8REPLCONF$14listening-port$549314 应答1+OK  1.3.上报地址 请求1234567*3$8REPLCONF$10ip-address$9127.0.0.1 应答1+OK  1.4.上报信息 请求1234567*3$8REPLCONF$4c">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-04-07T01:21:38.760Z">
+<meta property="article:modified_time" content="2022-04-07T01:21:38.760Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="redis">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2022/04/07/data/redis/code/2.5.%E4%B8%BB%E4%BB%8E%E6%B5%81%E7%A8%8B/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">21</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/redis/">redis</a><span class="category-list-count">23</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/akka/" rel="tag">akka</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/log4j/" rel="tag">log4j</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a><span class="tag-list-count">23</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.29px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/DPDK/" style="font-size: 13.14px;">DPDK</a> <a href="/tags/JVM/" style="font-size: 13.57px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/akka/" style="font-size: 13.86px;">akka</a> <a href="/tags/atomic/" style="font-size: 13.29px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.43px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/log4j/" style="font-size: 13px;">log4j</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/redis/" style="font-size: 14px;">redis</a> <a href="/tags/sort/" style="font-size: 13.71px;">sort</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.29px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/04/">四月 2022</a><span class="archive-list-count">24</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">21</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">24</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">16</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2022/04/07/platform/framework/" class="title">云平台建设草稿</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-04-07T01:21:38.762Z" itemprop="datePublished">2022-04-07</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/redis/">redis</a>
+              </p>
+              <p class="item-title">
+                <a href="/2022/04/07/data/redis/command/cluster%E8%B0%83%E7%94%A8%E9%93%BE/" class="title">redis-cluster调用链</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-04-07T01:21:38.761Z" itemprop="datePublished">2022-04-07</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/redis/">redis</a>
+              </p>
+              <p class="item-title">
+                <a href="/2022/04/07/data/redis/command/expire%E8%B0%83%E7%94%A8%E9%93%BE/" class="title">redis-expire调用链</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-04-07T01:21:38.761Z" itemprop="datePublished">2022-04-07</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/redis/">redis</a>
+              </p>
+              <p class="item-title">
+                <a href="/2022/04/07/data/redis/command/set%E8%B0%83%E7%94%A8%E9%93%BE/" class="title">redis-set调用链</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-04-07T01:21:38.761Z" itemprop="datePublished">2022-04-07</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/redis/">redis</a>
+              </p>
+              <p class="item-title">
+                <a href="/2022/04/07/data/redis/code/2.3.%E5%86%99%E6%95%B0%E6%8D%AE%E6%B5%81%E7%A8%8B%E6%A6%82%E8%BF%B0/" class="title">2.3.redis-写数据流程概述</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-04-07T01:21:38.760Z" itemprop="datePublished">2022-04-07</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-data/redis/code/2.5.主从流程" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      2.5.redis-主从流程
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2022/04/07/data/redis/code/2.5.%E4%B8%BB%E4%BB%8E%E6%B5%81%E7%A8%8B/" class="article-date">
+	  <time datetime="2022-04-07T01:21:38.760Z" itemprop="datePublished">2022-04-07</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/redis/" rel="tag">redis</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2022/04/07/data/redis/code/2.5.%E4%B8%BB%E4%BB%8E%E6%B5%81%E7%A8%8B/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="1-主从同步流程"><a href="#1-主从同步流程" class="headerlink" title="1.主从同步流程"></a>1.主从同步流程</h2><h3 id="1-1-保活"><a href="#1-1-保活" class="headerlink" title="1.1.保活"></a>1.1.保活</h3><ul>
+<li>请求<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">*1</span><br><span class="line">$4</span><br><span class="line">PING</span><br></pre></td></tr></table></figure></li>
+<li>应答<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">+PONG</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="1-2-上报监听端口"><a href="#1-2-上报监听端口" class="headerlink" title="1.2.上报监听端口"></a>1.2.上报监听端口</h3><ul>
+<li>请求<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$14</span><br><span class="line">listening-port</span><br><span class="line">$5</span><br><span class="line">49314</span><br></pre></td></tr></table></figure></li>
+<li>应答<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">+OK</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="1-3-上报地址"><a href="#1-3-上报地址" class="headerlink" title="1.3.上报地址"></a>1.3.上报地址</h3><ul>
+<li>请求<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$10</span><br><span class="line">ip-address</span><br><span class="line">$9</span><br><span class="line">127.0.0.1</span><br></pre></td></tr></table></figure></li>
+<li>应答<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">+OK</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="1-4-上报信息"><a href="#1-4-上报信息" class="headerlink" title="1.4.上报信息"></a>1.4.上报信息</h3><ul>
+<li>请求<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$4</span><br><span class="line">capa</span><br><span class="line">$3</span><br><span class="line">eof</span><br></pre></td></tr></table></figure></li>
+<li>应答<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">+OK</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="1-55-上报类型"><a href="#1-55-上报类型" class="headerlink" title="1.55.上报类型"></a>1.55.上报类型</h3><ul>
+<li>请求<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$4</span><br><span class="line">capa</span><br><span class="line">$6</span><br><span class="line">psync2</span><br></pre></td></tr></table></figure></li>
+<li>应答<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">+OK</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="1-6-上报同步时间戳"><a href="#1-6-上报同步时间戳" class="headerlink" title="1.6.上报同步时间戳"></a>1.6.上报同步时间戳</h3><ul>
+<li><p>请求</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">*3</span><br><span class="line">$5</span><br><span class="line">PSYNC</span><br><span class="line">$1</span><br><span class="line">?</span><br><span class="line">$3</span><br><span class="line">218</span><br></pre></td></tr></table></figure></li>
+<li><p>应答(全量)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">+FULLRESYNC 02e371bd4a31c072e356c2cb0446f7d42ef0ff38 4060</span><br><span class="line">$227</span><br><span class="line">REDIS0009.	redis-ver.5.0.12.</span><br><span class="line">redis-bits.@..ctime.BE.`..used-mem. .....repl-stream-db....repl-id(02e371bd4a31c072e356c2cb0446f7d42ef0ff38..repl-offset.....aof-preamble.....	..................	.	......................</span><br><span class="line">.</span><br><span class="line">.O..5.P..</span><br></pre></td></tr></table></figure></li>
+<li><p>应答(增量)</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">PSYNC</span><br><span class="line">$40</span><br><span class="line">49adee2ad3c3bc3a23a812ddbb2403725079718b</span><br><span class="line">$4</span><br><span class="line">4229</span><br><span class="line">+CONTINUE</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="1-7-上报信息同步索引"><a href="#1-7-上报信息同步索引" class="headerlink" title="1.7.上报信息同步索引"></a>1.7.上报信息同步索引</h3><ul>
+<li>请求<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4060</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4060</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4060</span><br></pre></td></tr></table></figure></li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">5960</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">5960</span><br><span class="line">*1</span><br><span class="line">$4</span><br><span class="line">PING</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">processEvent,repl: 49adee2ad3c3bc3a23a812ddbb2403725079718b, offset: 5960</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-附录"><a href="#2-附录" class="headerlink" title="2.附录"></a>2.附录</h2><h3 id="2-1-同步报文"><a href="#2-1-同步报文" class="headerlink" title="2.1 同步报文"></a>2.1 同步报文</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br></pre></td><td class="code"><pre><span class="line">*1</span><br><span class="line">$4</span><br><span class="line">PING</span><br><span class="line">+PONG</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$14</span><br><span class="line">listening-port</span><br><span class="line">$5</span><br><span class="line">59804</span><br><span class="line">+OK</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$10</span><br><span class="line">ip-address</span><br><span class="line">$9</span><br><span class="line">127.0.0.1</span><br><span class="line">+OK</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$4</span><br><span class="line">capa</span><br><span class="line">$3</span><br><span class="line">eof</span><br><span class="line">+OK</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$4</span><br><span class="line">capa</span><br><span class="line">$6</span><br><span class="line">psync2</span><br><span class="line">+OK</span><br><span class="line">*3</span><br><span class="line">$5</span><br><span class="line">PSYNC</span><br><span class="line">$1</span><br><span class="line">?</span><br><span class="line">$2</span><br><span class="line">-2</span><br><span class="line"></span><br><span class="line">+FULLRESYNC db72e13d181ffb0d9cc7384c175a2371a530248b 1</span><br><span class="line">$138</span><br><span class="line">REDIS0007.	redis-ver.3.2.12.</span><br><span class="line">redis-bits.@..ctime.Y.za..used-mem............a.a.......keya.valuea..keyb.valueb.....................y.&quot;.W^..*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$1</span><br><span class="line">1</span><br><span class="line"></span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$1</span><br><span class="line">1</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$1</span><br><span class="line">1</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$1</span><br><span class="line">1</span><br><span class="line">*1</span><br><span class="line">$4</span><br><span class="line">PING</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$2</span><br><span class="line">15</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$2</span><br><span class="line">15</span><br><span class="line">*1</span><br><span class="line">$4</span><br><span class="line">PING</span><br><span class="line"></span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$2</span><br><span class="line">29</span><br><span class="line"></span><br><span class="line">*2</span><br><span class="line">$6</span><br><span class="line">SELECT</span><br><span class="line">$1</span><br><span class="line">0</span><br><span class="line"></span><br><span class="line">*3</span><br><span class="line">$3</span><br><span class="line">set</span><br><span class="line">$4</span><br><span class="line">keyc</span><br><span class="line">$6</span><br><span class="line">valuec</span><br><span class="line"></span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$2</span><br><span class="line">87</span><br><span class="line"></span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$2</span><br><span class="line">87</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+<h3 id="2-2-同步空包"><a href="#2-2-同步空包" class="headerlink" title="2.2 同步空包"></a>2.2 同步空包</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line">*1</span><br><span class="line">$4</span><br><span class="line">PING</span><br><span class="line">+PONG</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$14</span><br><span class="line">listening-port</span><br><span class="line">$5</span><br><span class="line">49942</span><br><span class="line">+OK</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$10</span><br><span class="line">ip-address</span><br><span class="line">$9</span><br><span class="line">127.0.0.1</span><br><span class="line">+OK</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$4</span><br><span class="line">capa</span><br><span class="line">$3</span><br><span class="line">eof</span><br><span class="line">+OK</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$4</span><br><span class="line">capa</span><br><span class="line">$6</span><br><span class="line">psync2</span><br><span class="line">+OK</span><br><span class="line">*3</span><br><span class="line">$5</span><br><span class="line">PSYNC</span><br><span class="line">$40</span><br><span class="line">db72e13d181ffb0d9cc7384c175a2371a530248b</span><br><span class="line">$1</span><br><span class="line">1</span><br><span class="line">+FULLRESYNC 49adee2ad3c3bc3a23a812ddbb2403725079718b 1</span><br><span class="line">$77</span><br><span class="line">REDIS0007.	redis-ver.3.2.12.</span><br><span class="line">redis-bits.@..ctime....a..used-mem...........</span><br><span class="line">..*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$1</span><br><span class="line">1</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$1</span><br><span class="line">1</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$1</span><br><span class="line">1</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$1</span><br><span class="line">1</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$1</span><br><span class="line">1</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-3-同步增量"><a href="#2-3-同步增量" class="headerlink" title="2.3 同步增量"></a>2.3 同步增量</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br></pre></td><td class="code"><pre><span class="line">*1</span><br><span class="line">$4</span><br><span class="line">PING</span><br><span class="line">+PONG</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$14</span><br><span class="line">listening-port</span><br><span class="line">$5</span><br><span class="line">50731</span><br><span class="line">+OK</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$10</span><br><span class="line">ip-address</span><br><span class="line">$9</span><br><span class="line">127.0.0.1</span><br><span class="line">+OK</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$4</span><br><span class="line">capa</span><br><span class="line">$3</span><br><span class="line">eof</span><br><span class="line">+OK</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$4</span><br><span class="line">capa</span><br><span class="line">$6</span><br><span class="line">psync2</span><br><span class="line">+OK</span><br><span class="line">*3</span><br><span class="line">$5</span><br><span class="line">PSYNC</span><br><span class="line">$40</span><br><span class="line">49adee2ad3c3bc3a23a812ddbb2403725079718b</span><br><span class="line">$4</span><br><span class="line">4229</span><br><span class="line">+CONTINUE</span><br><span class="line"></span><br><span class="line">*1</span><br><span class="line">$4</span><br><span class="line">PING</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4242</span><br><span class="line">*1</span><br><span class="line">$4</span><br><span class="line">PING</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4256</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4256</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4256</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4256</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4256</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4256</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4256</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4256</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4256</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4256</span><br><span class="line">*1</span><br><span class="line">$4</span><br><span class="line">PING</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4270</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4270</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4270</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4270</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4270</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4270</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4270</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4270</span><br><span class="line">*3</span><br><span class="line">$8</span><br><span class="line">REPLCONF</span><br><span class="line">$3</span><br><span class="line">ACK</span><br><span class="line">$4</span><br><span class="line">4270</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2022/04/07/data/redis/code/2.5.%E4%B8%BB%E4%BB%8E%E6%B5%81%E7%A8%8B/" title="2.5.redis-主从流程" target="_blank" rel="external">https://wuhaocn.github.io/2022/04/07/data/redis/code/2.5.主从流程/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2022/04/07/data/redis/code/2.4.%E8%AF%BB%E6%95%B0%E6%8D%AE%E6%B5%81%E7%A8%8B%E6%A6%82%E8%BF%B0/" title="2.4.redis-读数据流程概述"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2022/04/07/data/redis/code/2.6.cluster%E6%B5%81%E7%A8%8B/" title="2.6.redis-cluster流程"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>
