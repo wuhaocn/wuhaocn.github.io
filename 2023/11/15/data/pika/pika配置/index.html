@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>pika配置 | Hexo</title>
+  <meta name="description" content="pika 端口port : 9221 pika是多线程的, 该参数能够配置pika的线程数量, 不建议配置值超过部署服务器的CPU核心数量thread-num : 1 处理命令用户请求命令线程池的大小thread-pool-size : 8 sync 主从同步时候从库执行主库传递过来命令的线程数量sync-thread-num : 6 sync 处理线程的任务队列大小, 不建议修改sync-buf">
+<meta property="og:type" content="article">
+<meta property="og:title" content="pika配置">
+<meta property="og:url" content="https://wuhaocn.github.io/2023/11/15/data/pika/pika%E9%85%8D%E7%BD%AE/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="pika 端口port : 9221 pika是多线程的, 该参数能够配置pika的线程数量, 不建议配置值超过部署服务器的CPU核心数量thread-num : 1 处理命令用户请求命令线程池的大小thread-pool-size : 8 sync 主从同步时候从库执行主库传递过来命令的线程数量sync-thread-num : 6 sync 处理线程的任务队列大小, 不建议修改sync-buf">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-11-15T03:40:25.006Z">
+<meta property="article:modified_time" content="2023-11-15T03:40:25.007Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="pika">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2023/11/15/data/pika/pika%E9%85%8D%E7%BD%AE/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">6</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/ClickHouse/">ClickHouse</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/MyBatis/">MyBatis</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/MySQL/">MySQL</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/SIP/">SIP</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/TCP/">TCP</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">21</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mq/">mq</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/net/">net</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/netty/">netty</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/redis/">redis</a><span class="category-list-count">25</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/rpc/">rpc</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/sentinel/">sentinel</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/zookeeper/">zookeeper</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ClickHouse/" rel="tag">ClickHouse</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/IMS/" rel="tag">IMS</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MyBatis/" rel="tag">MyBatis</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MySQL/" rel="tag">MySQL</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP/" rel="tag">TCP</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/akka/" rel="tag">akka</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/log4j/" rel="tag">log4j</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mq/" rel="tag">mq</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/net/" rel="tag">net</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/netty/" rel="tag">netty</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pika/" rel="tag">pika</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a><span class="tag-list-count">23</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sentinel/" rel="tag">sentinel</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/zookeeper/" rel="tag">zookeeper</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.44px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/ClickHouse/" style="font-size: 13.22px;">ClickHouse</a> <a href="/tags/DPDK/" style="font-size: 13.11px;">DPDK</a> <a href="/tags/IMS/" style="font-size: 13.22px;">IMS</a> <a href="/tags/JVM/" style="font-size: 13.67px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/MyBatis/" style="font-size: 13px;">MyBatis</a> <a href="/tags/MySQL/" style="font-size: 13.22px;">MySQL</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/TCP/" style="font-size: 13.22px;">TCP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/akka/" style="font-size: 13.89px;">akka</a> <a href="/tags/atomic/" style="font-size: 13.33px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.56px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/log4j/" style="font-size: 13px;">log4j</a> <a href="/tags/mq/" style="font-size: 13px;">mq</a> <a href="/tags/net/" style="font-size: 13px;">net</a> <a href="/tags/netty/" style="font-size: 13.11px;">netty</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/pika/" style="font-size: 13.11px;">pika</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/redis/" style="font-size: 14px;">redis</a> <a href="/tags/sentinel/" style="font-size: 13px;">sentinel</a> <a href="/tags/sort/" style="font-size: 13.78px;">sort</a> <a href="/tags/zookeeper/" style="font-size: 13px;">zookeeper</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.33px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/11/">十一月 2023</a><span class="archive-list-count">25</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/10/">十月 2022</a><span class="archive-list-count">11</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/04/">四月 2022</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">21</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">22</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">14</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/net/">net</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/network/3gpp/%E5%9F%BA%E7%A1%80%E7%BD%91%E7%BB%9C%E9%93%BE%E8%B7%AF%E4%BB%8B%E7%BB%8D/" class="title">基础网络链路介绍</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T06:28:30.065Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/devops/docker/%E8%BF%90%E8%A1%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA-Java/" class="title">docker-java运行环境</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:43:01.859Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/devops/docker/%E8%BF%90%E8%A1%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA-%E7%9B%91%E6%8E%A7/" class="title">docker-监控环境搭建.md</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:43:01.859Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/MySQL/">MySQL</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/data/mysql/MySQL%E8%BF%9E%E6%8E%A5%E6%8C%82%E6%AD%BB%E5%8E%9F%E5%9B%A0%E5%88%86%E6%9E%90/" class="title">MySQL连接挂死原因分析</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:43:01.853Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/TCP/">TCP</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/network/protocol/tcp/TCP%E7%8A%B6%E6%80%81%E6%A6%82%E8%BF%B0/" class="title">TCP状态概述.md</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:40:25.016Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-data/pika/pika配置" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      pika配置
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2023/11/15/data/pika/pika%E9%85%8D%E7%BD%AE/" class="article-date">
+	  <time datetime="2023-11-15T03:40:25.006Z" itemprop="datePublished">2023-11-15</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/pika/" rel="tag">pika</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2023/11/15/data/pika/pika%E9%85%8D%E7%BD%AE/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="pika-端口"><a href="#pika-端口" class="headerlink" title="pika 端口"></a>pika 端口</h1><p>port : 9221</p>
+<h1 id="pika是多线程的-该参数能够配置pika的线程数量-不建议配置值超过部署服务器的CPU核心数量"><a href="#pika是多线程的-该参数能够配置pika的线程数量-不建议配置值超过部署服务器的CPU核心数量" class="headerlink" title="pika是多线程的, 该参数能够配置pika的线程数量, 不建议配置值超过部署服务器的CPU核心数量"></a>pika是多线程的, 该参数能够配置pika的线程数量, 不建议配置值超过部署服务器的CPU核心数量</h1><p>thread-num : 1</p>
+<h1 id="处理命令用户请求命令线程池的大小"><a href="#处理命令用户请求命令线程池的大小" class="headerlink" title="处理命令用户请求命令线程池的大小"></a>处理命令用户请求命令线程池的大小</h1><p>thread-pool-size : 8</p>
+<h1 id="sync-主从同步时候从库执行主库传递过来命令的线程数量"><a href="#sync-主从同步时候从库执行主库传递过来命令的线程数量" class="headerlink" title="sync 主从同步时候从库执行主库传递过来命令的线程数量"></a>sync 主从同步时候从库执行主库传递过来命令的线程数量</h1><p>sync-thread-num : 6</p>
+<h1 id="sync-处理线程的任务队列大小-不建议修改"><a href="#sync-处理线程的任务队列大小-不建议修改" class="headerlink" title="sync 处理线程的任务队列大小, 不建议修改"></a>sync 处理线程的任务队列大小, 不建议修改</h1><p>sync-buffer-size : 10</p>
+<h1 id="Pika日志目录-用于存放INFO-WARNING-ERROR日志以及用于同步的binlog-write2fine-文件"><a href="#Pika日志目录-用于存放INFO-WARNING-ERROR日志以及用于同步的binlog-write2fine-文件" class="headerlink" title="Pika日志目录, 用于存放INFO, WARNING, ERROR日志以及用于同步的binlog(write2fine)文件"></a>Pika日志目录, 用于存放INFO, WARNING, ERROR日志以及用于同步的binlog(write2fine)文件</h1><p>log-path : ./log/</p>
+<h1 id="Pika数据目录"><a href="#Pika数据目录" class="headerlink" title="Pika数据目录"></a>Pika数据目录</h1><p>db-path : ./db/</p>
+<h1 id="Pika-底层单个rocksdb单个memtable的大小-设置越大写入性能越好但会在buffer刷盘时带来更大的IO负载-请依据使用场景合理配置"><a href="#Pika-底层单个rocksdb单个memtable的大小-设置越大写入性能越好但会在buffer刷盘时带来更大的IO负载-请依据使用场景合理配置" class="headerlink" title="Pika 底层单个rocksdb单个memtable的大小, 设置越大写入性能越好但会在buffer刷盘时带来更大的IO负载, 请依据使用场景合理配置"></a>Pika 底层单个rocksdb单个memtable的大小, 设置越大写入性能越好但会在buffer刷盘时带来更大的IO负载, 请依据使用场景合理配置</h1><p><a target="_blank" rel="noopener" href="https://github.com/facebook/rocksdb/wiki/RocksDB-Tuning-Guide">RocksDb-Tuning-Guide</a><br>write-buffer-size : 268435456</p>
+<h1 id="Pika-的连接超时时间配置-单位为秒-当连接无请求时-进入sleep状态-开始从配置时间倒计时-当倒计时为0时pika将强行"><a href="#Pika-的连接超时时间配置-单位为秒-当连接无请求时-进入sleep状态-开始从配置时间倒计时-当倒计时为0时pika将强行" class="headerlink" title="Pika 的连接超时时间配置, 单位为秒, 当连接无请求时(进入sleep状态)开始从配置时间倒计时, 当倒计时为0时pika将强行"></a>Pika 的连接超时时间配置, 单位为秒, 当连接无请求时(进入sleep状态)开始从配置时间倒计时, 当倒计时为0时pika将强行</h1><h1 id="断开该连接-可以通过合理配置该参数避免可能出现的pika连接数用尽问题-该参数默认值为60"><a href="#断开该连接-可以通过合理配置该参数避免可能出现的pika连接数用尽问题-该参数默认值为60" class="headerlink" title="断开该连接, 可以通过合理配置该参数避免可能出现的pika连接数用尽问题, 该参数默认值为60"></a>断开该连接, 可以通过合理配置该参数避免可能出现的pika连接数用尽问题, 该参数默认值为60</h1><p>timeout : 60</p>
+<h1 id="密码管理员密码-默认为空-如果该参数与下方的userpass参数相同-包括同时为空-则userpass参数将自动失效-所有用户均为"><a href="#密码管理员密码-默认为空-如果该参数与下方的userpass参数相同-包括同时为空-则userpass参数将自动失效-所有用户均为" class="headerlink" title="密码管理员密码, 默认为空, 如果该参数与下方的userpass参数相同(包括同时为空), 则userpass参数将自动失效, 所有用户均为"></a>密码管理员密码, 默认为空, 如果该参数与下方的userpass参数相同(包括同时为空), 则userpass参数将自动失效, 所有用户均为</h1><h1 id="管理员身份不受userblacklist参数的限制"><a href="#管理员身份不受userblacklist参数的限制" class="headerlink" title="管理员身份不受userblacklist参数的限制"></a>管理员身份不受userblacklist参数的限制</h1><p>requirepass : password</p>
+<h1 id="同步验证密码-用于slave-从库-连接master-主库-请求同步时进行验证-该参数需要与master-主库-的requirepass一致"><a href="#同步验证密码-用于slave-从库-连接master-主库-请求同步时进行验证-该参数需要与master-主库-的requirepass一致" class="headerlink" title="同步验证密码, 用于slave(从库)连接master(主库)请求同步时进行验证, 该参数需要与master(主库)的requirepass一致"></a>同步验证密码, 用于slave(从库)连接master(主库)请求同步时进行验证, 该参数需要与master(主库)的requirepass一致</h1><p>masterauth :</p>
+<h1 id="用户密码-默认为空-如果该参数与上方的userpass参数相同-包括同时为空-则本参数将自动失效-所有用户均为管理员身份不"><a href="#用户密码-默认为空-如果该参数与上方的userpass参数相同-包括同时为空-则本参数将自动失效-所有用户均为管理员身份不" class="headerlink" title="用户密码, 默认为空, 如果该参数与上方的userpass参数相同(包括同时为空), 则本参数将自动失效, 所有用户均为管理员身份不"></a>用户密码, 默认为空, 如果该参数与上方的userpass参数相同(包括同时为空), 则本参数将自动失效, 所有用户均为管理员身份不</h1><h1 id="受userblacklist参数的限制"><a href="#受userblacklist参数的限制" class="headerlink" title="受userblacklist参数的限制"></a>受userblacklist参数的限制</h1><p>userpass : userpass</p>
+<h1 id="指令黑名单-能够限制通过userpass登录的用户-这些用户将不能使用黑名单中的指令-指令之间使用”-”隔开-默认为空"><a href="#指令黑名单-能够限制通过userpass登录的用户-这些用户将不能使用黑名单中的指令-指令之间使用”-”隔开-默认为空" class="headerlink" title="指令黑名单, 能够限制通过userpass登录的用户, 这些用户将不能使用黑名单中的指令, 指令之间使用”,”隔开, 默认为空"></a>指令黑名单, 能够限制通过userpass登录的用户, 这些用户将不能使用黑名单中的指令, 指令之间使用”,”隔开, 默认为空</h1><h1 id="建议将高风险命令配置在该参数中"><a href="#建议将高风险命令配置在该参数中" class="headerlink" title="建议将高风险命令配置在该参数中"></a>建议将高风险命令配置在该参数中</h1><p>userblacklist : FLUSHALL, SHUTDOWN, KEYS, CONFIG</p>
+<h1 id="分为经典模式和分片模式，-classic-sharding-，经典模式中支持多db的配置"><a href="#分为经典模式和分片模式，-classic-sharding-，经典模式中支持多db的配置" class="headerlink" title="分为经典模式和分片模式，[classic | sharding]，经典模式中支持多db的配置"></a>分为经典模式和分片模式，[classic | sharding]，经典模式中支持多db的配置</h1><p>instance-mode : classic</p>
+<h1 id="经典模式下下指定db的数量，使用方式和redis一致"><a href="#经典模式下下指定db的数量，使用方式和redis一致" class="headerlink" title="经典模式下下指定db的数量，使用方式和redis一致"></a>经典模式下下指定db的数量，使用方式和redis一致</h1><p>databases : 1</p>
+<h1 id="分片模式下每一个table中默认的slot数量"><a href="#分片模式下每一个table中默认的slot数量" class="headerlink" title="分片模式下每一个table中默认的slot数量"></a>分片模式下每一个table中默认的slot数量</h1><p>default-slot-num：16</p>
+<h1 id="定义一个副本组又多少个从副本，目前支持的配置选项范围-0-1-2-3-4-0代表不开启此功能"><a href="#定义一个副本组又多少个从副本，目前支持的配置选项范围-0-1-2-3-4-0代表不开启此功能" class="headerlink" title="定义一个副本组又多少个从副本，目前支持的配置选项范围[0, 1, 2, 3, 4], 0代表不开启此功能"></a>定义一个副本组又多少个从副本，目前支持的配置选项范围[0, 1, 2, 3, 4], 0代表不开启此功能</h1><p>replication-num : 0</p>
+<h1 id="定义在返回客户端之前主副本收到多少个从副本的ACK反馈信息。目前可以配置的选项范围-0-…replicaiton-num-，0代表不开启此功能。"><a href="#定义在返回客户端之前主副本收到多少个从副本的ACK反馈信息。目前可以配置的选项范围-0-…replicaiton-num-，0代表不开启此功能。" class="headerlink" title="定义在返回客户端之前主副本收到多少个从副本的ACK反馈信息。目前可以配置的选项范围[0, …replicaiton-num]，0代表不开启此功能。"></a>定义在返回客户端之前主副本收到多少个从副本的ACK反馈信息。目前可以配置的选项范围[0, …replicaiton-num]，0代表不开启此功能。</h1><p>consensus-level : 0</p>
+<h1 id="Pika的dump文件名称前缀-bgsave后生成的文件将以该前缀命名"><a href="#Pika的dump文件名称前缀-bgsave后生成的文件将以该前缀命名" class="headerlink" title="Pika的dump文件名称前缀, bgsave后生成的文件将以该前缀命名"></a>Pika的dump文件名称前缀, bgsave后生成的文件将以该前缀命名</h1><p>dump-prefix : backup-</p>
+<h1 id="守护进程模式-yes-no"><a href="#守护进程模式-yes-no" class="headerlink" title="守护进程模式  [yes | no]"></a>守护进程模式  [yes | no]</h1><p>daemonize : yes</p>
+<h1 id="slotmigrate-yes-no-pika3-0-0暂不支持该参数"><a href="#slotmigrate-yes-no-pika3-0-0暂不支持该参数" class="headerlink" title="slotmigrate  [yes | no], pika3.0.0暂不支持该参数"></a>slotmigrate  [yes | no], pika3.0.0暂不支持该参数</h1><p>#slotmigrate : no</p>
+<h1 id="Pika-dump目录设置-bgsave后生成的文件将存放在该目录中"><a href="#Pika-dump目录设置-bgsave后生成的文件将存放在该目录中" class="headerlink" title="Pika dump目录设置, bgsave后生成的文件将存放在该目录中"></a>Pika dump目录设置, bgsave后生成的文件将存放在该目录中</h1><p>dump-path : /data1/pika9001/dump/</p>
+<h1 id="dump目录过期时间-单位为天-默认为0即永不过期"><a href="#dump目录过期时间-单位为天-默认为0即永不过期" class="headerlink" title="dump目录过期时间, 单位为天, 默认为0即永不过期"></a>dump目录过期时间, 单位为天, 默认为0即永不过期</h1><p>dump-expire: 0</p>
+<h1 id="pidfile-Path-pid文件目录"><a href="#pidfile-Path-pid文件目录" class="headerlink" title="pidfile Path pid文件目录"></a>pidfile Path pid文件目录</h1><p>pidfile : /data1/pika9001/pid/9001.pid</p>
+<h1 id="pika最大连接数配置参数"><a href="#pika最大连接数配置参数" class="headerlink" title="pika最大连接数配置参数"></a>pika最大连接数配置参数</h1><p>maxclients : 20000</p>
+<h1 id="rocks-db的sst文件体积-sst文件是层级的-文件越小-速度越快-合并代价越低-但文件数量就会超多-而文件越大-速度相对变慢-合并代价大-但文件数量会很少-默认是-20M"><a href="#rocks-db的sst文件体积-sst文件是层级的-文件越小-速度越快-合并代价越低-但文件数量就会超多-而文件越大-速度相对变慢-合并代价大-但文件数量会很少-默认是-20M" class="headerlink" title="rocks-db的sst文件体积, sst文件是层级的, 文件越小, 速度越快, 合并代价越低, 但文件数量就会超多, 而文件越大, 速度相对变慢, 合并代价大, 但文件数量会很少, 默认是 20M"></a>rocks-db的sst文件体积, sst文件是层级的, 文件越小, 速度越快, 合并代价越低, 但文件数量就会超多, 而文件越大, 速度相对变慢, 合并代价大, 但文件数量会很少, 默认是 20M</h1><p>target-file-size-base : 20971520</p>
+<h1 id="binlog-write2file-文件保留时间-7天-最小为1-超过7天的文件会被自动清理"><a href="#binlog-write2file-文件保留时间-7天-最小为1-超过7天的文件会被自动清理" class="headerlink" title="binlog(write2file)文件保留时间, 7天, 最小为1, 超过7天的文件会被自动清理"></a>binlog(write2file)文件保留时间, 7天, 最小为1, 超过7天的文件会被自动清理</h1><p>expire-logs-days : 7</p>
+<h1 id="binlog-write2file-文件最大数量-200个-最小为10-超过200个就开始自动清理-始终保留200个"><a href="#binlog-write2file-文件最大数量-200个-最小为10-超过200个就开始自动清理-始终保留200个" class="headerlink" title="binlog(write2file)文件最大数量, 200个, 最小为10, 超过200个就开始自动清理, 始终保留200个"></a>binlog(write2file)文件最大数量, 200个, 最小为10, 超过200个就开始自动清理, 始终保留200个</h1><p>expire-logs-nums : 200</p>
+<h1 id="root用户连接保证数量：2个-即时Max-Connection用完-该参数也能确保本地（127-0-0-1）有2个连接可以同来登陆pika"><a href="#root用户连接保证数量：2个-即时Max-Connection用完-该参数也能确保本地（127-0-0-1）有2个连接可以同来登陆pika" class="headerlink" title="root用户连接保证数量：2个, 即时Max Connection用完, 该参数也能确保本地（127.0.0.1）有2个连接可以同来登陆pika"></a>root用户连接保证数量：2个, 即时Max Connection用完, 该参数也能确保本地（127.0.0.1）有2个连接可以同来登陆pika</h1><p>root-connection-num : 2</p>
+<h1 id="慢日志记录时间-单位为微秒-pika的慢日志记录在pika-ERROR-log中-pika没有类似redis-slow-log的慢日志提取api"><a href="#慢日志记录时间-单位为微秒-pika的慢日志记录在pika-ERROR-log中-pika没有类似redis-slow-log的慢日志提取api" class="headerlink" title="慢日志记录时间, 单位为微秒, pika的慢日志记录在pika-ERROR.log中, pika没有类似redis slow log的慢日志提取api"></a>慢日志记录时间, 单位为微秒, pika的慢日志记录在pika-ERROR.log中, pika没有类似redis slow log的慢日志提取api</h1><p>slowlog-log-slower-than : 10000</p>
+<h1 id="slave是否是只读状态-yes-no-1-0"><a href="#slave是否是只读状态-yes-no-1-0" class="headerlink" title="slave是否是只读状态(yes/no, 1/0)"></a>slave是否是只读状态(yes/no, 1/0)</h1><h1 id="slave-read-only-0"><a href="#slave-read-only-0" class="headerlink" title="slave-read-only : 0"></a>slave-read-only : 0</h1><h1 id="Pika-db-同步路径配置参数"><a href="#Pika-db-同步路径配置参数" class="headerlink" title="Pika db 同步路径配置参数"></a>Pika db 同步路径配置参数</h1><p>db-sync-path : ./dbsync/</p>
+<h1 id="该参数能够控制全量同步时的传输速度-合理配置该参数能够避免网卡被用尽-该参数范围为11024-意为-1MB-s1024MB-s，当该参数"><a href="#该参数能够控制全量同步时的传输速度-合理配置该参数能够避免网卡被用尽-该参数范围为11024-意为-1MB-s1024MB-s，当该参数" class="headerlink" title="该参数能够控制全量同步时的传输速度, 合理配置该参数能够避免网卡被用尽, 该参数范围为11024, 意为:1MB/s1024MB/s，当该参数"></a>该参数能够控制全量同步时的传输速度, 合理配置该参数能够避免网卡被用尽, 该参数范围为1<del>1024, 意为:1MB/s</del>1024MB/s，当该参数</h1><h1 id="被配置为小于0或大于1024时-该参数会被自动配置为1024"><a href="#被配置为小于0或大于1024时-该参数会被自动配置为1024" class="headerlink" title="被配置为小于0或大于1024时, 该参数会被自动配置为1024"></a>被配置为小于0或大于1024时, 该参数会被自动配置为1024</h1><p>db-sync-speed : -1 (1024MB/s)</p>
+<h1 id="指定网卡"><a href="#指定网卡" class="headerlink" title="指定网卡"></a>指定网卡</h1><h1 id="network-interface-eth1"><a href="#network-interface-eth1" class="headerlink" title="network-interface : eth1"></a>network-interface : eth1</h1><h1 id="同步参数配置-适用于从库节点-slave-该参数格式为ip-port-例如192-168-1-2-6666-启动后该示例会自动向192-168-1-2的"><a href="#同步参数配置-适用于从库节点-slave-该参数格式为ip-port-例如192-168-1-2-6666-启动后该示例会自动向192-168-1-2的" class="headerlink" title="同步参数配置, 适用于从库节点(slave), 该参数格式为ip:port, 例如192.168.1.2:6666, 启动后该示例会自动向192.168.1.2的"></a>同步参数配置, 适用于从库节点(slave), 该参数格式为ip:port, 例如192.168.1.2:6666, 启动后该示例会自动向192.168.1.2的</h1><h1 id="6666端口发送同步请求"><a href="#6666端口发送同步请求" class="headerlink" title="6666端口发送同步请求"></a>6666端口发送同步请求</h1><h1 id="slaveof-master-ip-master-port"><a href="#slaveof-master-ip-master-port" class="headerlink" title="slaveof : master-ip:master-port"></a>slaveof : master-ip:master-port</h1><h1 id="配置双主或Hub需要的server-id-不使用双主或Hub请忽略该参数"><a href="#配置双主或Hub需要的server-id-不使用双主或Hub请忽略该参数" class="headerlink" title="配置双主或Hub需要的server id, 不使用双主或Hub请忽略该参数"></a>配置双主或Hub需要的server id, 不使用双主或Hub请忽略该参数</h1><p>server-id : 1</p>
+<h1 id="双主配置-不使用双主请忽略以下配置"><a href="#双主配置-不使用双主请忽略以下配置" class="headerlink" title="双主配置, 不使用双主请忽略以下配置"></a>双主配置, 不使用双主请忽略以下配置</h1><p>double-master-ip :    双主对端Ip<br>double-master-port :    双主对端Port<br>double-master-server-id :    双主对端server id</p>
+<h1 id="自动全量compact-通过配置的参数每天定时触发一次自动全量compact-特别适合存在多数据结构大量过期、删除、key名称复用的场景"><a href="#自动全量compact-通过配置的参数每天定时触发一次自动全量compact-特别适合存在多数据结构大量过期、删除、key名称复用的场景" class="headerlink" title="自动全量compact, 通过配置的参数每天定时触发一次自动全量compact, 特别适合存在多数据结构大量过期、删除、key名称复用的场景"></a>自动全量compact, 通过配置的参数每天定时触发一次自动全量compact, 特别适合存在多数据结构大量过期、删除、key名称复用的场景</h1><h1 id="参数格式为-”启动时间-小时-结束时间-小时-磁盘空余空间百分比”-例如你需要配置一个每天在凌晨3点-4点之间自动compact的任务"><a href="#参数格式为-”启动时间-小时-结束时间-小时-磁盘空余空间百分比”-例如你需要配置一个每天在凌晨3点-4点之间自动compact的任务" class="headerlink" title="参数格式为:”启动时间(小时)-结束时间(小时)/磁盘空余空间百分比”, 例如你需要配置一个每天在凌晨3点~4点之间自动compact的任务"></a>参数格式为:”启动时间(小时)-结束时间(小时)/磁盘空余空间百分比”, 例如你需要配置一个每天在凌晨3点~4点之间自动compact的任务</h1><h1 id="同时该任务仅仅在磁盘空余空间不低于30-的时候执行-那么应配置为-03-04-30-该参数默认为空"><a href="#同时该任务仅仅在磁盘空余空间不低于30-的时候执行-那么应配置为-03-04-30-该参数默认为空" class="headerlink" title="同时该任务仅仅在磁盘空余空间不低于30%的时候执行, 那么应配置为:03-04/30, 该参数默认为空"></a>同时该任务仅仅在磁盘空余空间不低于30%的时候执行, 那么应配置为:03-04/30, 该参数默认为空</h1><p>compact-cron :</p>
+<h1 id="自动全量compact-该参与与compact-cron的区别为-compact-cron每天仅在指定时间段执行-而compact-interval则以配置时间为周期"><a href="#自动全量compact-该参与与compact-cron的区别为-compact-cron每天仅在指定时间段执行-而compact-interval则以配置时间为周期" class="headerlink" title="自动全量compact, 该参与与compact-cron的区别为, compact-cron每天仅在指定时间段执行, 而compact-interval则以配置时间为周期"></a>自动全量compact, 该参与与compact-cron的区别为, compact-cron每天仅在指定时间段执行, 而compact-interval则以配置时间为周期</h1><h1 id="循环执行-例如你需要配置一个每4小时执行一次的自动compact任务-同时该任务仅仅在磁盘空余空间不低于30-的时候执行-那么该参"><a href="#循环执行-例如你需要配置一个每4小时执行一次的自动compact任务-同时该任务仅仅在磁盘空余空间不低于30-的时候执行-那么该参" class="headerlink" title="循环执行, 例如你需要配置一个每4小时执行一次的自动compact任务, 同时该任务仅仅在磁盘空余空间不低于30%的时候执行, 那么该参"></a>循环执行, 例如你需要配置一个每4小时执行一次的自动compact任务, 同时该任务仅仅在磁盘空余空间不低于30%的时候执行, 那么该参</h1><h1 id="数应配置为-4-30-该参数默认为空"><a href="#数应配置为-4-30-该参数默认为空" class="headerlink" title="数应配置为:4/30, 该参数默认为空"></a>数应配置为:4/30, 该参数默认为空</h1><p>compact-interval :</p>
+<h1 id="从库实例权重设置-仅配合哨兵使用-无其它功能-权重低的slave会优先选举为主库-该参数默认为0-不参与选举"><a href="#从库实例权重设置-仅配合哨兵使用-无其它功能-权重低的slave会优先选举为主库-该参数默认为0-不参与选举" class="headerlink" title="从库实例权重设置, 仅配合哨兵使用,无其它功能, 权重低的slave会优先选举为主库, 该参数默认为0(不参与选举)"></a>从库实例权重设置, 仅配合哨兵使用,无其它功能, 权重低的slave会优先选举为主库, 该参数默认为0(不参与选举)</h1><p>slave-priority :</p>
+<h1 id="该参数仅适用于pika跨版本同步时不同版本的binlog能够兼容并成功解析-该参数可配置为-new-old"><a href="#该参数仅适用于pika跨版本同步时不同版本的binlog能够兼容并成功解析-该参数可配置为-new-old" class="headerlink" title="该参数仅适用于pika跨版本同步时不同版本的binlog能够兼容并成功解析, 该参数可配置为[new | old]"></a>该参数仅适用于pika跨版本同步时不同版本的binlog能够兼容并成功解析, 该参数可配置为[new | old]</h1><h1 id="当该参数被配置为new时-该实例仅能作为3-0-0及以上版本pika的从库-与pika2-3-3-2-3-5不兼容"><a href="#当该参数被配置为new时-该实例仅能作为3-0-0及以上版本pika的从库-与pika2-3-3-2-3-5不兼容" class="headerlink" title="当该参数被配置为new时, 该实例仅能作为3.0.0及以上版本pika的从库, 与pika2.3.3~2.3.5不兼容"></a>当该参数被配置为new时, 该实例仅能作为3.0.0及以上版本pika的从库, 与pika2.3.3~2.3.5不兼容</h1><h1 id="当该参数被配置为old时-该时候仅能作为2-3-3-2-3-5版本pika的从库-与pika3-0-0及以上版本不兼容"><a href="#当该参数被配置为old时-该时候仅能作为2-3-3-2-3-5版本pika的从库-与pika3-0-0及以上版本不兼容" class="headerlink" title="当该参数被配置为old时, 该时候仅能作为2.3.3~2.3.5版本pika的从库, 与pika3.0.0及以上版本不兼容"></a>当该参数被配置为old时, 该时候仅能作为2.3.3~2.3.5版本pika的从库, 与pika3.0.0及以上版本不兼容</h1><h1 id="该参数默认值为new-该参数可在没有配置同步关系的时候通过config-set动态调整-一旦配置了同步关系则不可动态修改"><a href="#该参数默认值为new-该参数可在没有配置同步关系的时候通过config-set动态调整-一旦配置了同步关系则不可动态修改" class="headerlink" title="该参数默认值为new, 该参数可在没有配置同步关系的时候通过config set动态调整, 一旦配置了同步关系则不可动态修改"></a>该参数默认值为new, 该参数可在没有配置同步关系的时候通过config set动态调整, 一旦配置了同步关系则不可动态修改</h1><h1 id="需要先执行slaveof-no-one关闭同步配置-之后即可通过config-set动态修改"><a href="#需要先执行slaveof-no-one关闭同步配置-之后即可通过config-set动态修改" class="headerlink" title="需要先执行slaveof no one关闭同步配置, 之后即可通过config set动态修改"></a>需要先执行slaveof no one关闭同步配置, 之后即可通过config set动态修改</h1><p>identify-binlog-type : new</p>
+<h1 id="主从同步流量控制的的窗口，主从高延迟情形下可以通过提高该参数提高同步性能。默认值9000最大值90000。"><a href="#主从同步流量控制的的窗口，主从高延迟情形下可以通过提高该参数提高同步性能。默认值9000最大值90000。" class="headerlink" title="主从同步流量控制的的窗口，主从高延迟情形下可以通过提高该参数提高同步性能。默认值9000最大值90000。"></a>主从同步流量控制的的窗口，主从高延迟情形下可以通过提高该参数提高同步性能。默认值9000最大值90000。</h1><p>sync-window-size : 9000</p>
+<h1 id="处理客户端连接请求的最大缓存大小，可配置的数值为67108864-64MB-或-268435456-256MB-或-536870912-512MB"><a href="#处理客户端连接请求的最大缓存大小，可配置的数值为67108864-64MB-或-268435456-256MB-或-536870912-512MB" class="headerlink" title="处理客户端连接请求的最大缓存大小，可配置的数值为67108864(64MB) 或 268435456(256MB) 或 536870912(512MB)"></a>处理客户端连接请求的最大缓存大小，可配置的数值为67108864(64MB) 或 268435456(256MB) 或 536870912(512MB)</h1><h1 id="默认是268435456-256MB-，需要注意的是主从的配置需要一致。"><a href="#默认是268435456-256MB-，需要注意的是主从的配置需要一致。" class="headerlink" title="默认是268435456(256MB)，需要注意的是主从的配置需要一致。"></a>默认是268435456(256MB)，需要注意的是主从的配置需要一致。</h1><h1 id="单条命令超过此buffer大小，服务端会自动关闭与客户端的连接。"><a href="#单条命令超过此buffer大小，服务端会自动关闭与客户端的连接。" class="headerlink" title="单条命令超过此buffer大小，服务端会自动关闭与客户端的连接。"></a>单条命令超过此buffer大小，服务端会自动关闭与客户端的连接。</h1><p>max-conn-rbuf-size : 268435456</p>
+<p>###################<br>#Critical Settings#</p>
+<h1 id="危险参数"><a href="#危险参数" class="headerlink" title="危险参数"></a>危险参数</h1><p>###################</p>
+<h1 id="write2file文件体积-默认为100MB-一旦启动不可修改-limited-in-1K-2G"><a href="#write2file文件体积-默认为100MB-一旦启动不可修改-limited-in-1K-2G" class="headerlink" title="write2file文件体积, 默认为100MB, 一旦启动不可修改,  limited in [1K, 2G]"></a>write2file文件体积, 默认为100MB, 一旦启动不可修改,  limited in [1K, 2G]</h1><p>binlog-file-size : 104857600</p>
+<h1 id="压缩方式-snappy-zlib-lz4-zstd-默认为snappy-一旦启动不可修改"><a href="#压缩方式-snappy-zlib-lz4-zstd-默认为snappy-一旦启动不可修改" class="headerlink" title="压缩方式[snappy, zlib, lz4, zstd]默认为snappy, 一旦启动不可修改"></a>压缩方式[snappy, zlib, lz4, zstd]默认为snappy, 一旦启动不可修改</h1><h1 id="官方发布的二进制提供默认的snaapy的静态连接。如果需要其他压缩方式请自行下载相应静态库并进行编译。"><a href="#官方发布的二进制提供默认的snaapy的静态连接。如果需要其他压缩方式请自行下载相应静态库并进行编译。" class="headerlink" title="官方发布的二进制提供默认的snaapy的静态连接。如果需要其他压缩方式请自行下载相应静态库并进行编译。"></a>官方发布的二进制提供默认的snaapy的静态连接。如果需要其他压缩方式请自行下载相应静态库并进行编译。</h1><p>compression : snappy</p>
+<h1 id="指定后台flush线程数量-默认为1-范围为-1-4"><a href="#指定后台flush线程数量-默认为1-范围为-1-4" class="headerlink" title="指定后台flush线程数量, 默认为1, 范围为[1, 4]"></a>指定后台flush线程数量, 默认为1, 范围为[1, 4]</h1><p>max-background-flushes : 1</p>
+<h1 id="指定后台压缩线程数量-默认为1-范围为-1-4"><a href="#指定后台压缩线程数量-默认为1-范围为-1-4" class="headerlink" title="指定后台压缩线程数量, 默认为1, 范围为[1, 4]"></a>指定后台压缩线程数量, 默认为1, 范围为[1, 4]</h1><p>max-background-compactions : 1</p>
+<h1 id="DB可以使用的打开文件的数量-默认为5000"><a href="#DB可以使用的打开文件的数量-默认为5000" class="headerlink" title="DB可以使用的打开文件的数量, 默认为5000"></a>DB可以使用的打开文件的数量, 默认为5000</h1><p>max-cache-files : 5000</p>
+<h1 id="pika实例所拥有的rocksdb实例使用的memtable大小上限，如果rocksdb实际使用超过这个数值，下一次写入会造成刷盘"><a href="#pika实例所拥有的rocksdb实例使用的memtable大小上限，如果rocksdb实际使用超过这个数值，下一次写入会造成刷盘" class="headerlink" title="pika实例所拥有的rocksdb实例使用的memtable大小上限，如果rocksdb实际使用超过这个数值，下一次写入会造成刷盘"></a>pika实例所拥有的rocksdb实例使用的memtable大小上限，如果rocksdb实际使用超过这个数值，下一次写入会造成刷盘</h1><p><a target="_blank" rel="noopener" href="https://github.com/facebook/rocksdb/wiki/Setup-Options-and-Basic-Tuning">Rocksdb-Basic-Tuning</a><br>max-write-buffer-size : 10737418240</p>
+<h1 id="限制命令返回数据的大小，应对类似于keys-等命令，返回值过大将内存耗尽。"><a href="#限制命令返回数据的大小，应对类似于keys-等命令，返回值过大将内存耗尽。" class="headerlink" title="限制命令返回数据的大小，应对类似于keys *等命令，返回值过大将内存耗尽。"></a>限制命令返回数据的大小，应对类似于keys *等命令，返回值过大将内存耗尽。</h1><p>max-client-response-size : 1073741824</p>
+<h1 id="pika引擎中层级因子-用于控制每个层级与上一层级总容量的倍数关系-默认为10-倍-允许调整为5-倍"><a href="#pika引擎中层级因子-用于控制每个层级与上一层级总容量的倍数关系-默认为10-倍-允许调整为5-倍" class="headerlink" title="pika引擎中层级因子, 用于控制每个层级与上一层级总容量的倍数关系, 默认为10(倍), 允许调整为5(倍)"></a>pika引擎中层级因子, 用于控制每个层级与上一层级总容量的倍数关系, 默认为10(倍), 允许调整为5(倍)</h1><p>max-bytes-for-level-multiplier : 10</p>
+<h1 id="统计对于key的操作次数，对于操作频繁的一部分key做小规模compaction"><a href="#统计对于key的操作次数，对于操作频繁的一部分key做小规模compaction" class="headerlink" title="统计对于key的操作次数，对于操作频繁的一部分key做小规模compaction"></a>统计对于key的操作次数，对于操作频繁的一部分key做小规模compaction</h1><h1 id="max-cache-statistic-keys-为受监控key的数量，配置为0代表关闭此功能"><a href="#max-cache-statistic-keys-为受监控key的数量，配置为0代表关闭此功能" class="headerlink" title="max-cache-statistic-keys 为受监控key的数量，配置为0代表关闭此功能"></a>max-cache-statistic-keys 为受监控key的数量，配置为0代表关闭此功能</h1><p>max-cache-statistic-keys : 0</p>
+<h1 id="如果开启小规模compaction，如果对于key操作次数超过small-compaction-threshold上限，那么对该key进行compaction"><a href="#如果开启小规模compaction，如果对于key操作次数超过small-compaction-threshold上限，那么对该key进行compaction" class="headerlink" title="如果开启小规模compaction，如果对于key操作次数超过small-compaction-threshold上限，那么对该key进行compaction"></a>如果开启小规模compaction，如果对于key操作次数超过small-compaction-threshold上限，那么对该key进行compaction</h1><p>small-compaction-threshold : 5000</p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2023/11/15/data/pika/pika%E9%85%8D%E7%BD%AE/" title="pika配置" target="_blank" rel="external">https://wuhaocn.github.io/2023/11/15/data/pika/pika配置/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2023/11/15/data/pika/pika%E5%AE%89%E8%A3%85/" title="pika安装"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2023/11/15/data/clickhouse/ClickHouse%E5%AE%89%E8%A3%85%E6%96%87%E6%A1%A3/" title="ClickHouse安装文档"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

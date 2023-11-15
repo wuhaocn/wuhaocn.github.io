@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>Linux IO模式及select、poll、epoll详解 | Hexo</title>
+  <meta name="description" content="0、前言对于每一个从事 Web 服务器开发的后端程序员，必然绕不开网络编程，而其中最基础也是最重要的部分就是 Linux IO 模式及 Socket 编程。什么是 Socket 呢？简单理解，就是 ip地址 + 端口号。当两个进程间需要通信时，首先要创建五元组（源ip地址、目的ip地址、源端口号、目的端口号、协议），建立 tcp 连接，建立好连接之后，两个进程各自有一个 Socket 来标识，这两">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux IO模式及select、poll、epoll详解">
+<meta property="og:url" content="https://wuhaocn.github.io/2023/11/15/network/protocol/tcp/Linux%20IO%E6%A8%A1%E5%BC%8F%E5%8F%8Aselect%E3%80%81poll%E3%80%81epoll%E8%AF%A6%E8%A7%A3/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="0、前言对于每一个从事 Web 服务器开发的后端程序员，必然绕不开网络编程，而其中最基础也是最重要的部分就是 Linux IO 模式及 Socket 编程。什么是 Socket 呢？简单理解，就是 ip地址 + 端口号。当两个进程间需要通信时，首先要创建五元组（源ip地址、目的ip地址、源端口号、目的端口号、协议），建立 tcp 连接，建立好连接之后，两个进程各自有一个 Socket 来标识，这两">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2023/webp/804884/1676087915312-7960cc52-7230-47d2-8579-36d012fbd81f.webp#averageHue=%23f0f0f0&clientId=u991cae4a-9930-4&from=paste&id=ubacb17bd&originHeight=654&originWidth=1228&originalType=url&ratio=2&rotation=0&showTitle=false&status=done&style=none&taskId=u23b55a3f-828d-412a-82fd-26cdbaf18d3&title=">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2023/webp/804884/1676087915344-4b07e7fd-2095-408e-8b30-38e68d079411.webp#averageHue=%23f9f8f8&clientId=u991cae4a-9930-4&from=paste&id=u86da44a3&originHeight=701&originWidth=1244&originalType=url&ratio=2&rotation=0&showTitle=false&status=done&style=none&taskId=ua639cca0-190b-4148-9beb-468de7bc37a&title=">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2023/webp/804884/1676087915317-f66fd7a2-7cda-4d58-8fa4-1c65db5a33f5.webp#averageHue=%23f9f9f9&clientId=u991cae4a-9930-4&from=paste&id=u74453309&originHeight=1115&originWidth=1440&originalType=url&ratio=2&rotation=0&showTitle=false&status=done&style=none&taskId=u471155bc-f967-40d1-9ca8-554d7fe7be2&title=">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2023/webp/804884/1676087915312-7af2a901-e86a-4894-8a3c-b3d34ed8532d.webp#averageHue=%23f8f8f8&clientId=u991cae4a-9930-4&from=paste&id=ue7085e06&originHeight=960&originWidth=1440&originalType=url&ratio=2&rotation=0&showTitle=false&status=done&style=none&taskId=u99d3174d-445e-4db7-b44e-9acd1f02f19&title=">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2023/png/804884/1676087915418-6ba5d0fb-8fa5-471f-8dbd-1c87cd2d28c9.png#averageHue=%23fcfaf9&clientId=u991cae4a-9930-4&from=paste&id=u3c503c6d&originHeight=347&originWidth=959&originalType=url&ratio=2&rotation=0&showTitle=false&status=done&style=none&taskId=ubd432f6f-e6cd-47d4-93d8-4130aaf693e&title=">
+<meta property="article:published_time" content="2023-11-15T03:40:25.015Z">
+<meta property="article:modified_time" content="2023-11-15T03:40:25.016Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="TCP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2023/webp/804884/1676087915312-7960cc52-7230-47d2-8579-36d012fbd81f.webp#averageHue=%23f0f0f0&clientId=u991cae4a-9930-4&from=paste&id=ubacb17bd&originHeight=654&originWidth=1228&originalType=url&ratio=2&rotation=0&showTitle=false&status=done&style=none&taskId=u23b55a3f-828d-412a-82fd-26cdbaf18d3&title=">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2023/11/15/network/protocol/tcp/Linux%20IO%E6%A8%A1%E5%BC%8F%E5%8F%8Aselect%E3%80%81poll%E3%80%81epoll%E8%AF%A6%E8%A7%A3/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">6</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/ClickHouse/">ClickHouse</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/MyBatis/">MyBatis</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/MySQL/">MySQL</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/SIP/">SIP</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/TCP/">TCP</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">21</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mq/">mq</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/net/">net</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/netty/">netty</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/redis/">redis</a><span class="category-list-count">25</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/rpc/">rpc</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/sentinel/">sentinel</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/zookeeper/">zookeeper</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ClickHouse/" rel="tag">ClickHouse</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/IMS/" rel="tag">IMS</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MyBatis/" rel="tag">MyBatis</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MySQL/" rel="tag">MySQL</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP/" rel="tag">TCP</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/akka/" rel="tag">akka</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/log4j/" rel="tag">log4j</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mq/" rel="tag">mq</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/net/" rel="tag">net</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/netty/" rel="tag">netty</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pika/" rel="tag">pika</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a><span class="tag-list-count">23</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sentinel/" rel="tag">sentinel</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/zookeeper/" rel="tag">zookeeper</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.44px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/ClickHouse/" style="font-size: 13.22px;">ClickHouse</a> <a href="/tags/DPDK/" style="font-size: 13.11px;">DPDK</a> <a href="/tags/IMS/" style="font-size: 13.22px;">IMS</a> <a href="/tags/JVM/" style="font-size: 13.67px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/MyBatis/" style="font-size: 13px;">MyBatis</a> <a href="/tags/MySQL/" style="font-size: 13.22px;">MySQL</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/TCP/" style="font-size: 13.22px;">TCP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/akka/" style="font-size: 13.89px;">akka</a> <a href="/tags/atomic/" style="font-size: 13.33px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.56px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/log4j/" style="font-size: 13px;">log4j</a> <a href="/tags/mq/" style="font-size: 13px;">mq</a> <a href="/tags/net/" style="font-size: 13px;">net</a> <a href="/tags/netty/" style="font-size: 13.11px;">netty</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/pika/" style="font-size: 13.11px;">pika</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/redis/" style="font-size: 14px;">redis</a> <a href="/tags/sentinel/" style="font-size: 13px;">sentinel</a> <a href="/tags/sort/" style="font-size: 13.78px;">sort</a> <a href="/tags/zookeeper/" style="font-size: 13px;">zookeeper</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.33px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/11/">十一月 2023</a><span class="archive-list-count">25</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/10/">十月 2022</a><span class="archive-list-count">11</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/04/">四月 2022</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">21</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">22</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">14</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/net/">net</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/network/3gpp/%E5%9F%BA%E7%A1%80%E7%BD%91%E7%BB%9C%E9%93%BE%E8%B7%AF%E4%BB%8B%E7%BB%8D/" class="title">基础网络链路介绍</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T06:28:30.065Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/devops/docker/%E8%BF%90%E8%A1%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA-Java/" class="title">docker-java运行环境</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:43:01.859Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/devops/docker/%E8%BF%90%E8%A1%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA-%E7%9B%91%E6%8E%A7/" class="title">docker-监控环境搭建.md</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:43:01.859Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/MySQL/">MySQL</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/data/mysql/MySQL%E8%BF%9E%E6%8E%A5%E6%8C%82%E6%AD%BB%E5%8E%9F%E5%9B%A0%E5%88%86%E6%9E%90/" class="title">MySQL连接挂死原因分析</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:43:01.853Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/TCP/">TCP</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/network/protocol/tcp/TCP%E7%8A%B6%E6%80%81%E6%A6%82%E8%BF%B0/" class="title">TCP状态概述.md</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:40:25.016Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-network/protocol/tcp/Linux IO模式及select、poll、epoll详解" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Linux IO模式及select、poll、epoll详解
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2023/11/15/network/protocol/tcp/Linux%20IO%E6%A8%A1%E5%BC%8F%E5%8F%8Aselect%E3%80%81poll%E3%80%81epoll%E8%AF%A6%E8%A7%A3/" class="article-date">
+	  <time datetime="2023-11-15T03:40:25.015Z" itemprop="datePublished">2023-11-15</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/TCP/">TCP</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/TCP/" rel="tag">TCP</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2023/11/15/network/protocol/tcp/Linux%20IO%E6%A8%A1%E5%BC%8F%E5%8F%8Aselect%E3%80%81poll%E3%80%81epoll%E8%AF%A6%E8%A7%A3/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="0、前言"><a href="#0、前言" class="headerlink" title="0、前言"></a>0、前言</h2><p>对于每一个从事 Web 服务器开发的后端程序员，必然绕不开网络编程，而其中最基础也是最重要的部分就是 Linux IO 模式及 Socket 编程。什么是 Socket 呢？简单理解，就是 ip地址 + 端口号。当两个进程间需要通信时，首先要创建五元组（源ip地址、目的ip地址、源端口号、目的端口号、协议），建立 tcp 连接，建立好连接之后，两个进程各自有一个 Socket 来标识，这两个 socket 组成的 socket pair 也就唯一标识了一个连接。有了连接之后，应用程序得要从 tcp 流上获取数据，然后再处理数据。于是，诞生了三种高效的 Socket 编程方法：select、poll 和 epoll.<br>本文将首先介绍下 Linux IO 的几种模式以及一些前置知识，因为这是理解 select、poll 和 epoll 的前提；接下来重点介绍下 select、poll 和 epoll 的工作原理及优缺点；最后附上样例代码<br>注：本人并不是从事 web 后端开发的工作，平时也就用用 grpc/brpc（封装了 socket 编程模型），所以尽量从概念及实现原理上把这个知识地点讲清楚，如果有讲的不对的地方，欢迎专业人士批评指正。</p>
+<h2 id="1、几个基础概念"><a href="#1、几个基础概念" class="headerlink" title="1、几个基础概念"></a>1、几个基础概念</h2><h3 id="1-1、用户空间和内核空间"><a href="#1-1、用户空间和内核空间" class="headerlink" title="1.1、用户空间和内核空间"></a>1.1、用户空间和内核空间</h3><p>对于32位操作系统而言，它的寻址空间是4G（2的32次方），注意这里的4G是虚拟内存空间大小。以 Linux 为例，它将最高的1G字节给内核使用，称为内核空间，剩下的3G给用户进程使用，称为用户空间。这样做的好处就是隔离，保证内核安全。</p>
+<h3 id="1-2、进程切换"><a href="#1-2、进程切换" class="headerlink" title="1.2、进程切换"></a>1.2、进程切换</h3><p>这是内核要干的事，字面意思很好理解，挂起正在运行的 A 进程，然后运行 B 进程，当然这其中的流程比较复杂，涉及到上下文切换，且非常消耗资源，感兴趣的同学可以去深入研究。</p>
+<h3 id="1-3、进程的阻塞"><a href="#1-3、进程的阻塞" class="headerlink" title="1.3、进程的阻塞"></a>1.3、进程的阻塞</h3><ul>
+<li>进程阻塞是本进程的行为，比如和其他进程通信时，等待请求的数据返回；</li>
+<li>进程进入阻塞状态时不占用CPU资源的</li>
+</ul>
+<h3 id="1-4、文件描述符"><a href="#1-4、文件描述符" class="headerlink" title="1.4、文件描述符"></a>1.4、文件描述符</h3><p>在 Linux 世界里，一切皆文件。怎么理解呢？当程序打开一个现有文件或创建新文件时，内核会向进程返回一个文件描述符，文件描述符在形式上是一个非负整数，其实就是一个索引值，指向该进程打开文件的记录表（它是由内核维护的）。</p>
+<h3 id="1-5、缓存-I-O"><a href="#1-5、缓存-I-O" class="headerlink" title="1.5、缓存 I/O"></a>1.5、缓存 I/O</h3><p>和标准 IO 是一个概念，当应用程序需要从内核读数据时，数据先被拷贝到操作系统的内核缓冲区（page cache），然后再从该缓冲区拷贝到应用程序的地址空间。</p>
+<h2 id="2、Linux-IO-模式"><a href="#2、Linux-IO-模式" class="headerlink" title="2、Linux IO 模式"></a>2、Linux IO 模式</h2><p>当应用程序发起一次 read 调用时，会经历以下两个阶段：</p>
+<ul>
+<li>等待数据准备 (Waiting for the data to be ready)</li>
+<li>将数据从内核拷贝到进程中 (Copying the data from the kernel to the process)</li>
+</ul>
+<p><strong>正式因为这两个阶段，Linux 系统产生了下述五种 IO 方式：</strong></p>
+<ul>
+<li>阻塞 I/O（blocking IO）</li>
+<li>非阻塞 I/O（nonblocking IO）</li>
+<li>异步 I/O（asynchronous IO）</li>
+<li>I/O 多路复用（ IO multiplexing）</li>
+<li>信号驱动 I/O（ signal driven IO）（很少见，可忽略）</li>
+</ul>
+<p>它们具体怎么工作，这里做下总结：</p>
+<h3 id="2-1、blocking-和-non-blocking的区别"><a href="#2-1、blocking-和-non-blocking的区别" class="headerlink" title="2.1、blocking 和 non-blocking的区别"></a>2.1、blocking 和 non-blocking的区别</h3><p>blocking IO的特点就是在IO执行的两个阶段都被block了。<br>non-blocking IO 的特点是用户进程需要不断的主动询问内核 “ 数据好了吗？”</p>
+<h3 id="2-2、IO-多路复用"><a href="#2-2、IO-多路复用" class="headerlink" title="2.2、IO 多路复用"></a>2.2、IO 多路复用</h3><p>I/O 多路复用的特点是通过一种机制一个进程能同时等待多个文件描述符，而这些文件描述符（套接字描述符）其中的任意一个进入读就绪状态，select()函数就可以返回。</p>
+<h3 id="2-3、synchronous-IO和asynchronous-IO的区别"><a href="#2-3、synchronous-IO和asynchronous-IO的区别" class="headerlink" title="2.3、synchronous IO和asynchronous IO的区别"></a>2.3、synchronous IO和asynchronous IO的区别</h3><p>POSIX 中是这样定义的：</p>
+<ul>
+<li><p>A synchronous I/O operation causes the requesting process to be blocked until that I/O operation completes;</p>
+</li>
+<li><p>An asynchronous I/O operation does not cause the requesting process to be blocked;<br>两者的区别就在于synchronous IO做”IO operation”的时候会将process阻塞。按照这个定义，之前所述的blocking IO，non-blocking IO，IO multiplexing 都属于 synchronous IO。</p>
+<h3 id="2-4、各个IO-模式的比较"><a href="#2-4、各个IO-模式的比较" class="headerlink" title="2.4、各个IO 模式的比较"></a>2.4、各个IO 模式的比较</h3><p><img src="https://cdn.nlark.com/yuque/0/2023/webp/804884/1676087915312-7960cc52-7230-47d2-8579-36d012fbd81f.webp#averageHue=%23f0f0f0&clientId=u991cae4a-9930-4&from=paste&id=ubacb17bd&originHeight=654&originWidth=1228&originalType=url&ratio=2&rotation=0&showTitle=false&status=done&style=none&taskId=u23b55a3f-828d-412a-82fd-26cdbaf18d3&title="><br>可以发现：</p>
+</li>
+<li><p>对于 non-blocking IO中，虽然进程大部分时间都不会被 block，但是它仍然要求进程去主动的 check，并且当数据准备完成以后，也需要进程主动的再次调用recvfrom来将数据拷贝到用户内存。</p>
+</li>
+<li><p>asynchronous IO 完全不同于 no-blocking IO，它就像是用户进程将整个 IO 操作交给了内核完成，然后内核做完后发出信号通知。在此期间，用户进程不需要去检查 IO 操作的状态，也不需要主动的去拷贝数据。</p>
+</li>
+</ul>
+<h2 id="3、IO-多路复用之-select、poll、epoll-详解"><a href="#3、IO-多路复用之-select、poll、epoll-详解" class="headerlink" title="3、IO 多路复用之 select、poll、epoll 详解"></a>3、IO 多路复用之 select、poll、epoll 详解</h2><p>select，poll，epoll 都是 IO 多路复用的机制，它们都需要在读写事件就绪后自己负责进行读写，也就是说这个读写过程是阻塞的。</p>
+<h3 id="3-1、select"><a href="#3-1、select" class="headerlink" title="3.1、select"></a>3.1、select</h3><p><img src="https://cdn.nlark.com/yuque/0/2023/webp/804884/1676087915344-4b07e7fd-2095-408e-8b30-38e68d079411.webp#averageHue=%23f9f8f8&clientId=u991cae4a-9930-4&from=paste&id=u86da44a3&originHeight=701&originWidth=1244&originalType=url&ratio=2&rotation=0&showTitle=false&status=done&style=none&taskId=ua639cca0-190b-4148-9beb-468de7bc37a&title="><br>select 最多能同时监视 1024 个 socket（因为 fd_set 结构体大小是 128 字节，每个 bit 表示一个文件描述符）。用户需要维护一个临时数组，存储文件描述符。当内核有事件发生时，内核将 fd_set 中没发生的文件描述符清空，然后拷贝到用户区。select 返回的是整个数组，它需要遍历整个数组才知道谁发生了变化。</p>
+<h3 id="3-2、poll"><a href="#3-2、poll" class="headerlink" title="3.2、poll"></a>3.2、poll</h3><p><img src="https://cdn.nlark.com/yuque/0/2023/webp/804884/1676087915317-f66fd7a2-7cda-4d58-8fa4-1c65db5a33f5.webp#averageHue=%23f9f9f9&clientId=u991cae4a-9930-4&from=paste&id=u74453309&originHeight=1115&originWidth=1440&originalType=url&ratio=2&rotation=0&showTitle=false&status=done&style=none&taskId=u471155bc-f967-40d1-9ca8-554d7fe7be2&title="><br>poll 就是把 select 中的 fd_set 数组换成了链表，其他和 select 没什么不同。</p>
+<h3 id="3-3、epoll"><a href="#3-3、epoll" class="headerlink" title="3.3、epoll"></a>3.3、epoll</h3><p><img src="https://cdn.nlark.com/yuque/0/2023/webp/804884/1676087915312-7af2a901-e86a-4894-8a3c-b3d34ed8532d.webp#averageHue=%23f8f8f8&clientId=u991cae4a-9930-4&from=paste&id=ue7085e06&originHeight=960&originWidth=1440&originalType=url&ratio=2&rotation=0&showTitle=false&status=done&style=none&taskId=u99d3174d-445e-4db7-b44e-9acd1f02f19&title="><br>epoll 是基于事件驱动的 IO 方式，它没有文件描述符个数限制，它将用户关心的文件描述符的事件存放到内核的一个事件表中（简单来说，就是由内核来负责存储（红黑树）有事件的 socket 句柄），这样在用户空间和内核空间的copy只需一次。优点如下：</p>
+<ul>
+<li>没有最大并发连接的限制，能打开的fd上限远大于1024（1G的内存能监听约10万个端口） </li>
+<li>采用回调的方式，效率提升。只有<strong>活跃可用</strong>的fd才会调用callback函数，也就是说 epoll 只管你“活跃”的连接，而跟连接总数无关； </li>
+<li>内存拷贝。使用mmap()文件映射内存来加速与内核空间的消息传递，减少复制开销。</li>
+</ul>
+<p>epoll 有两种工作方式：</p>
+<ul>
+<li>LT模式（水平触发）：若就绪的事件一次没有处理完，就会一直去处理。也就是说，将没有处理完的事件继续放回到就绪队列之中（即那个内核中的链表），一直进行处理。</li>
+<li>ET模式（边缘触发）：就绪的事件只能处理一次，若没有处理完会在下次的其它事件就绪时再进行处理。而若以后再也没有就绪的事件，那么剩余的那部分数据也会随之而丢失。</li>
+</ul>
+<p>由此可见：ET模式的效率比LT模式的效率要高很多。_简单点说就是，如果对于一个非阻塞 socket，如果使用 epoll 边缘模式去检测数据是否可读，触发可读事件以后，一定要一次性把 socket 上的数据收取干净才行，也就是说一定要循环调用 recv 函数直到 recv 出错，错误码是<strong>EWOULDBLOCK</strong>（<strong>EAGAIN</strong> 一样）（此时表示 socket 上本次数据已经读完）；如果使用水平模式，则不用，你可以根据业务一次性收取固定的字节数，或者收完为止。_只是如果使用ET模式，就要保证每次进行数据处理时，要将其处理完，不能造成数据丢失，这样对编写代码的人要求就比较高。</p>
+<h3 id="3-4、select、poll、epoll-三者区别"><a href="#3-4、select、poll、epoll-三者区别" class="headerlink" title="3.4、select、poll、epoll 三者区别"></a>3.4、select、poll、epoll 三者区别</h3><p><img src="https://cdn.nlark.com/yuque/0/2023/png/804884/1676087915418-6ba5d0fb-8fa5-471f-8dbd-1c87cd2d28c9.png#averageHue=%23fcfaf9&clientId=u991cae4a-9930-4&from=paste&id=u3c503c6d&originHeight=347&originWidth=959&originalType=url&ratio=2&rotation=0&showTitle=false&status=done&style=none&taskId=ubd432f6f-e6cd-47d4-93d8-4130aaf693e&title="></p>
+<h2 id="4、代码详解"><a href="#4、代码详解" class="headerlink" title="4、代码详解"></a>4、代码详解</h2><h3 id="4-1-select"><a href="#4-1-select" class="headerlink" title="4.1 select"></a>4.1 select</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br></pre></td><td class="code"><pre><span class="line">#include&lt;stdio.h&gt;</span><br><span class="line">#include&lt;sys/types.h&gt;</span><br><span class="line">#include&lt;sys/socket.h&gt;</span><br><span class="line">#include&lt;unistd.h&gt;</span><br><span class="line">#include&lt;netinet/in.h&gt;</span><br><span class="line">#include&lt;arpa/inet.h&gt;</span><br><span class="line">#include&lt;stdlib.h&gt;</span><br><span class="line">#include&lt;string.h&gt;</span><br><span class="line">#include&lt;sys/time.h&gt;</span><br><span class="line">static void Usage(const char* proc)</span><br><span class="line">&#123;</span><br><span class="line">    printf(&quot;%s [local_ip] [local_port]\n&quot;,proc);</span><br><span class="line">&#125;</span><br><span class="line">int array[4096];</span><br><span class="line">static int start_up(const char* _ip,int _port)</span><br><span class="line">&#123;</span><br><span class="line">    int sock = socket(AF_INET,SOCK_STREAM,0);</span><br><span class="line">    if(sock &lt; 0)</span><br><span class="line">    &#123;</span><br><span class="line">        perror(&quot;socket&quot;);</span><br><span class="line">        exit(1);</span><br><span class="line">    &#125;</span><br><span class="line">    struct sockaddr_in local;</span><br><span class="line">    local.sin_family = AF_INET;</span><br><span class="line">    local.sin_port = htons(_port);</span><br><span class="line">    local.sin_addr.s_addr = inet_addr(_ip);</span><br><span class="line">    if(bind(sock,(struct sockaddr*)&amp;local,sizeof(local)) &lt; 0)</span><br><span class="line">    &#123;</span><br><span class="line">        perror(&quot;bind&quot;);</span><br><span class="line">        exit(2);</span><br><span class="line">    &#125;</span><br><span class="line">    if(listen(sock,10) &lt; 0)</span><br><span class="line">    &#123;</span><br><span class="line">        perror(&quot;listen&quot;);</span><br><span class="line">        exit(3);</span><br><span class="line">    &#125;</span><br><span class="line">    return sock;</span><br><span class="line">&#125;</span><br><span class="line">int main(int argc,char* argv[])</span><br><span class="line">&#123;</span><br><span class="line">    if(argc != 3)</span><br><span class="line">    &#123;</span><br><span class="line">        Usage(argv[0]);</span><br><span class="line">        return -1;</span><br><span class="line">    &#125;</span><br><span class="line">    int listensock = start_up(argv[1],atoi(argv[2]));</span><br><span class="line">    int maxfd = 0;</span><br><span class="line">    fd_set rfds;</span><br><span class="line">    fd_set wfds;</span><br><span class="line">    array[0] = listensock;</span><br><span class="line">    int i = 1;</span><br><span class="line">    int array_size = sizeof(array)/sizeof(array[0]);</span><br><span class="line">    for(; i &lt; array_size;i++)</span><br><span class="line">    &#123;</span><br><span class="line">        array[i] = -1;</span><br><span class="line">    &#125;</span><br><span class="line">    while(1)</span><br><span class="line">    &#123;</span><br><span class="line">        FD_ZERO(&amp;rfds);</span><br><span class="line">        FD_ZERO(&amp;wfds);</span><br><span class="line">        for(i = 0;i &lt; array_size;++i)</span><br><span class="line">        &#123;</span><br><span class="line">            if(array[i] &gt; 0)</span><br><span class="line">            &#123;</span><br><span class="line">                FD_SET(array[i],&amp;rfds);</span><br><span class="line">                FD_SET(array[i],&amp;wfds);</span><br><span class="line">                if(array[i] &gt; maxfd)</span><br><span class="line">                &#123;</span><br><span class="line">                    maxfd = array[i];</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        switch(select(maxfd + 1,&amp;rfds,&amp;wfds,NULL,NULL))</span><br><span class="line">        &#123;</span><br><span class="line">            case 0:</span><br><span class="line">                &#123;</span><br><span class="line">                    printf(&quot;timeout\n&quot;);</span><br><span class="line">                    break;</span><br><span class="line">                &#125;</span><br><span class="line">            case -1:</span><br><span class="line">                &#123;</span><br><span class="line">                    perror(&quot;select&quot;);</span><br><span class="line">                    break;</span><br><span class="line">                &#125;</span><br><span class="line">             default:</span><br><span class="line">                &#123;</span><br><span class="line">                    int j = 0;</span><br><span class="line">                    for(; j &lt; array_size; ++j)</span><br><span class="line">                    &#123;</span><br><span class="line">                        if(j == 0 &amp;&amp; FD_ISSET(array[j],&amp;rfds))</span><br><span class="line">                        &#123;</span><br><span class="line">                            //listensock happened read events</span><br><span class="line">                            struct sockaddr_in client;</span><br><span class="line">                            socklen_t len = sizeof(client);</span><br><span class="line">                            int new_sock = accept(listensock,(struct sockaddr*)&amp;client,&amp;len);</span><br><span class="line">                            if(new_sock &lt; 0)//accept failed</span><br><span class="line">                            &#123;</span><br><span class="line">                                perror(&quot;accept&quot;);</span><br><span class="line">                                continue;</span><br><span class="line">                            &#125;</span><br><span class="line">                            else//accept success</span><br><span class="line">                            &#123;</span><br><span class="line">                                printf(&quot;get a new client%s\n&quot;,inet_ntoa(client.sin_addr));</span><br><span class="line">                                fflush(stdout);</span><br><span class="line">                                int k = 1;</span><br><span class="line">                                for(; k &lt; array_size;++k)</span><br><span class="line">                                &#123;</span><br><span class="line">                                    if(array[k] &lt; 0)</span><br><span class="line">                                    &#123;</span><br><span class="line">                                        array[k] = new_sock;</span><br><span class="line">                                        if(new_sock &gt; maxfd)</span><br><span class="line">                                            maxfd = new_sock;</span><br><span class="line">                                        break;</span><br><span class="line">                                    &#125;</span><br><span class="line">                                &#125;</span><br><span class="line">                                if(k == array_size)</span><br><span class="line">                                &#123;</span><br><span class="line">                                    close(new_sock);</span><br><span class="line">                                &#125;</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;//j == 0</span><br><span class="line">                        else if(j != 0 &amp;&amp; FD_ISSET(array[j], &amp;rfds))</span><br><span class="line">                        &#123;</span><br><span class="line">                            //new_sock happend read events</span><br><span class="line">                            char buf[1024];</span><br><span class="line">                            ssize_t s = read(array[j],buf,sizeof(buf) - 1);</span><br><span class="line">                            if(s &gt; 0)//read success</span><br><span class="line">                            &#123;</span><br><span class="line">                                buf[s] = 0;</span><br><span class="line">                                printf(&quot;clientsay#%s\n&quot;,buf);</span><br><span class="line">                                if(FD_ISSET(array[j],&amp;wfds))</span><br><span class="line">                                &#123;</span><br><span class="line">                                    char *msg = &quot;HTTP/1.0 200 OK &lt;\r\n\r\n&lt;html&gt;&lt;h1&gt;yingying beautiful&lt;/h1&gt;&lt;/html&gt;\r\n&quot;;</span><br><span class="line">                                    write(array[j],msg,strlen(msg));</span><br><span class="line"></span><br><span class="line">                                &#125;</span><br><span class="line">                            &#125;</span><br><span class="line">                            else if(0 == s)</span><br><span class="line">                            &#123;</span><br><span class="line">                                printf(&quot;client quit!\n&quot;);</span><br><span class="line">                                close(array[j]);</span><br><span class="line">                                array[j] = -1;</span><br><span class="line">                            &#125;</span><br><span class="line">                            else</span><br><span class="line">                            &#123;</span><br><span class="line">                                perror(&quot;read&quot;);</span><br><span class="line">                                close(array[j]);</span><br><span class="line">                                array[j] = -1;</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;//else j != 0  </span><br><span class="line">                    &#125;</span><br><span class="line">                    break;</span><br><span class="line">                &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="4-2、Poll"><a href="#4-2、Poll" class="headerlink" title="4.2、Poll"></a>4.2、Poll</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br></pre></td><td class="code"><pre><span class="line">#include&lt;stdio.h&gt;</span><br><span class="line">#include&lt;stdlib.h&gt;</span><br><span class="line">#include&lt;string.h&gt;</span><br><span class="line">#include&lt;sys/types.h&gt;</span><br><span class="line">#include&lt;sys/socket.h&gt;</span><br><span class="line">#include&lt;netinet/in.h&gt;</span><br><span class="line">#include&lt;arpa/inet.h&gt;</span><br><span class="line">#include&lt;poll.h&gt;</span><br><span class="line">static void usage(const char *proc)</span><br><span class="line">&#123;</span><br><span class="line">    printf(&quot;%s [local_ip] [local_port]\n&quot;,proc);</span><br><span class="line">&#125;</span><br><span class="line">int start_up(const char*_ip,int _port)</span><br><span class="line">&#123;</span><br><span class="line">    int sock = socket(AF_INET,SOCK_STREAM,0);</span><br><span class="line">    if(sock &lt; 0)</span><br><span class="line">    &#123;</span><br><span class="line">        perror(&quot;socket&quot;);</span><br><span class="line">        return 2;</span><br><span class="line">    &#125;</span><br><span class="line">    int opt = 1;</span><br><span class="line">    setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&amp;opt,sizeof(opt));</span><br><span class="line">    struct sockaddr_in local;</span><br><span class="line">    local.sin_family = AF_INET;</span><br><span class="line">    local.sin_port = htons(_port);</span><br><span class="line">    local.sin_addr.s_addr = inet_addr(_ip);</span><br><span class="line">    if(bind(sock,(struct sockaddr*)&amp;local,sizeof(local)) &lt; 0)</span><br><span class="line">    &#123;</span><br><span class="line">        perror(&quot;bind&quot;);</span><br><span class="line">        return 3;</span><br><span class="line">    &#125;</span><br><span class="line">    if(listen(sock,10) &lt; 0)</span><br><span class="line">    &#123;</span><br><span class="line">        perror(&quot;listen&quot;);</span><br><span class="line">        return 4;</span><br><span class="line">    &#125;</span><br><span class="line">    return sock;</span><br><span class="line">&#125;</span><br><span class="line">int main(int argc, char*argv[])</span><br><span class="line">&#123;</span><br><span class="line">    if(argc != 3)</span><br><span class="line">    &#123;</span><br><span class="line">        usage(argv[0]);</span><br><span class="line">        return 1;</span><br><span class="line">    &#125;</span><br><span class="line">    int sock = start_up(argv[1],atoi(argv[2]));</span><br><span class="line">    struct pollfd peerfd[1024];</span><br><span class="line">    peerfd[0].fd = sock;</span><br><span class="line">    peerfd[0].events = POLLIN;</span><br><span class="line">    int nfds = 1;</span><br><span class="line">    int ret;</span><br><span class="line">    int maxsize = sizeof(peerfd)/sizeof(peerfd[0]);</span><br><span class="line">    int i = 1;</span><br><span class="line">    int timeout = -1;</span><br><span class="line">    for(; i &lt; maxsize; ++i)</span><br><span class="line">    &#123;</span><br><span class="line">        peerfd[i].fd = -1;</span><br><span class="line">    &#125;</span><br><span class="line">    while(1)</span><br><span class="line">    &#123;</span><br><span class="line">        switch(ret = poll(peerfd,nfds,timeout))</span><br><span class="line">        &#123;</span><br><span class="line">            case 0:</span><br><span class="line">                printf(&quot;timeout...\n&quot;);</span><br><span class="line">                break;</span><br><span class="line">            case -1:</span><br><span class="line">                perror(&quot;poll&quot;);</span><br><span class="line">                break;</span><br><span class="line">            default:</span><br><span class="line">                &#123;</span><br><span class="line">                        if(peerfd[0].revents &amp; POLLIN)</span><br><span class="line">                        &#123;</span><br><span class="line">                            struct sockaddr_in client;</span><br><span class="line">                            socklen_t len = sizeof(client);</span><br><span class="line">                            int new_sock = accept(sock,\</span><br><span class="line">                                    (struct sockaddr*)&amp;client,&amp;len);</span><br><span class="line">                            printf(&quot;accept finish %d\n&quot;,new_sock);</span><br><span class="line">                            if(new_sock &lt; 0)</span><br><span class="line">                            &#123;</span><br><span class="line">                                perror(&quot;accept&quot;);</span><br><span class="line">                                continue;</span><br><span class="line">                            &#125;</span><br><span class="line">                            printf(&quot;get a new client\n&quot;);</span><br><span class="line">                                int j = 1;</span><br><span class="line">                                for(; j &lt; maxsize; ++j)</span><br><span class="line">                                &#123;</span><br><span class="line">                                    if(peerfd[j].fd &lt; 0)</span><br><span class="line">                                    &#123;</span><br><span class="line">                                        peerfd[j].fd = new_sock;</span><br><span class="line">                                        break;</span><br><span class="line">                                    &#125;</span><br><span class="line">                                &#125;</span><br><span class="line">                                if(j == maxsize)</span><br><span class="line">                                &#123;</span><br><span class="line">                                    printf(&quot;to many clients...\n&quot;);</span><br><span class="line">                                    close(new_sock);</span><br><span class="line">                                &#125;</span><br><span class="line">                                peerfd[j].events = POLLIN;</span><br><span class="line">                                if(j + 1 &gt; nfds)</span><br><span class="line">                                    nfds = j + 1;</span><br><span class="line">                        &#125;</span><br><span class="line">                        for(i = 1;i &lt; nfds;++i)</span><br><span class="line">                        &#123;</span><br><span class="line">                            if(peerfd[i].revents &amp; POLLIN)</span><br><span class="line">                        &#123;</span><br><span class="line">                            printf(&quot;read ready\n&quot;);</span><br><span class="line">                            char buf[1024];</span><br><span class="line">                            ssize_t s = read(peerfd[i].fd,buf, \</span><br><span class="line">                                    sizeof(buf) - 1);</span><br><span class="line">                            if(s &gt; 0)</span><br><span class="line">                            &#123;</span><br><span class="line">                                buf[s] = 0;</span><br><span class="line">                                printf(&quot;client say#%s&quot;,buf);</span><br><span class="line">                                fflush(stdout);</span><br><span class="line">                                peerfd[i].events = POLLOUT;</span><br><span class="line">                            &#125;</span><br><span class="line">                        else if(s &lt;= 0)</span><br><span class="line">                            &#123;</span><br><span class="line">                                close(peerfd[i].fd);</span><br><span class="line">                                peerfd[i].fd = -1;</span><br><span class="line">                            &#125;</span><br><span class="line">                            else</span><br><span class="line">                            &#123;</span><br><span class="line"></span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;//i != 0</span><br><span class="line">                        else if(peerfd[i].revents &amp; POLLOUT)</span><br><span class="line">                        &#123;</span><br><span class="line">                            char *msg = &quot;HTTP/1.0 200 OK \</span><br><span class="line">                                         &lt;\r\n\r\n&lt;html&gt;&lt;h1&gt; \</span><br><span class="line">                                         yingying beautiful \</span><br><span class="line">                                         &lt;/h1&gt;&lt;/html&gt;\r\n&quot;;</span><br><span class="line">                            write(peerfd[i].fd,msg,strlen(msg));</span><br><span class="line">                            close(peerfd[i].fd);</span><br><span class="line">                            peerfd[i].fd = -1;</span><br><span class="line">                        &#125;</span><br><span class="line">                        else</span><br><span class="line">                        &#123;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;//for</span><br><span class="line">                &#125;//default</span><br><span class="line">                break;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>具体流程如下：</p>
+<ol>
+<li>poll()函数返回fds集合中就绪的读、写，或出错的描述符数量，返回0表示超时，返回-1表示出错；</li>
+<li>fds是一个struct pollfd类型的数组，用于存放需要检测其状态的socket描述符，并且调用poll函数之后fds数组不会被清空；</li>
+<li>nfds记录数组fds中描述符的总数量；</li>
+<li>timeout是调用poll函数阻塞的超时时间，单位毫秒；</li>
+<li>一个pollfd结构体表示一个被监视的文件描述符，通过传递fds[]指示 poll() 监视多个文件描述符。其中，结构体的events域是监视该文件描述符的事件掩码，由用户来设置这个域，结构体的revents域是文件描述符的操作结果事件掩码，内核在调用返回时设置这个域。events域中请求的任何事件都可能在revents域中返回。</li>
+</ol>
+<h3 id="4-3、epoll"><a href="#4-3、epoll" class="headerlink" title="4.3、epoll"></a>4.3、epoll</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br></pre></td><td class="code"><pre><span class="line">#include&lt;stdio.h&gt;</span><br><span class="line">#include&lt;sys/types.h&gt;</span><br><span class="line">#include&lt;sys/socket.h&gt;</span><br><span class="line">#include&lt;netinet/in.h&gt;</span><br><span class="line">#include&lt;arpa/inet.h&gt;</span><br><span class="line">#include&lt;stdlib.h&gt;</span><br><span class="line">#include&lt;string.h&gt;</span><br><span class="line">#include&lt;sys/epoll.h&gt;</span><br><span class="line">static Usage(const char* proc)</span><br><span class="line">&#123;</span><br><span class="line">    printf(&quot;%s [local_ip] [local_port]\n&quot;,proc);</span><br><span class="line">&#125;</span><br><span class="line">int start_up(const char*_ip,int _port)</span><br><span class="line">&#123;</span><br><span class="line">    int sock = socket(AF_INET,SOCK_STREAM,0);</span><br><span class="line">    if(sock &lt; 0)</span><br><span class="line">    &#123;</span><br><span class="line">        perror(&quot;socket&quot;);</span><br><span class="line">        exit(2);</span><br><span class="line">    &#125;</span><br><span class="line">    struct sockaddr_in local;</span><br><span class="line">    local.sin_family = AF_INET;</span><br><span class="line">    local.sin_port = htons(_port);</span><br><span class="line">    local.sin_addr.s_addr = inet_addr(_ip);</span><br><span class="line">    if(bind(sock,(struct sockaddr*)&amp;local,sizeof(local)) &lt; 0)</span><br><span class="line">    &#123;</span><br><span class="line">        perror(&quot;bind&quot;);</span><br><span class="line">        exit(3);</span><br><span class="line">    &#125;</span><br><span class="line">    if(listen(sock,10)&lt; 0)</span><br><span class="line">    &#123;</span><br><span class="line">        perror(&quot;listen&quot;);</span><br><span class="line">        exit(4);</span><br><span class="line">    &#125;</span><br><span class="line">    return sock;</span><br><span class="line">&#125;</span><br><span class="line">int main(int argc, char*argv[])</span><br><span class="line">&#123;</span><br><span class="line">    if(argc != 3)</span><br><span class="line">    &#123;</span><br><span class="line">        Usage(argv[0]);</span><br><span class="line">        return 1;</span><br><span class="line">    &#125;</span><br><span class="line">    int sock = start_up(argv[1],atoi(argv[2]));</span><br><span class="line">    int epollfd = epoll_create(256);</span><br><span class="line">    if(epollfd &lt; 0)</span><br><span class="line">    &#123;</span><br><span class="line">        perror(&quot;epoll_create&quot;);</span><br><span class="line">        return 5;</span><br><span class="line">    &#125;</span><br><span class="line">    struct epoll_event ev;</span><br><span class="line">    ev.events = EPOLLIN;</span><br><span class="line">    ev.data.fd = sock;</span><br><span class="line">    if(epoll_ctl(epollfd,EPOLL_CTL_ADD,sock,&amp;ev) &lt; 0)</span><br><span class="line">    &#123;</span><br><span class="line">        perror(&quot;epoll_ctl&quot;);</span><br><span class="line">        return 6;</span><br><span class="line">    &#125;</span><br><span class="line">    int evnums = 0;//epoll_wait return val</span><br><span class="line">    struct epoll_event evs[64];</span><br><span class="line">    int timeout = -1;</span><br><span class="line">    while(1)</span><br><span class="line">    &#123;</span><br><span class="line">        switch(evnums = epoll_wait(epollfd,evs,64,timeout))</span><br><span class="line">        &#123;</span><br><span class="line">            case 0:</span><br><span class="line">     printf(&quot;timeout...\n&quot;);</span><br><span class="line">     break;</span><br><span class="line">            case -1:</span><br><span class="line">     perror(&quot;epoll_wait&quot;);</span><br><span class="line">     break;</span><br><span class="line">default:</span><br><span class="line">     &#123;</span><br><span class="line">         int i = 0;</span><br><span class="line">         for(; i &lt; evnums; ++i)</span><br><span class="line">         &#123;</span><br><span class="line">             struct sockaddr_in client;</span><br><span class="line">             socklen_t len = sizeof(client);</span><br><span class="line">             if(evs[i].data.fd == sock \</span><br><span class="line">                     &amp;&amp; evs[i].events &amp; EPOLLIN)</span><br><span class="line">             &#123;</span><br><span class="line">                 int new_sock = accept(sock, \</span><br><span class="line">                         (struct sockaddr*)&amp;client,&amp;len);</span><br><span class="line">                 if(new_sock &lt; 0)</span><br><span class="line">                 &#123;</span><br><span class="line">                     perror(&quot;accept&quot;);</span><br><span class="line">                     continue;</span><br><span class="line">                 &#125;//if accept failed</span><br><span class="line">                 else </span><br><span class="line">                 &#123;</span><br><span class="line">                     printf(&quot;Get a new client[%s]\n&quot;, \</span><br><span class="line">                             inet_ntoa(client.sin_addr));</span><br><span class="line">                     ev.data.fd = new_sock;</span><br><span class="line">                     ev.events = EPOLLIN;</span><br><span class="line">                     epoll_ctl(epollfd,EPOLL_CTL_ADD,\</span><br><span class="line">                             new_sock,&amp;ev);</span><br><span class="line">                 &#125;//accept success</span><br><span class="line"></span><br><span class="line">             &#125;//if fd == sock</span><br><span class="line">             else if(evs[i].data.fd != sock &amp;&amp; \</span><br><span class="line">                     evs[i].events &amp; EPOLLIN)</span><br><span class="line">             &#123;</span><br><span class="line">                 char buf[1024];</span><br><span class="line">                 ssize_t s = read(evs[i].data.fd,buf,sizeof(buf) - 1);</span><br><span class="line">                 if(s &gt; 0)</span><br><span class="line">                 &#123;</span><br><span class="line">                     buf[s] = 0;</span><br><span class="line">                     printf(&quot;client say#%s&quot;,buf);</span><br><span class="line">                     ev.data.fd = evs[i].data.fd;</span><br><span class="line">                     ev.events = EPOLLOUT;</span><br><span class="line">                     epoll_ctl(epollfd,EPOLL_CTL_MOD, \</span><br><span class="line">                             evs[i].data.fd,&amp;ev);</span><br><span class="line">                 &#125;//s &gt; 0</span><br><span class="line">                 else</span><br><span class="line">                 &#123;</span><br><span class="line">                     close(evs[i].data.fd);</span><br><span class="line">                     epoll_ctl(epollfd,EPOLL_CTL_DEL, \</span><br><span class="line">                             evs[i].data.fd,NULL);</span><br><span class="line">                 &#125;</span><br><span class="line">             &#125;//fd != sock</span><br><span class="line">             else if(evs[i].data.fd != sock \</span><br><span class="line">                     &amp;&amp; evs[i].events &amp; EPOLLOUT)</span><br><span class="line">             &#123;</span><br><span class="line">                 char *msg =  &quot;HTTP/1.0 200 OK &lt;\r\n\r\n&lt;html&gt;&lt;h1&gt;yingying beautiful &lt;/h1&gt;&lt;/html&gt;\r\n&quot;;</span><br><span class="line">                 write(evs[i].data.fd,msg,strlen(msg));</span><br><span class="line">                 close(evs[i].data.fd);</span><br><span class="line">                 epoll_ctl(epollfd,EPOLL_CTL_DEL, \</span><br><span class="line">                             evs[i].data.fd,NULL);</span><br><span class="line">             &#125;//EPOLLOUT</span><br><span class="line">             else</span><br><span class="line">             &#123;</span><br><span class="line">             &#125;</span><br><span class="line">         &#125;//for</span><br><span class="line">     &#125;//default</span><br><span class="line">     break;</span><br><span class="line">        &#125;//switch</span><br><span class="line">    &#125;//while</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>epoll_create</strong>函数创建一个epoll句柄，参数size表明内核要监听的描述符数量。调用成功时返回一个epoll句柄描述符，失败时返回-1。</li>
+<li><strong>epoll_ct</strong>l函数注册要监听的事件类型。四个参数解释如下： epfd表示epoll句柄； op表示fd操作类型：<strong>EPOLL_CTL_ADD</strong>（注册新的fd到epfd中），<strong>EPOLL_CTL_MOD</strong>（修改已注册的fd的监听事件），<strong>EPOLL_CTL_DEL</strong>（从epfd中删除一个fd）；fd是要监听的描述符； event表示要监听的事件，epoll_event结构体定义如下：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">struct epoll_event &#123; </span><br><span class="line">  __uint32_t events; /* Epoll events */ </span><br><span class="line">  epoll_data_t data; /* User data variable */ </span><br><span class="line">&#125;; </span><br><span class="line">typedef union epoll_data &#123;</span><br><span class="line">  void *ptr; </span><br><span class="line">  int fd; </span><br><span class="line">  __uint32_t u32;</span><br><span class="line">  __uint64_t u64; </span><br><span class="line">&#125; epoll_data_t;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>. epoll_wait</strong> 函数等待事件的就绪，成功时返回就绪的事件数目，调用失败时返回 -1，等待超时返回 0。maxevents告诉内核events的大小，timeout表示等待的超时事件。</li>
+</ul>
+<p><strong>5、总结</strong><br>epoll是 Linux 目前大规模网络并发程序开发的首选模型。在绝大多数情况下性能远超 select和poll。目前流行的高性能web服务器Nginx正式依赖于epoll提供的高效网络套接字轮询服务。但是，在并发连接不高的情况下，多线程+阻塞 IO 方式可能性能更好。</p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2023/11/15/network/protocol/tcp/Linux%20IO%E6%A8%A1%E5%BC%8F%E5%8F%8Aselect%E3%80%81poll%E3%80%81epoll%E8%AF%A6%E8%A7%A3/" title="Linux IO模式及select、poll、epoll详解" target="_blank" rel="external">https://wuhaocn.github.io/2023/11/15/network/protocol/tcp/Linux IO模式及select、poll、epoll详解/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2023/11/15/network/protocol/tcp/TCP%E7%9A%843%E6%AC%A1%E6%8F%A1%E6%89%8B%E4%B8%8E4%E6%AC%A1%E6%8C%A5%E6%89%8B%E8%AF%A6%E8%A7%A3/" title="TCP的3次握手与4次挥手简介"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2023/11/15/network/protocol/sip/IMS-%E7%9F%AD%E4%BF%A1%E5%8F%91%E9%80%81/" title="IMS-短信发送"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

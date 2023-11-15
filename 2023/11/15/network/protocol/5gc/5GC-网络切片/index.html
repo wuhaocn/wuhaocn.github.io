@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>5GC-网络切片 | Hexo</title>
+  <meta name="description" content="1.切片概述5G网络基于三大业务场景的网络切片，使切片场景更加多样化。  eMBB，提供大带宽流量通道，主要是借助无线侧提升带宽上限。 uRLLC，提供低时延网络，主要借助边缘网络进行边缘计算降低端到端网络距离。 mMTC，提供大规模机器通信，及4G中NB-IOT规范在制定中预计R16版本制定。现在采用4G核心网eLTE增强实现。  切片实现基于核心网信令侧提供切片标识传输，用户面实现切片能力提供">
+<meta property="og:type" content="article">
+<meta property="og:title" content="5GC-网络切片">
+<meta property="og:url" content="https://wuhaocn.github.io/2023/11/15/network/protocol/5gc/5GC-%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="1.切片概述5G网络基于三大业务场景的网络切片，使切片场景更加多样化。  eMBB，提供大带宽流量通道，主要是借助无线侧提升带宽上限。 uRLLC，提供低时延网络，主要借助边缘网络进行边缘计算降低端到端网络距离。 mMTC，提供大规模机器通信，及4G中NB-IOT规范在制定中预计R16版本制定。现在采用4G核心网eLTE增强实现。  切片实现基于核心网信令侧提供切片标识传输，用户面实现切片能力提供">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627466041353-07197c90-661f-4580-8395-c783fbea80d4.png#clientId=u0a72d6f7-f525-4&from=paste&height=423&id=ue0a385c8&margin=%5Bobject%20Object%5D&name=image.png&originHeight=423&originWidth=752&originalType=binary&ratio=1&size=128451&status=done&style=none&taskId=u074cf0b9-aa6c-4e68-aeb0-e641603fa04&width=752">
+<meta property="article:published_time" content="2023-11-15T03:40:25.013Z">
+<meta property="article:modified_time" content="2023-11-15T03:40:25.014Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="5G">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627466041353-07197c90-661f-4580-8395-c783fbea80d4.png#clientId=u0a72d6f7-f525-4&from=paste&height=423&id=ue0a385c8&margin=%5Bobject%20Object%5D&name=image.png&originHeight=423&originWidth=752&originalType=binary&ratio=1&size=128451&status=done&style=none&taskId=u074cf0b9-aa6c-4e68-aeb0-e641603fa04&width=752">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2023/11/15/network/protocol/5gc/5GC-%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">6</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/ClickHouse/">ClickHouse</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/MyBatis/">MyBatis</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/MySQL/">MySQL</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/SIP/">SIP</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/TCP/">TCP</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">21</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mq/">mq</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/net/">net</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/netty/">netty</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/redis/">redis</a><span class="category-list-count">25</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/rpc/">rpc</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/sentinel/">sentinel</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/zookeeper/">zookeeper</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ClickHouse/" rel="tag">ClickHouse</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/IMS/" rel="tag">IMS</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MyBatis/" rel="tag">MyBatis</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MySQL/" rel="tag">MySQL</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP/" rel="tag">TCP</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/akka/" rel="tag">akka</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/log4j/" rel="tag">log4j</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mq/" rel="tag">mq</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/net/" rel="tag">net</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/netty/" rel="tag">netty</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pika/" rel="tag">pika</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a><span class="tag-list-count">23</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sentinel/" rel="tag">sentinel</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/zookeeper/" rel="tag">zookeeper</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.44px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/ClickHouse/" style="font-size: 13.22px;">ClickHouse</a> <a href="/tags/DPDK/" style="font-size: 13.11px;">DPDK</a> <a href="/tags/IMS/" style="font-size: 13.22px;">IMS</a> <a href="/tags/JVM/" style="font-size: 13.67px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/MyBatis/" style="font-size: 13px;">MyBatis</a> <a href="/tags/MySQL/" style="font-size: 13.22px;">MySQL</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/TCP/" style="font-size: 13.22px;">TCP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/akka/" style="font-size: 13.89px;">akka</a> <a href="/tags/atomic/" style="font-size: 13.33px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.56px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/log4j/" style="font-size: 13px;">log4j</a> <a href="/tags/mq/" style="font-size: 13px;">mq</a> <a href="/tags/net/" style="font-size: 13px;">net</a> <a href="/tags/netty/" style="font-size: 13.11px;">netty</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/pika/" style="font-size: 13.11px;">pika</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/redis/" style="font-size: 14px;">redis</a> <a href="/tags/sentinel/" style="font-size: 13px;">sentinel</a> <a href="/tags/sort/" style="font-size: 13.78px;">sort</a> <a href="/tags/zookeeper/" style="font-size: 13px;">zookeeper</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.33px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/11/">十一月 2023</a><span class="archive-list-count">25</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/10/">十月 2022</a><span class="archive-list-count">11</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/04/">四月 2022</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">21</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">22</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">14</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/net/">net</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/network/3gpp/%E5%9F%BA%E7%A1%80%E7%BD%91%E7%BB%9C%E9%93%BE%E8%B7%AF%E4%BB%8B%E7%BB%8D/" class="title">基础网络链路介绍</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T06:28:30.065Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/devops/docker/%E8%BF%90%E8%A1%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA-Java/" class="title">docker-java运行环境</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:43:01.859Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/devops/docker/%E8%BF%90%E8%A1%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA-%E7%9B%91%E6%8E%A7/" class="title">docker-监控环境搭建.md</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:43:01.859Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/MySQL/">MySQL</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/data/mysql/MySQL%E8%BF%9E%E6%8E%A5%E6%8C%82%E6%AD%BB%E5%8E%9F%E5%9B%A0%E5%88%86%E6%9E%90/" class="title">MySQL连接挂死原因分析</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:43:01.853Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/TCP/">TCP</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/network/protocol/tcp/TCP%E7%8A%B6%E6%80%81%E6%A6%82%E8%BF%B0/" class="title">TCP状态概述.md</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:40:25.016Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-network/protocol/5gc/5GC-网络切片" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      5GC-网络切片
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2023/11/15/network/protocol/5gc/5GC-%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" class="article-date">
+	  <time datetime="2023-11-15T03:40:25.013Z" itemprop="datePublished">2023-11-15</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/5G/">5G</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/5G/" rel="tag">5G</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2023/11/15/network/protocol/5gc/5GC-%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="1-切片概述"><a href="#1-切片概述" class="headerlink" title="1.切片概述"></a>1.切片概述</h2><h2 id=""><a href="#" class="headerlink" title=""></a><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1627466041353-07197c90-661f-4580-8395-c783fbea80d4.png#clientId=u0a72d6f7-f525-4&from=paste&height=423&id=ue0a385c8&margin=%5Bobject%20Object%5D&name=image.png&originHeight=423&originWidth=752&originalType=binary&ratio=1&size=128451&status=done&style=none&taskId=u074cf0b9-aa6c-4e68-aeb0-e641603fa04&width=752" alt="image.png"></h2><p>5G网络基于三大业务场景的网络切片，使切片场景更加多样化。</p>
+<ul>
+<li>eMBB，提供大带宽流量通道，主要是借助无线侧提升带宽上限。</li>
+<li>uRLLC，提供低时延网络，主要借助边缘网络进行边缘计算降低端到端网络距离。</li>
+<li>mMTC，提供大规模机器通信，及4G中NB-IOT规范在制定中预计R16版本制定。现在采用4G核心网eLTE增强实现。</li>
+</ul>
+<p>切片实现基于核心网信令侧提供切片标识传输，用户面实现切片能力提供。</p>
+<h3 id="2-切片关键点"><a href="#2-切片关键点" class="headerlink" title="2. 切片关键点"></a>2. 切片关键点</h3><h4 id="2-1-核心参数"><a href="#2-1-核心参数" class="headerlink" title="2.1 核心参数"></a>2.1 核心参数</h4><ul>
+<li>NSSAI</li>
+</ul>
+<p>当 UE 发起注册流程时，接入网络（gNB）根据 UE 请求携带的 NSSAI（Network Slice Selection Assistance Information，网络切片选择辅助信息）来选择核心网络子切片的入口AMF。NSSAI是S-NSSAI的集合。NSSAI可以是已配置的NSSAI、请求的NSSAI或允许的NSSAI（Configured NSSAI, a Requested NSSAI or an Allowed NSSAI）。在UE和网络之间的信令消息中，允许和请求的NSSAI最多可以有8个。</p>
+<ul>
+<li>S-NSSAI</li>
+</ul>
+<p>网络切片主要体现在接纳控制、网络选择和资源分离。标准主要是通过S-NSSAI (Single Network Slice Selection Assistance Information)参数来进行识别</p>
+<ul>
+<li>SST</li>
+</ul>
+<p>切片/服务类型（SST），它是指在功能和服务方面预期的网络片行为；<br>SST指示S-NSSAI的切片和服务类型，而sst-SD是S-NSSAI参数切片、服务类型的组成和切片分量。该参数的结构如下：</p>
+<ul>
+<li>SD</li>
+</ul>
+<p>切片分量（SD），它是对切片/服务类型进行补充以在同一切片/服务类型的多个网络切片l之间进行区分的可选信息。<br>SD字段有一个保留值“no SD value associated with The SST”定义为十六进制FFFFFF。在某些协议中，不包括SD字段以指示没有SD值与SST关联。</p>
+<ul>
+<li> Subscribed S-NSSAIs：订阅S-NSSAI，属于用户的订阅数据。 </li>
+<li> Default S-NSSAI：默认S-NSSAI，根据运营商的策略，用户的订阅S-NSSAI中可能会一个或多个被设置为默认S-NSSAI；如果UE在注册请求消息（Registration Request）没有携带Allowed NSSAI，则网络会使用默认S-NSSAI来给UE提供服务，如果默认S-NSSAI存在的话。 </li>
+<li> Requested NSSAI：请求NSSAI，也就是UE在注册请求消息(Registration Request)携带的Allowed NSSAI。 </li>
+<li> Allowed NSSAI：允许NSSAI，表示UE请求的NSSAI中，哪些S-NSSAI被网络允许了，网络会在注册接收消息（Registration Accept）的”Allowed NSSAI” IE 带给UE。 </li>
+<li> Rejected NSSAI：拒绝NSSAI，表示UE请求的NSSAI中，哪些S-NSSAI被网络拒绝了，网络会在注册接收消息（Registration Accept）的”Rejected NSSAI” IE 带给UE。 </li>
+<li> Configured NSSAI：配置NSSAI，网络配置给UE使用的NSSAI，收到这个配置参数收，UE就知道网络下有哪些S-NSSAI可用；网络会在注册接收消息（Registration Accept）的”Configured NSSAI” IE 带给UE，如果注册后UE的配置有变化，则网络可通过Configuration update command通知UE更新；UE会在非易失存储空间保存每个网络给它配置的Configured NSSAI 【见TS24.501 Annex C】；每个PLMN最多只能配置一个Configured NSSAI。 </li>
+<li> 参数结构 </li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">nssai</span><br><span class="line">    s-nssai</span><br><span class="line">        sst</span><br><span class="line">        sd</span><br><span class="line">    s-nssai</span><br><span class="line">        sst</span><br><span class="line">        sd</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-2-切片需求来源"><a href="#2-2-切片需求来源" class="headerlink" title="2.2 切片需求来源"></a>2.2 切片需求来源</h4><p>网络切片的需求来自于业务对网络提出的差异化要求，网络切片设计的出发点是按照业务对网络的不同需求灵活组织网络，形成为特定业务提供专属服务的网络，达到网络与业务的高度匹配。</p>
+<h4 id="2-3-切片类型"><a href="#2-3-切片类型" class="headerlink" title="2.3 切片类型"></a>2.3 切片类型</h4><ul>
+<li>增强型移动宽带（eMBB）：需要关注峰值速率，容量，频谱效率，移动性，网络能效等这些指标，和 3G、4G 类似。AR/VR、4K/8K 超高清视频等业务属于该类型。</li>
+<li>海量机器通信（mMTC）：主要关注连接数。对下载速率，移动性等指标不太关心。针对大规模物联网业务。</li>
+<li>高可靠低时延通信（uRLLC）：主要关注高可靠性，移动性和超低时延。对连接数，峰值速率，容量，频谱效率，网络能效等指标都没有太大需求。例如无人驾驶等业务。</li>
+</ul>
+<h4 id="2-4-切片特性"><a href="#2-4-切片特性" class="headerlink" title="2.4 切片特性"></a>2.4 切片特性</h4><p>网络切片具有以下四个特性：</p>
+<ul>
+<li>1.隔离性：不同的网络切片之间互相隔离，一个切片的异常不会影响到其他的切片。</li>
+<li>2.虚拟化：网络切片是在物理网络上划分出来的虚拟网络。</li>
+<li>3.按需定制：可以根据不同的业务需求去自定义网络切片的业务、功能、容量、服务质量与连接关系，还可以按需进行切片的生命周期管理。</li>
+<li>4.端到端：网络切片是针对整个网络而言，不仅需要核心网，还要包括接入网、传输网、管理网络等。</li>
+</ul>
+<h4 id="2-5-切片层次"><a href="#2-5-切片层次" class="headerlink" title="2.5 切片层次"></a>2.5 切片层次</h4><ul>
+<li>无线接入网络子切片：切片资源划分和隔离，切片感知，切片选择，移动性管理，每个切片的 QoS 保障。</li>
+<li>承载网络子切片：基于 SDN 的统一管理，承载也可以被抽象成资源池来进行灵活分配，从而切割成网络切片。</li>
+<li>核心网络子切片：5G 核心网基于SBA 架构，核心网的微服务模块就像搭积木一样按需拼装成网络切片。</li>
+</ul>
+<h3 id="3-切片选择流程"><a href="#3-切片选择流程" class="headerlink" title="3.切片选择流程"></a>3.切片选择流程</h3><p>UE对网络切片的选择涉及两个关键过程，一个是UE注册流程，一个是PDUSession建立流程。<br>在实际应用中，一个 UE 可能同时接入一个或多个网络切片，当 UE 发起注册流程时，接入网络（gNB）根据 UE 请求携带的 NSSAI（Network Slice Selection Assistance Information，网络切片选择辅助信息）来选择核心网络子切片的入口AMF。NSSAI 包括切片/业务的类型和切片区分标识（Slice Differentiator），这些信息可以是标准定义的，也可以是运营商自定义的。如果 UE 发起注册时，请求没有携带任何 NSSAI 信息，接入网将选择默认的 AMF 提供服务。默认的 AMF 将根据运营商的策略和用户签约信息进一步选择 Target AMF 提供服务。AMF 将与 AUSF 一同对 UE 进行鉴权，鉴权通过后，UE 成功注册到网络。UE 注册成功后，AMF 将向 UE 提供被允许的 NSSAI 和临时用户标识（Temporary User ID），后续 UE 将携带这些信息接入网络，网络根据临时用户标识可以得到之前服务的 AMF 信息。<br>接下来，UE 可以发起业务请求，建立 UE 和 AMF 之间的信令连接，连接过程中或连接建立成功后，UE 和网络之间可以建立 PDU Session。在建立 PDU Session 的过程中，AMF 应综合签约信息、本地策略以及 NSSAI 等信息选择合适的 SMF，SMF 进行 PDU Session 的鉴权，为 UE 分配 IP 地址，指定提供服务的 UPF 提供后续的用户平面服务等。会话建立成功后，AMF 将保存 SMF 和终端的对应关系，SMF 也会保存 AMF 和终端识别的对应关系，以便后续的网络交互。以上是 3GPP 网络切片选择、终端注册、连接建立和会话建立的基本框架。</p>
+<ul>
+<li>开户</li>
+</ul>
+<p>用户开户时，签约数据中会包含用户支持的切片信息（例如切片 A、B、C，其中 A 和 B 被标记为 “default”，“default” 表示在终端不携带切片信息时，网络侧默认用户支持接入的切片。UE 侧存储在 USIM 卡，网络侧存储在 UDM）。</p>
+<ul>
+<li>终端注册</li>
+</ul>
+<p>终端初次入网注册时，不会在用户面建立 QoS Flow，所以终端未携带切片信息，AMF 将本地配置的切片信息与从 UDM 获取的用户签约数据中的切片信息进行匹配。</p>
+<ul>
+<li>切片校验</li>
+</ul>
+<p>如果 AMF 本地配置的切片信息包含签约的默认切片信息，则 AMF 判断可以为终端提供对应切片服务，在注册响应消息中携带用户在当前网络下可以使用的切片 A、B。</p>
+<ul>
+<li>接入切换</li>
+</ul>
+<p>如果 AMF 本地配置的切片信息中不包含签约的默认切片信息，则 AMF 判断自身不能为终端提供对应切片服务，AMF 查询 NSSF 获取可提供切片服务的其他 AMF 信息，NSSF 响应消息中携带为终端分配的切片配置信息。Target AMF 在注册响应消息中携带用户在当前网络下可以使用的切片 A、B。</p>
+<ul>
+<li>应用接入<br>用户激活业务时（例如，用户打开一个 APP）才会携带切片信息，终端会根据步骤 2 中的切片选择策略，选择对应的切片 ID（例如网络切片 A）进行业务触发，AMF 选择切片 A 对应的 SMF 为终端建立 PDU Session。</li>
+</ul>
+<h3 id="4-参考"><a href="#4-参考" class="headerlink" title="4.参考"></a>4.参考</h3><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/u010178611/article/details/82109791">https://blog.csdn.net/u010178611/article/details/82109791</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2023/11/15/network/protocol/5gc/5GC-%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" title="5GC-网络切片" target="_blank" rel="external">https://wuhaocn.github.io/2023/11/15/network/protocol/5gc/5GC-网络切片/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2023/11/15/network/protocol/sip/IMS-%E5%85%A5%E7%BD%91%E6%B3%A8%E5%86%8C/" title="IMS-入网注册"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2023/11/15/network/protocol/5gc/5GC-%E5%85%A5%E7%BD%91%E6%B3%A8%E5%86%8C%E6%8A%A5%E6%96%87/" title="5GC-入网注册报文"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

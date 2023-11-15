@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>音视频通话 | Hexo</title>
+  <meta name="description" content="1.主要流程 2.音频通话2.1 INVITE1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556INVITE tel:+8616500000062 SIP&#x2F;2.0From: &lt;sip:+8616500000061@ims.mnc000.m">
+<meta property="og:type" content="article">
+<meta property="og:title" content="音视频通话">
+<meta property="og:url" content="https://wuhaocn.github.io/2023/11/15/network/protocol/sip/IMS-%E9%9F%B3%E8%A7%86%E9%A2%91%E9%80%9A%E8%AF%9D%E6%8A%A5%E6%96%87/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="1.主要流程 2.音频通话2.1 INVITE1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556INVITE tel:+8616500000062 SIP&#x2F;2.0From: &lt;sip:+8616500000061@ims.mnc000.m">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627470940752-974ccafb-9a9f-4493-b685-fc011492c598.png#clientId=u483e4c72-e2ee-4&from=drop&id=uae785ddf&margin=%5Bobject%20Object%5D&name=%E4%B8%8B%E8%BD%BD%20%283%29.png&originHeight=1215&originWidth=1277&originalType=binary&ratio=1&size=133973&status=done&style=none&taskId=ua18dae18-1f40-42d0-8acd-04779ad4c05">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627471023385-85c0acc3-4b59-45fc-bca4-abf99963f673.png#clientId=u483e4c72-e2ee-4&from=paste&height=250&id=u01d42343&margin=%5Bobject%20Object%5D&name=image.png&originHeight=250&originWidth=1286&originalType=binary&ratio=1&size=234005&status=done&style=none&taskId=ue1c25eb8-003d-44f7-ac45-24f1c730440&width=1286">
+<meta property="article:published_time" content="2023-11-15T03:40:25.015Z">
+<meta property="article:modified_time" content="2023-11-15T03:40:25.015Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="IMS">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/804884/1627470940752-974ccafb-9a9f-4493-b685-fc011492c598.png#clientId=u483e4c72-e2ee-4&from=drop&id=uae785ddf&margin=%5Bobject%20Object%5D&name=%E4%B8%8B%E8%BD%BD%20%283%29.png&originHeight=1215&originWidth=1277&originalType=binary&ratio=1&size=133973&status=done&style=none&taskId=ua18dae18-1f40-42d0-8acd-04779ad4c05">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2023/11/15/network/protocol/sip/IMS-%E9%9F%B3%E8%A7%86%E9%A2%91%E9%80%9A%E8%AF%9D%E6%8A%A5%E6%96%87/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">6</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/ClickHouse/">ClickHouse</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/MyBatis/">MyBatis</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/MySQL/">MySQL</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/SIP/">SIP</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/TCP/">TCP</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">21</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mq/">mq</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/net/">net</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/netty/">netty</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/redis/">redis</a><span class="category-list-count">25</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/rpc/">rpc</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/sentinel/">sentinel</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/zookeeper/">zookeeper</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ClickHouse/" rel="tag">ClickHouse</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/IMS/" rel="tag">IMS</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MyBatis/" rel="tag">MyBatis</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MySQL/" rel="tag">MySQL</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP/" rel="tag">TCP</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/akka/" rel="tag">akka</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/log4j/" rel="tag">log4j</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mq/" rel="tag">mq</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/net/" rel="tag">net</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/netty/" rel="tag">netty</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pika/" rel="tag">pika</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a><span class="tag-list-count">23</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sentinel/" rel="tag">sentinel</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/zookeeper/" rel="tag">zookeeper</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.44px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/ClickHouse/" style="font-size: 13.22px;">ClickHouse</a> <a href="/tags/DPDK/" style="font-size: 13.11px;">DPDK</a> <a href="/tags/IMS/" style="font-size: 13.22px;">IMS</a> <a href="/tags/JVM/" style="font-size: 13.67px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/MyBatis/" style="font-size: 13px;">MyBatis</a> <a href="/tags/MySQL/" style="font-size: 13.22px;">MySQL</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/TCP/" style="font-size: 13.22px;">TCP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/akka/" style="font-size: 13.89px;">akka</a> <a href="/tags/atomic/" style="font-size: 13.33px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.56px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/log4j/" style="font-size: 13px;">log4j</a> <a href="/tags/mq/" style="font-size: 13px;">mq</a> <a href="/tags/net/" style="font-size: 13px;">net</a> <a href="/tags/netty/" style="font-size: 13.11px;">netty</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/pika/" style="font-size: 13.11px;">pika</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/redis/" style="font-size: 14px;">redis</a> <a href="/tags/sentinel/" style="font-size: 13px;">sentinel</a> <a href="/tags/sort/" style="font-size: 13.78px;">sort</a> <a href="/tags/zookeeper/" style="font-size: 13px;">zookeeper</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.33px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/11/">十一月 2023</a><span class="archive-list-count">25</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/10/">十月 2022</a><span class="archive-list-count">11</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/04/">四月 2022</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">21</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">22</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">14</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/net/">net</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/network/3gpp/%E5%9F%BA%E7%A1%80%E7%BD%91%E7%BB%9C%E9%93%BE%E8%B7%AF%E4%BB%8B%E7%BB%8D/" class="title">基础网络链路介绍</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T06:28:30.065Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/devops/docker/%E8%BF%90%E8%A1%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA-Java/" class="title">docker-java运行环境</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:43:01.859Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/devops/docker/%E8%BF%90%E8%A1%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA-%E7%9B%91%E6%8E%A7/" class="title">docker-监控环境搭建.md</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:43:01.859Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/MySQL/">MySQL</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/data/mysql/MySQL%E8%BF%9E%E6%8E%A5%E6%8C%82%E6%AD%BB%E5%8E%9F%E5%9B%A0%E5%88%86%E6%9E%90/" class="title">MySQL连接挂死原因分析</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:43:01.853Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/TCP/">TCP</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/network/protocol/tcp/TCP%E7%8A%B6%E6%80%81%E6%A6%82%E8%BF%B0/" class="title">TCP状态概述.md</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:40:25.016Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-network/protocol/sip/IMS-音视频通话报文" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      音视频通话
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2023/11/15/network/protocol/sip/IMS-%E9%9F%B3%E8%A7%86%E9%A2%91%E9%80%9A%E8%AF%9D%E6%8A%A5%E6%96%87/" class="article-date">
+	  <time datetime="2023-11-15T03:40:25.015Z" itemprop="datePublished">2023-11-15</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/SIP/">SIP</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/IMS/" rel="tag">IMS</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2023/11/15/network/protocol/sip/IMS-%E9%9F%B3%E8%A7%86%E9%A2%91%E9%80%9A%E8%AF%9D%E6%8A%A5%E6%96%87/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="1-主要流程"><a href="#1-主要流程" class="headerlink" title="1.主要流程"></a>1.主要流程</h2><p><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1627470940752-974ccafb-9a9f-4493-b685-fc011492c598.png#clientId=u483e4c72-e2ee-4&from=drop&id=uae785ddf&margin=%5Bobject%20Object%5D&name=%E4%B8%8B%E8%BD%BD%20%283%29.png&originHeight=1215&originWidth=1277&originalType=binary&ratio=1&size=133973&status=done&style=none&taskId=ua18dae18-1f40-42d0-8acd-04779ad4c05" alt="下载 (3).png"><br><img src="https://cdn.nlark.com/yuque/0/2021/png/804884/1627471023385-85c0acc3-4b59-45fc-bca4-abf99963f673.png#clientId=u483e4c72-e2ee-4&from=paste&height=250&id=u01d42343&margin=%5Bobject%20Object%5D&name=image.png&originHeight=250&originWidth=1286&originalType=binary&ratio=1&size=234005&status=done&style=none&taskId=ue1c25eb8-003d-44f7-ac45-24f1c730440&width=1286" alt="image.png"></p>
+<h2 id="2-音频通话"><a href="#2-音频通话" class="headerlink" title="2.音频通话"></a>2.音频通话</h2><h3 id="2-1-INVITE"><a href="#2-1-INVITE" class="headerlink" title="2.1 INVITE"></a>2.1 INVITE</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">INVITE tel:+8616500000062 SIP/2.0</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=rvecbSk</span><br><span class="line">To: &quot;8616500000062&quot;&lt;tel:+8616500000062&gt;</span><br><span class="line">P-Preferred-Identity: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;</span><br><span class="line">Contact: &lt;sip:+8616500000061@222.222.2.27:5060&gt;;+sip.instance=&quot;&lt;urn:gsma:imei:86354104-407800-0&gt;&quot;;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;;audio;video;+g.3gpp.mid-call;+g.3gpp.srvcc-alerting;+g.3gpp.ps2cs-srvcc-orig-pre-alerting</span><br><span class="line">Accept-Contact: *;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">P-Preferred-Service: urn:urn-7:3gpp-service.ims.icsi.mmtel</span><br><span class="line">P-Early-Media: supported</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer,sec-agree</span><br><span class="line">Allow: INVITE,ACK,OPTIONS,BYE,CANCEL,UPDATE,INFO,PRACK,NOTIFY,MESSAGE,REFER</span><br><span class="line">Accept: application/sdp,application/3gpp-ims+xml</span><br><span class="line">Session-Expires: 1800</span><br><span class="line">Min-SE: 90</span><br><span class="line">Route: &lt;sip:172.16.106.38:5060;lr&gt;</span><br><span class="line">Require: sec-agree</span><br><span class="line">Proxy-Require: sec-agree</span><br><span class="line">Call-ID: quecbSk9i@222.222.2.27</span><br><span class="line">CSeq: 1 INVITE</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKswecbCEJ7GcqBMwaay6Y;rport</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Content-Type: application/sdp</span><br><span class="line">Content-Length: 772</span><br><span class="line"></span><br><span class="line">v=0</span><br><span class="line">o=rue 3211 3211 IN IP4 222.222.2.27</span><br><span class="line">s=-</span><br><span class="line">c=IN IP4 222.222.2.27</span><br><span class="line">b=AS:41</span><br><span class="line">b=RR:1537</span><br><span class="line">b=RS:512</span><br><span class="line">t=0 0</span><br><span class="line">m=audio 31022 RTP/AVP 107 106 105 104 101 102</span><br><span class="line">b=AS:41</span><br><span class="line">b=RR:1537</span><br><span class="line">b=RS:512</span><br><span class="line">a=rtpmap:107 AMR-WB/16000/1</span><br><span class="line">a=fmtp:107 mode-change-capability=2;max-red=0</span><br><span class="line">a=rtpmap:106 AMR-WB/16000/1</span><br><span class="line">a=fmtp:106 octet-align=1;mode-change-capability=2;max-red=0</span><br><span class="line">a=rtpmap:105 AMR/8000/1</span><br><span class="line">a=fmtp:105 mode-change-capability=2;max-red=0</span><br><span class="line">a=rtpmap:104 AMR/8000/1</span><br><span class="line">a=fmtp:104 octet-align=1;mode-change-capability=2;max-red=0</span><br><span class="line">a=rtpmap:101 telephone-event/16000</span><br><span class="line">a=fmtp:101 0-15</span><br><span class="line">a=rtpmap:102 telephone-event/8000</span><br><span class="line">a=fmtp:102 0-15</span><br><span class="line">a=ptime:20</span><br><span class="line">a=maxptime:240</span><br><span class="line">a=sendrecv</span><br><span class="line">a=curr:qos local none</span><br><span class="line">a=curr:qos remote none</span><br><span class="line">a=des:qos mandatory local sendrecv</span><br><span class="line">a=des:qos optional remote sendrecv</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-Trying"><a href="#2-2-Trying" class="headerlink" title="2.2 Trying"></a>2.2 Trying</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">SIP/2.0 100 Trying</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKswecbCEJ7GcqBMwaay6Y;rport=5060</span><br><span class="line">To: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=464889803917</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=rvecbSk</span><br><span class="line">Call-ID: quecbSk9i@222.222.2.27</span><br><span class="line">CSeq: 1 INVITE</span><br><span class="line">Server: IM-Sever/OMA5.1</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+<h3 id="2-3-183-Session-Progress"><a href="#2-3-183-Session-Progress" class="headerlink" title="2.3 183 Session Progress"></a>2.3 183 Session Progress</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">SIP/2.0 183 Session Progress</span><br><span class="line">P-Preferred-Identity: &lt;sip:+8616500000062@ims.mnc000.mcc000.3gppnetwork.org&gt;</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Allow: INVITE,ACK,OPTIONS,BYE,CANCEL,UPDATE,INFO,PRACK,NOTIFY,MESSAGE,REFER</span><br><span class="line">Require: 100rel,precondition</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Content-Type: application/sdp</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKswecbCEJ7GcqBMwaay6Y;rport=5060</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=rvecbSk</span><br><span class="line">Call-ID: quecbSk9i@222.222.2.27</span><br><span class="line">To: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=464889803917</span><br><span class="line">CSeq: 1 INVITE</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Contact: &lt;sip:+8616500000062@172.16.106.38:5060;transport=udp&gt;;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;;audio;video;+g.3gpp.mid-call;+g.3gpp.srvcc-alerting</span><br><span class="line">Session-Expires: 1800</span><br><span class="line">RSeq: 1</span><br><span class="line">Content-Length: 487</span><br><span class="line"></span><br><span class="line">v=0</span><br><span class="line">o=rue 3219 3219 IN IP4 172.16.106.38</span><br><span class="line">s=-</span><br><span class="line">c=IN IP4 172.16.106.38</span><br><span class="line">b=AS:41</span><br><span class="line">b=RR:1537</span><br><span class="line">b=RS:512</span><br><span class="line">t=0 0</span><br><span class="line">m=audio 30052 RTP/AVP 107 101</span><br><span class="line">b=AS:41</span><br><span class="line">b=RR:1537</span><br><span class="line">b=RS:512</span><br><span class="line">a=rtpmap:107 AMR-WB/16000/1</span><br><span class="line">a=fmtp:107 mode-change-capability=2;max-red=0</span><br><span class="line">a=rtpmap:101 telephone-event/16000</span><br><span class="line">a=fmtp:101 0-15</span><br><span class="line">a=ptime:20</span><br><span class="line">a=maxptime:240</span><br><span class="line">a=sendrecv</span><br><span class="line">a=curr:qos local none</span><br><span class="line">a=curr:qos remote none</span><br><span class="line">a=des:qos mandatory local sendrecv</span><br><span class="line">a=des:qos mandatory remote sendrecv</span><br><span class="line">a=conf:qos remote sendrecv</span><br></pre></td></tr></table></figure>
+<h3 id="2-4-PRACK"><a href="#2-4-PRACK" class="headerlink" title="2.4 PRACK"></a>2.4 PRACK</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">PRACK sip:+8616500000062@172.16.106.38:5060;transport=udp SIP/2.0</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=rvecbSk</span><br><span class="line">To: &quot;8616500000062&quot;&lt;tel:+8616500000062&gt;;tag=464889803917</span><br><span class="line">Call-ID: quecbSk9i@222.222.2.27</span><br><span class="line">CSeq: 2 PRACK</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKtxecbCEJ7GcqBMwaaq6Y;rport</span><br><span class="line">RAck: 1 1 INVITE</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+<h3 id="2-5-200-OK"><a href="#2-5-200-OK" class="headerlink" title="2.5 200 OK"></a>2.5 200 OK</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">SIP/2.0 200 OK</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKtxecbCEJ7GcqBMwaaq6Y;rport=5060</span><br><span class="line">To: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=464889803917</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=rvecbSk</span><br><span class="line">Call-ID: quecbSk9i@222.222.2.27</span><br><span class="line">CSeq: 2 PRACK</span><br><span class="line">Server: IM-Sever/OMA5.1</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-6-UPDATE"><a href="#2-6-UPDATE" class="headerlink" title="2.6 UPDATE"></a>2.6 UPDATE</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">UPDATE sip:+8616500000062@172.16.106.38:5060;transport=udp SIP/2.0</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=rvecbSk</span><br><span class="line">To: &quot;8616500000062&quot;&lt;tel:+8616500000062&gt;;tag=464889803917</span><br><span class="line">Contact: &lt;sip:+8616500000061@222.222.2.27:5060&gt;;+sip.instance=&quot;&lt;urn:gsma:imei:86354104-407800-0&gt;&quot;;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;;audio;video;+g.3gpp.mid-call;+g.3gpp.srvcc-alerting;+g.3gpp.ps2cs-srvcc-orig-pre-alerting</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer,sec-agree</span><br><span class="line">Require: precondition,sec-agree</span><br><span class="line">Allow: INVITE,ACK,OPTIONS,BYE,CANCEL,UPDATE,INFO,PRACK,NOTIFY,MESSAGE,REFER</span><br><span class="line">Proxy-Require: sec-agree</span><br><span class="line">Call-ID: quecbSk9i@222.222.2.27</span><br><span class="line">CSeq: 3 UPDATE</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKqyecbCEJ7GcqBMwaaW6Y;rport</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Content-Type: application/sdp</span><br><span class="line">Content-Length: 461</span><br><span class="line"></span><br><span class="line">v=0</span><br><span class="line">o=rue 3211 3212 IN IP4 222.222.2.27</span><br><span class="line">s=-</span><br><span class="line">c=IN IP4 222.222.2.27</span><br><span class="line">b=AS:41</span><br><span class="line">b=RR:1537</span><br><span class="line">b=RS:512</span><br><span class="line">t=0 0</span><br><span class="line">m=audio 31022 RTP/AVP 107 101</span><br><span class="line">b=AS:41</span><br><span class="line">b=RR:1537</span><br><span class="line">b=RS:512</span><br><span class="line">a=rtpmap:107 AMR-WB/16000/1</span><br><span class="line">a=fmtp:107 mode-change-capability=2;max-red=0</span><br><span class="line">a=rtpmap:101 telephone-event/16000</span><br><span class="line">a=fmtp:101 0-15</span><br><span class="line">a=ptime:20</span><br><span class="line">a=maxptime:240</span><br><span class="line">a=sendrecv</span><br><span class="line">a=curr:qos local sendrecv</span><br><span class="line">a=curr:qos remote none</span><br><span class="line">a=des:qos mandatory local sendrecv</span><br><span class="line">a=des:qos mandatory remote sendrecv</span><br></pre></td></tr></table></figure>
+<h3 id="2-7-200-OK"><a href="#2-7-200-OK" class="headerlink" title="2.7 200 OK"></a>2.7 200 OK</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line">SIP/2.0 200 OK</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer</span><br><span class="line">Allow: INVITE,ACK,OPTIONS,BYE,CANCEL,UPDATE,INFO,PRACK,NOTIFY,MESSAGE,REFER</span><br><span class="line">Min-SE: 90</span><br><span class="line">Require: precondition,timer</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Session-Expires: 1800;refresher=uas</span><br><span class="line">Content-Type: application/sdp</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKqyecbCEJ7GcqBMwaaW6Y;rport=5060</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=rvecbSk</span><br><span class="line">Call-ID: quecbSk9i@222.222.2.27</span><br><span class="line">To: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=464889803917</span><br><span class="line">CSeq: 3 UPDATE</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Contact: &lt;sip:+8616500000062@172.16.106.38:5060;transport=udp&gt;;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;;audio;video;+g.3gpp.mid-call;+g.3gpp.srvcc-alerting</span><br><span class="line">Content-Length: 467</span><br><span class="line"></span><br><span class="line">v=0</span><br><span class="line">o=rue 3219 3220 IN IP4 172.16.106.38</span><br><span class="line">s=-</span><br><span class="line">c=IN IP4 172.16.106.38</span><br><span class="line">b=AS:41</span><br><span class="line">b=RR:1537</span><br><span class="line">b=RS:512</span><br><span class="line">t=0 0</span><br><span class="line">m=audio 30052 RTP/AVP 107 101</span><br><span class="line">b=AS:41</span><br><span class="line">b=RR:1537</span><br><span class="line">b=RS:512</span><br><span class="line">a=rtpmap:107 AMR-WB/16000/1</span><br><span class="line">a=fmtp:107 mode-change-capability=2;max-red=0</span><br><span class="line">a=rtpmap:101 telephone-event/16000</span><br><span class="line">a=fmtp:101 0-15</span><br><span class="line">a=ptime:20</span><br><span class="line">a=maxptime:240</span><br><span class="line">a=sendrecv</span><br><span class="line">a=curr:qos local sendrecv</span><br><span class="line">a=curr:qos remote sendrecv</span><br><span class="line">a=des:qos mandatory local sendrecv</span><br><span class="line">a=des:qos mandatory remote sendrecv</span><br><span class="line">SIP/2.0 180 Ringing</span><br><span class="line">P-Preferred-Identity: &lt;sip:+8616500000062@ims.mnc000.mcc000.3gppnetwork.org&gt;</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Allow: INVITE,ACK,OPTIONS,BYE,CANCEL,UPDATE,INFO,PRACK,NOTIFY,MESSAGE,REFER</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKswecbCEJ7GcqBMwaay6Y;rport=5060</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=rvecbSk</span><br><span class="line">Call-ID: quecbSk9i@222.222.2.27</span><br><span class="line">To: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=464889803917</span><br><span class="line">CSeq: 1 INVITE</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Contact: &lt;sip:+8616500000062@172.16.106.38:5060;transport=udp&gt;;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;;audio;video;+g.3gpp.mid-call;+g.3gpp.srvcc-alerting</span><br><span class="line">Session-Expires: 1800</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+<h3 id="2-8-200-OK"><a href="#2-8-200-OK" class="headerlink" title="2.8 200 OK"></a>2.8 200 OK</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">SIP/2.0 200 OK</span><br><span class="line">P-Preferred-Identity: &lt;sip:+8616500000062@ims.mnc000.mcc000.3gppnetwork.org&gt;</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer</span><br><span class="line">Allow: INVITE,ACK,OPTIONS,BYE,CANCEL,UPDATE,INFO,PRACK,NOTIFY,MESSAGE,REFER</span><br><span class="line">Min-SE: 90</span><br><span class="line">Require: timer</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Session-Expires: 1800;refresher=uas</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKswecbCEJ7GcqBMwaay6Y;rport=5060</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=rvecbSk</span><br><span class="line">Call-ID: quecbSk9i@222.222.2.27</span><br><span class="line">To: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=464889803917</span><br><span class="line">CSeq: 1 INVITE</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Contact: &lt;sip:+8616500000062@172.16.106.38:5060;transport=udp&gt;;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;;audio;video;+g.3gpp.mid-call;+g.3gpp.srvcc-alerting</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+<h3 id="2-9-ACK"><a href="#2-9-ACK" class="headerlink" title="2.9 ACK"></a>2.9 ACK</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">ACK sip:+8616500000062@172.16.106.38:5060;transport=udp SIP/2.0</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=rvecbSk</span><br><span class="line">To: &quot;8616500000062&quot;&lt;tel:+8616500000062&gt;;tag=464889803917</span><br><span class="line">Contact: &lt;sip:+8616500000061@222.222.2.27:5060&gt;;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer,sec-agree</span><br><span class="line">Require: sec-agree</span><br><span class="line">Proxy-Require: sec-agree</span><br><span class="line">Call-ID: quecbSk9i@222.222.2.27</span><br><span class="line">CSeq: 1 ACK</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKrzecbCEJ7GcqBMwaaCcs;rport</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+<h3 id="2-10-200-OK"><a href="#2-10-200-OK" class="headerlink" title="2.10 200 OK"></a>2.10 200 OK</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">SIP/2.0 200 OK</span><br><span class="line">Server: IM-Sever/OMA5.1</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKrzecbCEJ7GcqBMwaaCcs;rport=5060</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=rvecbSk</span><br><span class="line">Call-ID: quecbSk9i@222.222.2.27</span><br><span class="line">To: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=464889803917</span><br><span class="line">CSeq: 1 ACK</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+<h3 id="2-11-BYE"><a href="#2-11-BYE" class="headerlink" title="2.11 BYE"></a>2.11 BYE</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">BYE sip:+8616500000061@222.222.2.27:5060 SIP/2.0</span><br><span class="line">Reason: SIP;cause=200;text=&quot;User term the call.&quot;</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer,sec-agree</span><br><span class="line">Require: sec-agree</span><br><span class="line">Proxy-Require: sec-agree</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Max-Forwards: 68</span><br><span class="line">CSeq: 1 BYE</span><br><span class="line">Call-ID: quecbSk9i@222.222.2.27</span><br><span class="line">From: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=464889803917</span><br><span class="line">To: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=rvecbSk</span><br><span class="line">Via: SIP/2.0/UDP 172.16.106.38:5060;branch=z9hG4bK948fb923faf4;rport=54872</span><br><span class="line">Via: SIP/2.0/TCP 172.16.106.38:6060;branch=z9hG4bKe104ab646147;rport=59226</span><br><span class="line">Via: SIP/2.0/TCP 222.222.2.29:6070;branch=z9hG4bKIQecbQDRYGizsRqaayaZ;rport=41222;received=172.16.106.38</span><br><span class="line">Record-Route: &lt;sip:172.16.106.38:6060;transport=tcp;lr&gt;</span><br><span class="line">Record-Route: &lt;sip:172.16.106.38:6060;transport=tcp;lr&gt;</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+<h3 id="2-12-200-OK"><a href="#2-12-200-OK" class="headerlink" title="2.12 200 OK"></a>2.12 200 OK</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">SIP/2.0 200 OK</span><br><span class="line">From: &quot;8616500000062&quot;&lt;tel:+8616500000062&gt;;tag=464889803917</span><br><span class="line">To: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=rvecbSk</span><br><span class="line">Call-ID: quecbSk9i@222.222.2.27</span><br><span class="line">CSeq: 1 BYE</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Via: SIP/2.0/UDP 172.16.106.38:5060;branch=z9hG4bK948fb923faf4;rport=5060</span><br><span class="line">Via: SIP/2.0/TCP 172.16.106.38:6060;branch=z9hG4bKe104ab646147;rport=59226</span><br><span class="line">Via: SIP/2.0/TCP 222.222.2.29:6070;branch=z9hG4bKIQecbQDRYGizsRqaayaZ;rport=41222;received=172.16.106.38</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+<h2 id="3-视频通话"><a href="#3-视频通话" class="headerlink" title="3.视频通话"></a>3.视频通话</h2><h3 id="3-1-INVITE"><a href="#3-1-INVITE" class="headerlink" title="3.1 INVITE"></a>3.1 INVITE</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br></pre></td><td class="code"><pre><span class="line">INVITE tel:+8616500000062 SIP/2.0</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=bjecbmO</span><br><span class="line">To: &quot;8616500000062&quot;&lt;tel:+8616500000062&gt;</span><br><span class="line">P-Preferred-Identity: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;</span><br><span class="line">Contact: &lt;sip:+8616500000061@222.222.2.27:5060&gt;;+sip.instance=&quot;&lt;urn:gsma:imei:86354104-407800-0&gt;&quot;;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;;audio;video;+g.3gpp.mid-call;+g.3gpp.srvcc-alerting;+g.3gpp.ps2cs-srvcc-orig-pre-alerting</span><br><span class="line">Accept-Contact: *;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;;video</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">P-Preferred-Service: urn:urn-7:3gpp-service.ims.icsi.mmtel</span><br><span class="line">P-Early-Media: supported</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer,sec-agree</span><br><span class="line">Allow: INVITE,ACK,OPTIONS,BYE,CANCEL,UPDATE,INFO,PRACK,NOTIFY,MESSAGE,REFER</span><br><span class="line">Accept: application/sdp,application/3gpp-ims+xml</span><br><span class="line">Session-Expires: 1800</span><br><span class="line">Min-SE: 90</span><br><span class="line">Route: &lt;sip:172.16.106.38:5060;lr&gt;</span><br><span class="line">Require: sec-agree</span><br><span class="line">Proxy-Require: sec-agree</span><br><span class="line">Call-ID: aiecbmOlo@222.222.2.27</span><br><span class="line">CSeq: 1 INVITE</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKckecbmOloqn5UNvaay6Y;rport</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Content-Type: application/sdp</span><br><span class="line">Content-Length: 1596</span><br><span class="line"></span><br><span class="line">v=0</span><br><span class="line">o=rue 3209 3209 IN IP4 222.222.2.27</span><br><span class="line">s=-</span><br><span class="line">c=IN IP4 222.222.2.27</span><br><span class="line">b=AS:1001</span><br><span class="line">b=RR:7537</span><br><span class="line">b=RS:8512</span><br><span class="line">t=0 0</span><br><span class="line">m=audio 31018 RTP/AVP 107 106 105 104 101 102</span><br><span class="line">b=AS:41</span><br><span class="line">b=RR:1537</span><br><span class="line">b=RS:512</span><br><span class="line">a=rtpmap:107 AMR-WB/16000/1</span><br><span class="line">a=fmtp:107 mode-change-capability=2;max-red=0</span><br><span class="line">a=rtpmap:106 AMR-WB/16000/1</span><br><span class="line">a=fmtp:106 octet-align=1;mode-change-capability=2;max-red=0</span><br><span class="line">a=rtpmap:105 AMR/8000/1</span><br><span class="line">a=fmtp:105 mode-change-capability=2;max-red=0</span><br><span class="line">a=rtpmap:104 AMR/8000/1</span><br><span class="line">a=fmtp:104 octet-align=1;mode-change-capability=2;max-red=0</span><br><span class="line">a=rtpmap:101 telephone-event/16000</span><br><span class="line">a=fmtp:101 0-15</span><br><span class="line">a=rtpmap:102 telephone-event/8000</span><br><span class="line">a=fmtp:102 0-15</span><br><span class="line">a=ptime:20</span><br><span class="line">a=maxptime:240</span><br><span class="line">a=sendrecv</span><br><span class="line">a=curr:qos local none</span><br><span class="line">a=curr:qos remote none</span><br><span class="line">a=des:qos mandatory local sendrecv</span><br><span class="line">a=des:qos optional remote sendrecv</span><br><span class="line">m=video 37058 RTP/AVP 120 123</span><br><span class="line">b=AS:960</span><br><span class="line">b=RR:6000</span><br><span class="line">b=RS:8000</span><br><span class="line">a=tcap:1 RTP/AVPF</span><br><span class="line">a=pcfg:1 t=1</span><br><span class="line">a=rtpmap:120 H265/90000</span><br><span class="line">a=fmtp:120 profile-id=1; level-id=93; max-br=1340</span><br><span class="line">a=imageattr:120 send [x=480,y=640] [x=360,y=480] [x=240,y=320] recv [x=480,y=640] [x=360,y=480] [x=240,y=320]</span><br><span class="line">a=rtpmap:123 H264/90000</span><br><span class="line">a=fmtp:123 profile-level-id=42C01F; packetization-mode=1; max-br=974; sprop-parameter-sets=Z0LAHtoHgUSAeEAhUA==,aM48gA==</span><br><span class="line">a=imageattr:123 send [x=480,y=640] [x=360,y=480] [x=240,y=320] recv [x=480,y=640] [x=360,y=480] [x=240,y=320]</span><br><span class="line">a=rtcp-fb:* trr-int 5000</span><br><span class="line">a=rtcp-fb:* nack</span><br><span class="line">a=rtcp-fb:* nack pli</span><br><span class="line">a=rtcp-fb:* ccm fir</span><br><span class="line">a=rtcp-fb:* ccm tmmbr</span><br><span class="line">a=sendrecv</span><br><span class="line">a=extmap:7 urn:3gpp:video-orientation</span><br><span class="line">a=curr:qos local none</span><br><span class="line">a=curr:qos remote none</span><br><span class="line">a=des:qos mandatory local sendrecv</span><br><span class="line">a=des:qos optional remote sendrecv</span><br></pre></td></tr></table></figure>
+<h3 id="3-2-100-Trying"><a href="#3-2-100-Trying" class="headerlink" title="3.2 100 Trying"></a>3.2 100 Trying</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">SIP/2.0 100 Trying</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKckecbmOloqn5UNvaay6Y;rport=5060</span><br><span class="line">To: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=635653312983</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=bjecbmO</span><br><span class="line">Call-ID: aiecbmOlo@222.222.2.27</span><br><span class="line">CSeq: 1 INVITE</span><br><span class="line">Server: IM-Sever/OMA5.1</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+<h3 id="3-3-183-Session-Progress"><a href="#3-3-183-Session-Progress" class="headerlink" title="3.3 183 Session Progress"></a>3.3 183 Session Progress</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line">SIP/2.0 183 Session Progress</span><br><span class="line">P-Preferred-Identity: &lt;sip:+8616500000062@ims.mnc000.mcc000.3gppnetwork.org&gt;</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Allow: INVITE,ACK,OPTIONS,BYE,CANCEL,UPDATE,INFO,PRACK,NOTIFY,MESSAGE,REFER</span><br><span class="line">Require: 100rel,precondition</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Content-Type: application/sdp</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKckecbmOloqn5UNvaay6Y;rport=5060</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=bjecbmO</span><br><span class="line">Call-ID: aiecbmOlo@222.222.2.27</span><br><span class="line">To: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=635653312983</span><br><span class="line">CSeq: 1 INVITE</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Contact: &lt;sip:+8616500000062@172.16.106.38:5060;transport=udp&gt;;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;;audio;video;+g.3gpp.mid-call;+g.3gpp.srvcc-alerting</span><br><span class="line">Session-Expires: 1800</span><br><span class="line">RSeq: 1</span><br><span class="line">Content-Length: 1059</span><br><span class="line"></span><br><span class="line">v=0</span><br><span class="line">o=rue 3217 3217 IN IP4 172.16.106.38</span><br><span class="line">s=-</span><br><span class="line">c=IN IP4 172.16.106.38</span><br><span class="line">b=AS:1001</span><br><span class="line">b=RR:7537</span><br><span class="line">b=RS:8512</span><br><span class="line">t=0 0</span><br><span class="line">m=audio 30016 RTP/AVP 107 101</span><br><span class="line">b=AS:41</span><br><span class="line">b=RR:1537</span><br><span class="line">b=RS:512</span><br><span class="line">a=rtpmap:107 AMR-WB/16000/1</span><br><span class="line">a=fmtp:107 mode-change-capability=2;max-red=0</span><br><span class="line">a=rtpmap:101 telephone-event/16000</span><br><span class="line">a=fmtp:101 0-15</span><br><span class="line">a=ptime:20</span><br><span class="line">a=maxptime:240</span><br><span class="line">a=sendrecv</span><br><span class="line">a=curr:qos local none</span><br><span class="line">a=curr:qos remote none</span><br><span class="line">a=des:qos mandatory local sendrecv</span><br><span class="line">a=des:qos mandatory remote sendrecv</span><br><span class="line">a=conf:qos remote sendrecv</span><br><span class="line">m=video 30018 RTP/AVPF 120</span><br><span class="line">b=AS:960</span><br><span class="line">b=RR:6000</span><br><span class="line">b=RS:8000</span><br><span class="line">a=acfg:1 t=1</span><br><span class="line">a=rtpmap:120 H265/90000</span><br><span class="line">a=fmtp:120 profile-id=1; level-id=93; max-br=974</span><br><span class="line">a=imageattr:120 send [x=480,y=640] [x=360,y=480] [x=240,y=320] recv [x=480,y=640] [x=360,y=480] [x=240,y=320]</span><br><span class="line">a=rtcp-fb:* trr-int 5000</span><br><span class="line">a=rtcp-fb:* nack</span><br><span class="line">a=rtcp-fb:* nack pli</span><br><span class="line">a=rtcp-fb:* ccm fir</span><br><span class="line">a=rtcp-fb:* ccm tmmbr</span><br><span class="line">a=sendrecv</span><br><span class="line">a=extmap:7 urn:3gpp:video-orientation</span><br><span class="line">a=curr:qos local none</span><br><span class="line">a=curr:qos remote none</span><br><span class="line">a=des:qos mandatory local sendrecv</span><br><span class="line">a=des:qos mandatory remote sendrecv</span><br><span class="line">a=conf:qos remote sendrecv</span><br></pre></td></tr></table></figure>
+<h3 id="3-4-PRACK"><a href="#3-4-PRACK" class="headerlink" title="3.4 PRACK"></a>3.4 PRACK</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">PRACK sip:+8616500000062@172.16.106.38:5060;transport=udp SIP/2.0</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=bjecbmO</span><br><span class="line">To: &quot;8616500000062&quot;&lt;tel:+8616500000062&gt;;tag=635653312983</span><br><span class="line">Call-ID: aiecbmOlo@222.222.2.27</span><br><span class="line">CSeq: 2 PRACK</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKdlecbSk9iWVQOxwaaq6Y;rport</span><br><span class="line">RAck: 1 1 INVITE</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+<h3 id="3-5-200-OK"><a href="#3-5-200-OK" class="headerlink" title="3.5 200 OK"></a>3.5 200 OK</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">SIP/2.0 200 OK</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKdlecbSk9iWVQOxwaaq6Y;rport=5060</span><br><span class="line">To: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=635653312983</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=bjecbmO</span><br><span class="line">Call-ID: aiecbmOlo@222.222.2.27</span><br><span class="line">CSeq: 2 PRACK</span><br><span class="line">Server: IM-Sever/OMA5.1</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+<h3 id="3-6-UPDATE"><a href="#3-6-UPDATE" class="headerlink" title="3.6 UPDATE"></a>3.6 UPDATE</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line">UPDATE sip:+8616500000062@172.16.106.38:5060;transport=udp SIP/2.0</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=bjecbmO</span><br><span class="line">To: &quot;8616500000062&quot;&lt;tel:+8616500000062&gt;;tag=635653312983</span><br><span class="line">Contact: &lt;sip:+8616500000061@222.222.2.27:5060&gt;;+sip.instance=&quot;&lt;urn:gsma:imei:86354104-407800-0&gt;&quot;;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;;audio;video;+g.3gpp.mid-call;+g.3gpp.srvcc-alerting;+g.3gpp.ps2cs-srvcc-orig-pre-alerting</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer,sec-agree</span><br><span class="line">Require: precondition,sec-agree</span><br><span class="line">Allow: INVITE,ACK,OPTIONS,BYE,CANCEL,UPDATE,INFO,PRACK,NOTIFY,MESSAGE,REFER</span><br><span class="line">Proxy-Require: sec-agree</span><br><span class="line">Call-ID: aiecbmOlo@222.222.2.27</span><br><span class="line">CSeq: 3 UPDATE</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKamecbSk9iWVQOxwaaW6Y;rport</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Content-Type: application/sdp</span><br><span class="line">Content-Length: 995</span><br><span class="line"></span><br><span class="line">v=0</span><br><span class="line">o=rue 3209 3210 IN IP4 222.222.2.27</span><br><span class="line">s=-</span><br><span class="line">c=IN IP4 222.222.2.27</span><br><span class="line">b=AS:1001</span><br><span class="line">b=RR:7537</span><br><span class="line">b=RS:8512</span><br><span class="line">t=0 0</span><br><span class="line">m=audio 31018 RTP/AVP 107 101</span><br><span class="line">b=AS:41</span><br><span class="line">b=RR:1537</span><br><span class="line">b=RS:512</span><br><span class="line">a=rtpmap:107 AMR-WB/16000/1</span><br><span class="line">a=fmtp:107 mode-change-capability=2;max-red=0</span><br><span class="line">a=rtpmap:101 telephone-event/16000</span><br><span class="line">a=fmtp:101 0-15</span><br><span class="line">a=ptime:20</span><br><span class="line">a=maxptime:240</span><br><span class="line">a=sendrecv</span><br><span class="line">a=curr:qos local sendrecv</span><br><span class="line">a=curr:qos remote none</span><br><span class="line">a=des:qos mandatory local sendrecv</span><br><span class="line">a=des:qos mandatory remote sendrecv</span><br><span class="line">m=video 37058 RTP/AVPF 120</span><br><span class="line">b=AS:960</span><br><span class="line">b=RR:6000</span><br><span class="line">b=RS:8000</span><br><span class="line">a=rtpmap:120 H265/90000</span><br><span class="line">a=fmtp:120 profile-id=1; level-id=93; max-br=974</span><br><span class="line">a=imageattr:120 send [x=480,y=640] [x=360,y=480] [x=240,y=320] recv [x=480,y=640] [x=360,y=480] [x=240,y=320]</span><br><span class="line">a=rtcp-fb:* trr-int 5000</span><br><span class="line">a=rtcp-fb:* nack</span><br><span class="line">a=rtcp-fb:* nack pli</span><br><span class="line">a=rtcp-fb:* ccm fir</span><br><span class="line">a=rtcp-fb:* ccm tmmbr</span><br><span class="line">a=sendrecv</span><br><span class="line">a=extmap:7 urn:3gpp:video-orientation</span><br><span class="line">a=curr:qos local sendrecv</span><br><span class="line">a=curr:qos remote none</span><br><span class="line">a=des:qos mandatory local sendrecv</span><br><span class="line">a=des:qos mandatory remote sendrecv</span><br></pre></td></tr></table></figure>
+<h3 id="3-7-200-OK"><a href="#3-7-200-OK" class="headerlink" title="3.7 200 OK"></a>3.7 200 OK</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line">SIP/2.0 200 OK</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer</span><br><span class="line">Allow: INVITE,ACK,OPTIONS,BYE,CANCEL,UPDATE,INFO,PRACK,NOTIFY,MESSAGE,REFER</span><br><span class="line">Min-SE: 90</span><br><span class="line">Require: precondition,timer</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Session-Expires: 1800;refresher=uas</span><br><span class="line">Content-Type: application/sdp</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKamecbSk9iWVQOxwaaW6Y;rport=5060</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=bjecbmO</span><br><span class="line">Call-ID: aiecbmOlo@222.222.2.27</span><br><span class="line">To: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=635653312983</span><br><span class="line">CSeq: 3 UPDATE</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Contact: &lt;sip:+8616500000062@172.16.106.38:5060;transport=udp&gt;;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;;audio;video;+g.3gpp.mid-call;+g.3gpp.srvcc-alerting</span><br><span class="line">Content-Length: 1005</span><br><span class="line"></span><br><span class="line">v=0</span><br><span class="line">o=rue 3217 3218 IN IP4 172.16.106.38</span><br><span class="line">s=-</span><br><span class="line">c=IN IP4 172.16.106.38</span><br><span class="line">b=AS:1001</span><br><span class="line">b=RR:7537</span><br><span class="line">b=RS:8512</span><br><span class="line">t=0 0</span><br><span class="line">m=audio 30016 RTP/AVP 107 101</span><br><span class="line">b=AS:41</span><br><span class="line">b=RR:1537</span><br><span class="line">b=RS:512</span><br><span class="line">a=rtpmap:107 AMR-WB/16000/1</span><br><span class="line">a=fmtp:107 mode-change-capability=2;max-red=0</span><br><span class="line">a=rtpmap:101 telephone-event/16000</span><br><span class="line">a=fmtp:101 0-15</span><br><span class="line">a=ptime:20</span><br><span class="line">a=maxptime:240</span><br><span class="line">a=sendrecv</span><br><span class="line">a=curr:qos local sendrecv</span><br><span class="line">a=curr:qos remote sendrecv</span><br><span class="line">a=des:qos mandatory local sendrecv</span><br><span class="line">a=des:qos mandatory remote sendrecv</span><br><span class="line">m=video 30018 RTP/AVPF 120</span><br><span class="line">b=AS:960</span><br><span class="line">b=RR:6000</span><br><span class="line">b=RS:8000</span><br><span class="line">a=rtpmap:120 H265/90000</span><br><span class="line">a=fmtp:120 profile-id=1; level-id=93; max-br=974</span><br><span class="line">a=imageattr:120 send [x=480,y=640] [x=360,y=480] [x=240,y=320] recv [x=480,y=640] [x=360,y=480] [x=240,y=320]</span><br><span class="line">a=rtcp-fb:* trr-int 5000</span><br><span class="line">a=rtcp-fb:* nack</span><br><span class="line">a=rtcp-fb:* nack pli</span><br><span class="line">a=rtcp-fb:* ccm fir</span><br><span class="line">a=rtcp-fb:* ccm tmmbr</span><br><span class="line">a=sendrecv</span><br><span class="line">a=extmap:7 urn:3gpp:video-orientation</span><br><span class="line">a=curr:qos local sendrecv</span><br><span class="line">a=curr:qos remote sendrecv</span><br><span class="line">a=des:qos mandatory local sendrecv</span><br><span class="line">a=des:qos mandatory remote sendrecv</span><br><span class="line">SIP/2.0 180 Ringing</span><br><span class="line">P-Preferred-Identity: &lt;sip:+8616500000062@ims.mnc000.mcc000.3gppnetwork.org&gt;</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Allow: INVITE,ACK,OPTIONS,BYE,CANCEL,UPDATE,INFO,PRACK,NOTIFY,MESSAGE,REFER</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKckecbmOloqn5UNvaay6Y;rport=5060</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=bjecbmO</span><br><span class="line">Call-ID: aiecbmOlo@222.222.2.27</span><br><span class="line">To: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=635653312983</span><br><span class="line">CSeq: 1 INVITE</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Contact: &lt;sip:+8616500000062@172.16.106.38:5060;transport=udp&gt;;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;;audio;video;+g.3gpp.mid-call;+g.3gpp.srvcc-alerting</span><br><span class="line">Session-Expires: 1800</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+<h3 id="3-8-200-OK"><a href="#3-8-200-OK" class="headerlink" title="3.8 200 OK"></a>3.8 200 OK</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">SIP/2.0 200 OK</span><br><span class="line">P-Preferred-Identity: &lt;sip:+8616500000062@ims.mnc000.mcc000.3gppnetwork.org&gt;</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer</span><br><span class="line">Allow: INVITE,ACK,OPTIONS,BYE,CANCEL,UPDATE,INFO,PRACK,NOTIFY,MESSAGE,REFER</span><br><span class="line">Min-SE: 90</span><br><span class="line">Require: timer</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Session-Expires: 1800;refresher=uas</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKckecbmOloqn5UNvaay6Y;rport=5060</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=bjecbmO</span><br><span class="line">Call-ID: aiecbmOlo@222.222.2.27</span><br><span class="line">To: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=635653312983</span><br><span class="line">CSeq: 1 INVITE</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Contact: &lt;sip:+8616500000062@172.16.106.38:5060;transport=udp&gt;;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;;audio;video;+g.3gpp.mid-call;+g.3gpp.srvcc-alerting</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+<h3 id="3-9-ACK"><a href="#3-9-ACK" class="headerlink" title="3.9 ACK"></a>3.9 ACK</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">ACK sip:+8616500000062@172.16.106.38:5060;transport=udp SIP/2.0</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=bjecbmO</span><br><span class="line">To: &quot;8616500000062&quot;&lt;tel:+8616500000062&gt;;tag=635653312983</span><br><span class="line">Contact: &lt;sip:+8616500000061@222.222.2.27:5060&gt;;+g.3gpp.icsi-ref=&quot;urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel&quot;</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer,sec-agree</span><br><span class="line">Require: sec-agree</span><br><span class="line">Proxy-Require: sec-agree</span><br><span class="line">Call-ID: aiecbmOlo@222.222.2.27</span><br><span class="line">CSeq: 1 ACK</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKbnecbSk9iWVQOxwaaCcs;rport</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-10-200-OK"><a href="#3-10-200-OK" class="headerlink" title="3.10 200 OK"></a>3.10 200 OK</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">SIP/2.0 200 OK</span><br><span class="line">Server: IM-Sever/OMA5.1</span><br><span class="line">Via: SIP/2.0/UDP 222.222.2.27:5060;branch=z9hG4bKbnecbSk9iWVQOxwaaCcs;rport=5060</span><br><span class="line">From: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=bjecbmO</span><br><span class="line">Call-ID: aiecbmOlo@222.222.2.27</span><br><span class="line">To: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=635653312983</span><br><span class="line">CSeq: 1 ACK</span><br><span class="line">Max-Forwards: 70</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-11-BYE"><a href="#3-11-BYE" class="headerlink" title="3.11 BYE"></a>3.11 BYE</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">BYE sip:+8616500000061@222.222.2.27:5060 SIP/2.0</span><br><span class="line">Reason: SIP;cause=200;text=&quot;User term the call.&quot;</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer,sec-agree</span><br><span class="line">Require: sec-agree</span><br><span class="line">Proxy-Require: sec-agree</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Max-Forwards: 68</span><br><span class="line">CSeq: 1 BYE</span><br><span class="line">Call-ID: aiecbmOlo@222.222.2.27</span><br><span class="line">From: &quot;8616500000062&quot; &lt;tel:+8616500000062&gt;;tag=635653312983</span><br><span class="line">To: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=bjecbmO</span><br><span class="line">Via: SIP/2.0/UDP 172.16.106.38:5060;branch=z9hG4bK8390bf49a6da;rport=54872</span><br><span class="line">Via: SIP/2.0/TCP 172.16.106.38:6060;branch=z9hG4bK0e2a771d7b17;rport=59226</span><br><span class="line">Via: SIP/2.0/TCP 222.222.2.29:6070;branch=z9hG4bKIMecbQDRYGizsRqaayaZ;rport=41222;received=172.16.106.38</span><br><span class="line">Record-Route: &lt;sip:172.16.106.38:6060;transport=tcp;lr&gt;</span><br><span class="line">Record-Route: &lt;sip:172.16.106.38:6060;transport=tcp;lr&gt;</span><br><span class="line">Content-Length: 0</span><br></pre></td></tr></table></figure>
+<h3 id="3-12-200-OK"><a href="#3-12-200-OK" class="headerlink" title="3.12 200 OK"></a>3.12 200 OK</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">SIP/2.0 200 OK</span><br><span class="line">From: &quot;8616500000062&quot;&lt;tel:+8616500000062&gt;;tag=635653312983</span><br><span class="line">To: &lt;sip:+8616500000061@ims.mnc000.mcc000.3gppnetwork.org&gt;;tag=bjecbmO</span><br><span class="line">Call-ID: aiecbmOlo@222.222.2.27</span><br><span class="line">CSeq: 1 BYE</span><br><span class="line">Supported: 100rel,histinfo,join,norefersub,precondition,replaces,timer</span><br><span class="line">P-Access-Network-Info: 3GPP-NR-TDD;utran-cell-id-3gpp=4600000112207A123000</span><br><span class="line">Via: SIP/2.0/UDP 172.16.106.38:5060;branch=z9hG4bK8390bf49a6da;rport=5060</span><br><span class="line">Via: SIP/2.0/TCP 172.16.106.38:6060;branch=z9hG4bK0e2a771d7b17;rport=59226</span><br><span class="line">Via: SIP/2.0/TCP 222.222.2.29:6070;branch=z9hG4bKIMecbQDRYGizsRqaayaZ;rport=41222;received=172.16.106.38</span><br><span class="line">User-Agent: IM-client/OMA1.0 HW-Rto/V1.0</span><br><span class="line">Content-Length: 0</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2023/11/15/network/protocol/sip/IMS-%E9%9F%B3%E8%A7%86%E9%A2%91%E9%80%9A%E8%AF%9D%E6%8A%A5%E6%96%87/" title="音视频通话" target="_blank" rel="external">https://wuhaocn.github.io/2023/11/15/network/protocol/sip/IMS-音视频通话报文/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2023/11/15/network/protocol/sip/IMS-%E7%9F%AD%E4%BF%A1%E5%8F%91%E9%80%81/" title="IMS-短信发送"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2023/11/15/network/protocol/sip/IMS-%E5%85%A5%E7%BD%91%E6%B3%A8%E5%86%8C/" title="IMS-入网注册"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

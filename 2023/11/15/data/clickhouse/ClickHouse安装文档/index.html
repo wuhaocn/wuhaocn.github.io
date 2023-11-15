@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>ClickHouse安装文档 | Hexo</title>
+  <meta name="description" content="1.系统要求ClickHouse可以在任何具有x86_64，AArch64或PowerPC64LE CPU架构的Linux，FreeBSD或Mac OS X上运行。 1grep -q sse4_2 &#x2F;proc&#x2F;cpuinfo &amp;&amp; echo &quot;SSE 4.2 supported&quot; || echo &quot;SSE 4.2 not supported&quot;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ClickHouse安装文档">
+<meta property="og:url" content="https://wuhaocn.github.io/2023/11/15/data/clickhouse/ClickHouse%E5%AE%89%E8%A3%85%E6%96%87%E6%A1%A3/index.html">
+<meta property="og:site_name" content="wuhaocn">
+<meta property="og:description" content="1.系统要求ClickHouse可以在任何具有x86_64，AArch64或PowerPC64LE CPU架构的Linux，FreeBSD或Mac OS X上运行。 1grep -q sse4_2 &#x2F;proc&#x2F;cpuinfo &amp;&amp; echo &quot;SSE 4.2 supported&quot; || echo &quot;SSE 4.2 not supported&quot;">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/jpeg/804884/1658143515241-a523d62b-3af6-4633-916c-3fc65dd948a1.jpeg">
+<meta property="article:published_time" content="2023-11-15T03:40:25.005Z">
+<meta property="article:modified_time" content="2023-11-15T03:40:25.005Z">
+<meta property="article:author" content="wuhao">
+<meta property="article:tag" content="ClickHouse">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2022/jpeg/804884/1658143515241-a523d62b-3af6-4633-916c-3fc65dd948a1.jpeg">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://wuhaocn.github.io/2023/11/15/data/clickhouse/ClickHouse%E5%AE%89%E8%A3%85%E6%96%87%E6%A1%A3/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="wuhaocn" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/wuhaocn" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">wuhaocn</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Java &amp; 后端 &amp; 通信</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> BeiJing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/5G/">5G</a><span class="category-list-count">6</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/ClickHouse/">ClickHouse</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/MyBatis/">MyBatis</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/MySQL/">MySQL</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/SIP/">SIP</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/TCP/">TCP</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a><span class="category-list-count">11</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/devops/">devops</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">21</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mq/">mq</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/net/">net</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/netty/">netty</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">20</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/redis/">redis</a><span class="category-list-count">25</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/rpc/">rpc</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/sentinel/">sentinel</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/zookeeper/">zookeeper</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%9F%AD%E4%BF%A1/">短信</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80-shell/">编程语言 - shell</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/5G/" rel="tag">5G</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AOP/" rel="tag">AOP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ClickHouse/" rel="tag">ClickHouse</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DPDK/" rel="tag">DPDK</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/IMS/" rel="tag">IMS</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MEC/" rel="tag">MEC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MyBatis/" rel="tag">MyBatis</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MySQL/" rel="tag">MySQL</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NGAP/" rel="tag">NGAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP/" rel="tag">TCP</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ai/" rel="tag">ai</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/akka/" rel="tag">akka</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/brew/" rel="tag">brew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cmpp/" rel="tag">cmpp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design/" rel="tag">design</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag">grafana</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jenkins/" rel="tag">jenkins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/log4j/" rel="tag">log4j</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mq/" rel="tag">mq</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/net/" rel="tag">net</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/netty/" rel="tag">netty</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pika/" rel="tag">pika</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag">prometheus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a><span class="tag-list-count">23</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sentinel/" rel="tag">sentinel</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sort/" rel="tag">sort</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/zookeeper/" rel="tag">zookeeper</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" rel="tag">动态调试技术</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" rel="tag">字节码</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" rel="tag">网络切片</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/5G/" style="font-size: 13.44px;">5G</a> <a href="/tags/AOP/" style="font-size: 13px;">AOP</a> <a href="/tags/ClickHouse/" style="font-size: 13.22px;">ClickHouse</a> <a href="/tags/DPDK/" style="font-size: 13.11px;">DPDK</a> <a href="/tags/IMS/" style="font-size: 13.22px;">IMS</a> <a href="/tags/JVM/" style="font-size: 13.67px;">JVM</a> <a href="/tags/MEC/" style="font-size: 13px;">MEC</a> <a href="/tags/MyBatis/" style="font-size: 13px;">MyBatis</a> <a href="/tags/MySQL/" style="font-size: 13.22px;">MySQL</a> <a href="/tags/NGAP/" style="font-size: 13px;">NGAP</a> <a href="/tags/TCP/" style="font-size: 13.22px;">TCP</a> <a href="/tags/ai/" style="font-size: 13px;">ai</a> <a href="/tags/akka/" style="font-size: 13.89px;">akka</a> <a href="/tags/atomic/" style="font-size: 13.33px;">atomic</a> <a href="/tags/brew/" style="font-size: 13px;">brew</a> <a href="/tags/cmpp/" style="font-size: 13px;">cmpp</a> <a href="/tags/design/" style="font-size: 13px;">design</a> <a href="/tags/docker/" style="font-size: 13.56px;">docker</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/grafana/" style="font-size: 13px;">grafana</a> <a href="/tags/java/" style="font-size: 13px;">java</a> <a href="/tags/jenkins/" style="font-size: 13px;">jenkins</a> <a href="/tags/log4j/" style="font-size: 13px;">log4j</a> <a href="/tags/mq/" style="font-size: 13px;">mq</a> <a href="/tags/net/" style="font-size: 13px;">net</a> <a href="/tags/netty/" style="font-size: 13.11px;">netty</a> <a href="/tags/nexus/" style="font-size: 13px;">nexus</a> <a href="/tags/pika/" style="font-size: 13.11px;">pika</a> <a href="/tags/prometheus/" style="font-size: 13px;">prometheus</a> <a href="/tags/redis/" style="font-size: 14px;">redis</a> <a href="/tags/sentinel/" style="font-size: 13px;">sentinel</a> <a href="/tags/sort/" style="font-size: 13.78px;">sort</a> <a href="/tags/zookeeper/" style="font-size: 13px;">zookeeper</a> <a href="/tags/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF/" style="font-size: 13px;">动态调试技术</a> <a href="/tags/%E5%AD%97%E8%8A%82%E7%A0%81/" style="font-size: 13.33px;">字节码</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E5%88%87%E7%89%87/" style="font-size: 13px;">网络切片</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/11/">十一月 2023</a><span class="archive-list-count">25</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/10/">十月 2022</a><span class="archive-list-count">11</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/04/">四月 2022</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">21</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">23</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">22</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/07/">七月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">14</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/net/">net</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/network/3gpp/%E5%9F%BA%E7%A1%80%E7%BD%91%E7%BB%9C%E9%93%BE%E8%B7%AF%E4%BB%8B%E7%BB%8D/" class="title">基础网络链路介绍</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T06:28:30.065Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/devops/docker/%E8%BF%90%E8%A1%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA-Java/" class="title">docker-java运行环境</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:43:01.859Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/devops/">devops</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/devops/docker/%E8%BF%90%E8%A1%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA-%E7%9B%91%E6%8E%A7/" class="title">docker-监控环境搭建.md</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:43:01.859Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/MySQL/">MySQL</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/data/mysql/MySQL%E8%BF%9E%E6%8E%A5%E6%8C%82%E6%AD%BB%E5%8E%9F%E5%9B%A0%E5%88%86%E6%9E%90/" class="title">MySQL连接挂死原因分析</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:43:01.853Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/TCP/">TCP</a>
+              </p>
+              <p class="item-title">
+                <a href="/2023/11/15/network/protocol/tcp/TCP%E7%8A%B6%E6%80%81%E6%A6%82%E8%BF%B0/" class="title">TCP状态概述.md</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-11-15T03:40:25.016Z" itemprop="datePublished">2023-11-15</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<meta name="referrer" content="no-referrer" />
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-data/clickhouse/ClickHouse安装文档" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      ClickHouse安装文档
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2023/11/15/data/clickhouse/ClickHouse%E5%AE%89%E8%A3%85%E6%96%87%E6%A1%A3/" class="article-date">
+	  <time datetime="2023-11-15T03:40:25.005Z" itemprop="datePublished">2023-11-15</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/ClickHouse/">ClickHouse</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/ClickHouse/" rel="tag">ClickHouse</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2023/11/15/data/clickhouse/ClickHouse%E5%AE%89%E8%A3%85%E6%96%87%E6%A1%A3/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h2 id="1-系统要求"><a href="#1-系统要求" class="headerlink" title="1.系统要求"></a>1.系统要求</h2><p>ClickHouse可以在任何具有x86_64，AArch64或PowerPC64LE CPU架构的Linux，FreeBSD或Mac OS X上运行。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grep -q sse4_2 /proc/cpuinfo &amp;&amp; echo <span class="string">&quot;SSE 4.2 supported&quot;</span> || echo <span class="string">&quot;SSE 4.2 not supported&quot;</span></span><br></pre></td></tr></table></figure>
+<h2 id="2-系统结构"><a href="#2-系统结构" class="headerlink" title="2.系统结构"></a>2.系统结构</h2><p><img src="https://cdn.nlark.com/yuque/0/2022/jpeg/804884/1658143515241-a523d62b-3af6-4633-916c-3fc65dd948a1.jpeg"></p>
+<h2 id="3-安装"><a href="#3-安装" class="headerlink" title="3.安装"></a>3.安装</h2><h3 id="3-1-单机安装"><a href="#3-1-单机安装" class="headerlink" title="3.1 单机安装"></a>3.1 单机安装</h3><h4 id="3-1-1-yum安装"><a href="#3-1-1-yum安装" class="headerlink" title="3.1.1 yum安装"></a>3.1.1 yum安装</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install -y yum-utils</span><br><span class="line">sudo yum-config-manager --add-repo https:<span class="comment">//packages.clickhouse.com/rpm/clickhouse.repo</span></span><br><span class="line">sudo yum install -y clickhouse-server clickhouse-client</span><br><span class="line"></span><br><span class="line">sudo /etc/init.d/clickhouse-server start</span><br><span class="line">clickhouse-client # or <span class="string">&quot;clickhouse-client --password&quot;</span> <span class="keyword">if</span> you set up a password.</span><br></pre></td></tr></table></figure>
+<h4 id="3-1-2-tar安装"><a href="#3-1-2-tar安装" class="headerlink" title="3.1.2 tar安装"></a>3.1.2 tar安装</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">LATEST_VERSION=$(curl -s https:<span class="comment">//packages.clickhouse.com/tgz/stable/ | \</span></span><br><span class="line">    grep -Eo <span class="string">&#x27;[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+&#x27;</span> | sort -V -r | head -n <span class="number">1</span>)</span><br><span class="line">export LATEST_VERSION</span><br><span class="line"></span><br><span class="line"><span class="keyword">case</span> $(uname -m) in</span><br><span class="line">  x86_64) ARCH=amd64 ;;</span><br><span class="line">  aarch64) ARCH=arm64 ;;</span><br><span class="line">  *) echo <span class="string">&quot;Unknown architecture $(uname -m)&quot;</span>; exit <span class="number">1</span> ;;</span><br><span class="line">esac</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> PKG in clickhouse-common-<span class="keyword">static</span> clickhouse-common-<span class="keyword">static</span>-dbg clickhouse-server clickhouse-client</span><br><span class="line"><span class="keyword">do</span></span><br><span class="line">  curl -fO <span class="string">&quot;https://packages.clickhouse.com/tgz/stable/$PKG-$LATEST_VERSION-$&#123;ARCH&#125;.tgz&quot;</span> \</span><br><span class="line">    || curl -fO <span class="string">&quot;https://packages.clickhouse.com/tgz/stable/$PKG-$LATEST_VERSION.tgz&quot;</span></span><br><span class="line">done</span><br><span class="line"></span><br><span class="line">exit <span class="number">0</span></span><br><span class="line"></span><br><span class="line">tar -xzvf <span class="string">&quot;clickhouse-common-static-$LATEST_VERSION-$&#123;ARCH&#125;.tgz&quot;</span> \</span><br><span class="line">  || tar -xzvf <span class="string">&quot;clickhouse-common-static-$LATEST_VERSION.tgz&quot;</span></span><br><span class="line">sudo <span class="string">&quot;clickhouse-common-static-$LATEST_VERSION/install/doinst.sh&quot;</span></span><br><span class="line"></span><br><span class="line">tar -xzvf <span class="string">&quot;clickhouse-common-static-dbg-$LATEST_VERSION-$&#123;ARCH&#125;.tgz&quot;</span> \</span><br><span class="line">  || tar -xzvf <span class="string">&quot;clickhouse-common-static-dbg-$LATEST_VERSION.tgz&quot;</span></span><br><span class="line">sudo <span class="string">&quot;clickhouse-common-static-dbg-$LATEST_VERSION/install/doinst.sh&quot;</span></span><br><span class="line"></span><br><span class="line">tar -xzvf <span class="string">&quot;clickhouse-server-$LATEST_VERSION-$&#123;ARCH&#125;.tgz&quot;</span> \</span><br><span class="line">  || tar -xzvf <span class="string">&quot;clickhouse-server-$LATEST_VERSION.tgz&quot;</span></span><br><span class="line">sudo <span class="string">&quot;clickhouse-server-$LATEST_VERSION/install/doinst.sh&quot;</span></span><br><span class="line">sudo /etc/init.d/clickhouse-server start</span><br><span class="line"></span><br><span class="line">tar -xzvf <span class="string">&quot;clickhouse-client-$LATEST_VERSION-$&#123;ARCH&#125;.tgz&quot;</span> \</span><br><span class="line">  || tar -xzvf <span class="string">&quot;clickhouse-client-$LATEST_VERSION.tgz&quot;</span></span><br><span class="line">sudo <span class="string">&quot;clickhouse-client-$LATEST_VERSION/install/doinst.sh&quot;</span></span><br></pre></td></tr></table></figure>
+<h4 id="3-1-3-配置"><a href="#3-1-3-配置" class="headerlink" title="3.1.3.配置"></a>3.1.3.配置</h4><ul>
+<li><p>外网访问</p>
+</li>
+<li><p>用户名密码</p>
+<h3 id="3-2-集群安装"><a href="#3-2-集群安装" class="headerlink" title="3.2 集群安装"></a>3.2 集群安装</h3><h4 id="3-2-1-zookeeper安装"><a href="#3-2-1-zookeeper安装" class="headerlink" title="3.2.1 zookeeper安装"></a>3.2.1 zookeeper安装</h4></li>
+<li><p>注线上需采用非docker安装</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">docker stop zookeeper</span><br><span class="line">docker rm zookeeper</span><br><span class="line">docker run --privileged=<span class="literal">true</span> -d --name zookeeper --publish <span class="number">2181</span>:<span class="number">2181</span>  -d zookeeper:<span class="number">3.5</span></span><br><span class="line">docker update zookeeper --restart=always</span><br></pre></td></tr></table></figure></li>
+<li><p>配置 zkEnv.sh</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">##zkEnv.sh 文件配置</span><br><span class="line">ZOO_LOG4J_PROP=&quot;ERROR,CONSOLE&quot;</span><br></pre></td></tr></table></figure></li>
+<li><p>配置zoo.cfg</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">## 配置自动清理</span><br><span class="line">autopurge.purgeInterval 这个参数指定了清理频率，单位是小时，需要填写一个1或更大的整数，默认是0，表示不开启自己清理功能。</span><br><span class="line">autopurge.snapRetainCount 这个参数和上面的参数搭配使用，这个参数指定了需要保留的文件数目。默认是保留3个。</span><br><span class="line"></span><br><span class="line">autopurge.snapRetainCount=20  </span><br><span class="line">autopurge.purgeInterval=48 </span><br></pre></td></tr></table></figure>
+<h4 id="3-2-2-clickhouse安装"><a href="#3-2-2-clickhouse安装" class="headerlink" title="3.2.2 clickhouse安装"></a>3.2.2 clickhouse安装</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># 下载安装</span><br><span class="line">sudo yum install -y yum-utils</span><br><span class="line">sudo yum-config-manager --add-repo https:<span class="comment">//packages.clickhouse.com/rpm/clickhouse.repo</span></span><br><span class="line">sudo yum install -y clickhouse-server clickhouse-client</span><br><span class="line"></span><br><span class="line"># 关闭防火墙</span><br><span class="line">systemctl stop firewalld.service</span><br><span class="line">systemctl status firewalld.service</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h4 id="3-2-3-集群配置"><a href="#3-2-3-集群配置" class="headerlink" title="3.2.3 集群配置"></a>3.2.3 集群配置</h4><table>
+<thead>
+<tr>
+<th>机器</th>
+<th>分片</th>
+<th>副本</th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>10.41.1.199</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+</tr>
+<tr>
+<td>10.41.0.114</td>
+<td>1</td>
+<td>2</td>
+<td></td>
+</tr>
+<tr>
+<td>10.41.0.158</td>
+<td>2</td>
+<td>1</td>
+<td></td>
+</tr>
+</tbody></table>
+</li>
+<li><p>user.xml(配置用户)</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://rongcloud.yuque.com/attachments/yuque/0/2022/xml/804884/1660557438970-43a7148e-419e-4a72-9aea-a3cfaac189c2.xml?_lake_card=%7B%22src%22:%22https://rongcloud.yuque.com/attachments/yuque/0/2022/xml/804884/1660557438970-43a7148e-419e-4a72-9aea-a3cfaac189c2.xml%22,%22name%22:%22users.xml%22,%22size%22:1090,%22type%22:%22text/xml%22,%22ext%22:%22xml%22,%22source%22:%22%22,%22status%22:%22done%22,%22mode%22:%22title%22,%22download%22:false,%22taskId%22:%22u56456c13-9a55-4485-9ebf-e2ccc2bef2b%22,%22taskType%22:%22transfer%22,%22id%22:%22ucbffb4d4%22,%22card%22:%22file%22%7D">users.xml</a></li>
+</ul>
+</li>
+<li><p>config.xml(配置集群)</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://rongcloud.yuque.com/attachments/yuque/0/2022/xml/804884/1660557439105-357df00d-27fb-4b38-ab8f-c9204eb3ecd0.xml?_lake_card=%7B%22src%22:%22https://rongcloud.yuque.com/attachments/yuque/0/2022/xml/804884/1660557439105-357df00d-27fb-4b38-ab8f-c9204eb3ecd0.xml%22,%22name%22:%22114-config.xml%22,%22size%22:10843,%22type%22:%22text/xml%22,%22ext%22:%22xml%22,%22source%22:%22%22,%22status%22:%22done%22,%22mode%22:%22title%22,%22download%22:false,%22taskId%22:%22uc4417792-d24a-4206-94f5-14dd7b844a0%22,%22taskType%22:%22transfer%22,%22id%22:%22u70813c3e%22,%22card%22:%22file%22%7D">114-config.xml</a><a target="_blank" rel="noopener" href="https://rongcloud.yuque.com/attachments/yuque/0/2022/xml/804884/1660557439217-2a2aa1f8-e2d4-4611-b791-fad2f542feb5.xml?_lake_card=%7B%22src%22:%22https://rongcloud.yuque.com/attachments/yuque/0/2022/xml/804884/1660557439217-2a2aa1f8-e2d4-4611-b791-fad2f542feb5.xml%22,%22name%22:%22158-config.xml%22,%22size%22:10843,%22type%22:%22text/xml%22,%22ext%22:%22xml%22,%22source%22:%22%22,%22status%22:%22done%22,%22mode%22:%22title%22,%22download%22:false,%22taskId%22:%22u4c98aa2a-eba6-4726-878f-d0ae9bee9ac%22,%22taskType%22:%22transfer%22,%22id%22:%22u6b82e008%22,%22card%22:%22file%22%7D">158-config.xml</a><a target="_blank" rel="noopener" href="https://rongcloud.yuque.com/attachments/yuque/0/2022/xml/804884/1660557439323-8fbbb35c-e466-4703-a214-a8719a9dd90b.xml?_lake_card=%7B%22src%22:%22https://rongcloud.yuque.com/attachments/yuque/0/2022/xml/804884/1660557439323-8fbbb35c-e466-4703-a214-a8719a9dd90b.xml%22,%22name%22:%22199-config.xml%22,%22size%22:10843,%22type%22:%22text/xml%22,%22ext%22:%22xml%22,%22source%22:%22%22,%22status%22:%22done%22,%22mode%22:%22title%22,%22download%22:false,%22taskId%22:%22u3903b64a-2051-457b-b841-0b1122a070d%22,%22taskType%22:%22transfer%22,%22id%22:%22u45a9c066%22,%22card%22:%22file%22%7D">199-config.xml</a></li>
+</ul>
+</li>
+<li><p>修改存储路径</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">#先停库</span><br><span class="line">systemctl stop clickhouse-server.service </span><br><span class="line"></span><br><span class="line">mkdir /data1/clickhouse/</span><br><span class="line">chown -R clickhouse:clickhouse /data1/clickhouse/</span><br><span class="line">yes | cp -rf /var/lib/clickhouse /data1/clickhouse/</span><br><span class="line"></span><br><span class="line">systemctl restart clickhouse-server.service </span><br><span class="line"></span><br><span class="line">systemctl status clickhouse-server.service </span><br><span class="line"></span><br><span class="line"># 备注 采用 service  clickhouse-server stop/restart 可能出错</span><br><span class="line"></span><br></pre></td></tr></table></figure></li>
+<li><p>需修改的配置</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 删除较大的数据 --&gt;</span><br><span class="line">&lt;max_table_size_to_drop&gt;0&lt;/max_table_size_to_drop&gt;</span><br><span class="line"></span><br><span class="line">&lt;!-- 插入限制 --&gt;</span><br><span class="line">&lt;merge_tree&gt;</span><br><span class="line">  &lt;parts_to_delay_insert&gt;600&lt;/parts_to_delay_insert&gt;</span><br><span class="line">  &lt;parts_to_throw_insert&gt;600&lt;/parts_to_throw_insert&gt;</span><br><span class="line">  &lt;max_delay_to_insert&gt;2&lt;/max_delay_to_insert&gt;</span><br><span class="line">  &lt;max_suspicious_broken_parts&gt;5&lt;/max_suspicious_broken_parts&gt;</span><br><span class="line">&lt;/merge_tree&gt;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="3-3-操作台"><a href="#3-3-操作台" class="headerlink" title="3.3.操作台"></a>3.3.操作台</h3></li>
+<li><p>数据库</p>
+<ul>
+<li>使用mysql5.7,创建数据库：clickvisual<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">docker stop mysql3336</span><br><span class="line">docker rm mysql3336</span><br><span class="line">docker run --privileged=<span class="literal">true</span> --name mysql3336 -p <span class="number">3336</span>:<span class="number">3306</span> -e MYSQL_ROOT_PASSWORD=root -d mysql:<span class="number">5.7</span><span class="number">.19</span></span><br><span class="line">docker update mysql3336 --restart=always</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>应用</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">wget https:<span class="comment">//github.com/clickvisual/clickvisual/releases/download/v0.3.2-rc1/clickvisual-v0.3.2-rc1-linux-amd64.tar.gz</span></span><br><span class="line"></span><br><span class="line">tar -xzvf clickvisual-v0<span class="number">.3</span><span class="number">.2</span>-rc1-linux-amd64.tar.gz</span><br></pre></td></tr></table></figure></li>
+<li><p>修改配置</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dsn = <span class="string">&quot;root:root@tcp(127.0.0.1:3336)/clickvisual?charset=utf8mb4&amp;collation=utf8mb4_general_ci&amp;parseTime=True&amp;loc=Local&amp;readTimeout=1s&amp;timeout=1s&amp;writeTimeout=3s&quot;</span></span><br><span class="line">rootURL = <span class="string">&quot;http://localhost:19001&quot;</span></span><br><span class="line">    </span><br></pre></td></tr></table></figure>
+<pre><code> [https://clickvisual.gocn.vip/clickvisual/02install/install-introduce.html](https://clickvisual.gocn.vip/clickvisual/02install/install-introduce.html)
+</code></pre>
+</li>
+</ul>
+<h2 id="5-使用"><a href="#5-使用" class="headerlink" title="5.使用"></a>5.使用</h2><h3 id="5-1-本地表测试"><a href="#5-1-本地表测试" class="headerlink" title="5.1 本地表测试"></a>5.1 本地表测试</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">CREATE DATABASE IF NOT EXISTS devloglocal</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">CREATE TABLE IF NOT EXISTS devloglocal.applog</span><br><span class="line">(</span><br><span class="line"></span><br><span class="line">    `timestamp` DateTime,</span><br><span class="line">    `observedTimestamp` DateTime,</span><br><span class="line">    `traceId` String,</span><br><span class="line">    `spanId` String,</span><br><span class="line">    `severityText` String,</span><br><span class="line">    `severityNumber` Int32,</span><br><span class="line">    `instrumentationScope` String,</span><br><span class="line">    `body` String,</span><br><span class="line">    `resource_names` Array(String),</span><br><span class="line">    `resource_values` Array(String),</span><br><span class="line">    `attribute_names` Array(String),</span><br><span class="line">    `attribute_values` Array(String)</span><br><span class="line">)</span><br><span class="line">ENGINE = MergeTree</span><br><span class="line">PARTITION BY timestamp</span><br><span class="line">ORDER BY timestamp</span><br><span class="line"><span class="type">SETTINGS</span> <span class="variable">index_granularity</span> <span class="operator">=</span> <span class="number">8192</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">INSERT INTO devloglocal.applog</span><br><span class="line">(`timestamp`, observedTimestamp, traceId, spanId, severityText, severityNumber, instrumentationScope, body, resource_names, resource_values, attribute_names, attribute_values)</span><br><span class="line">VALUES(<span class="number">1658217082</span>, <span class="number">1658217082</span>, <span class="string">&#x27;3232&#x27;</span>, <span class="string">&#x27;3232&#x27;</span>, <span class="string">&#x27;INFO &#x27;</span>, <span class="number">9</span>, <span class="string">&#x27;org.example.logdemo.LogTest&#x27;</span>, <span class="string">&#x27; test&#x27;</span>, [<span class="string">&#x27;instance&#x27;</span>,<span class="string">&#x27;service&#x27;</span>,<span class="string">&#x27;namespace&#x27;</span>,<span class="string">&#x27;region&#x27;</span>], [<span class="string">&#x27;10.3.12.55&#x27;</span>,<span class="string">&#x27;app&#x27;</span>,<span class="string">&#x27;biz&#x27;</span>,<span class="string">&#x27;idc&#x27;</span>], [<span class="string">&#x27;app&#x27;</span>,<span class="string">&#x27;session&#x27;</span>], [<span class="string">&#x27;3232&#x27;</span>,<span class="string">&#x27;32&#x27;</span>]);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">SELECT * FROM  devloglocal.applog limit <span class="number">0</span>, <span class="number">10</span></span><br></pre></td></tr></table></figure>
+<h3 id="5-2-集群测试"><a href="#5-2-集群测试" class="headerlink" title="5.2 集群测试"></a>5.2 集群测试</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">CREATE DATABASE IF NOT EXISTS devlog on cluster enic_cluster</span><br><span class="line"></span><br><span class="line">DROP DATABASE devloglocal on cluster enic_cluster</span><br><span class="line"></span><br><span class="line">CREATE TABLE IF NOT EXISTS devlog.applogrep on cluster <span class="title function_">enic_cluster</span></span><br><span class="line"><span class="params">(</span></span><br><span class="line"><span class="params"></span></span><br><span class="line"><span class="params">    `timestamp` DateTime,</span></span><br><span class="line"><span class="params">    `observedTimestamp` DateTime,</span></span><br><span class="line"><span class="params">    `traceId` String,</span></span><br><span class="line"><span class="params">    `spanId` String,</span></span><br><span class="line"><span class="params">    `severityText` String,</span></span><br><span class="line"><span class="params">    `severityNumber` Int32,</span></span><br><span class="line"><span class="params">    `instrumentationScope` String,</span></span><br><span class="line"><span class="params">    `body` String,</span></span><br><span class="line"><span class="params">    `resource_names` Array(String)</span>,</span><br><span class="line">    `resource_values` Array(String),</span><br><span class="line">    `attribute_names` Array(String),</span><br><span class="line">    `attribute_values` Array(String)</span><br><span class="line">)</span><br><span class="line">ENGINE = ReplicatedMergeTree(<span class="string">&#x27;/clickhouse/tables/&#123;shard&#125;/devlog/applogrep&#x27;</span>, <span class="string">&#x27;&#123;replica&#125;&#x27;</span>)</span><br><span class="line">PARTITION BY timestamp</span><br><span class="line">ORDER BY timestamp</span><br><span class="line"><span class="type">SETTINGS</span> <span class="variable">index_granularity</span> <span class="operator">=</span> <span class="number">8192</span>;</span><br><span class="line"></span><br><span class="line">create table devlog.applogrep_cluster on cluster <span class="title function_">enic_cluster</span></span><br><span class="line"><span class="params">(</span></span><br><span class="line"><span class="params">    `timestamp` DateTime,</span></span><br><span class="line"><span class="params">    `observedTimestamp` DateTime,</span></span><br><span class="line"><span class="params">    `traceId` String,</span></span><br><span class="line"><span class="params">    `spanId` String,</span></span><br><span class="line"><span class="params">    `severityText` String,</span></span><br><span class="line"><span class="params">    `severityNumber` Int32,</span></span><br><span class="line"><span class="params">    `instrumentationScope` String,</span></span><br><span class="line"><span class="params">    `body` String,</span></span><br><span class="line"><span class="params">    `resource_names` Array(String)</span>,</span><br><span class="line">    `resource_values` Array(String),</span><br><span class="line">    `attribute_names` Array(String),</span><br><span class="line">    `attribute_values` Array(String)</span><br><span class="line">)engine = Distributed(enic_cluster, devlog, applogrep, hiveHash(traceId));</span><br><span class="line"></span><br><span class="line">SELECT `timestamp`, observedTimestamp, traceId, spanId, severityText, severityNumber, instrumentationScope, body, resource_names, resource_values, attribute_names, attribute_values</span><br><span class="line">FROM devlog.applogrep_cluster;</span><br></pre></td></tr></table></figure>
+<h3 id="5-3-其他命令"><a href="#5-3-其他命令" class="headerlink" title="5.3 其他命令"></a>5.3 其他命令</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">create table devlog.applog_cluster on cluster <span class="title function_">enic_cluster</span></span><br><span class="line"><span class="params">(</span></span><br><span class="line"><span class="params">    `timestamp` DateTime,</span></span><br><span class="line"><span class="params">    `observedTimestamp` DateTime,</span></span><br><span class="line"><span class="params">    `traceId` String,</span></span><br><span class="line"><span class="params">    `spanId` String,</span></span><br><span class="line"><span class="params">    `severityText` String,</span></span><br><span class="line"><span class="params">    `severityNumber` Int32,</span></span><br><span class="line"><span class="params">    `instrumentationScope` String,</span></span><br><span class="line"><span class="params">    `body` String,</span></span><br><span class="line"><span class="params">    `resource_names` Array(String)</span>,</span><br><span class="line">    `resource_values` Array(String),</span><br><span class="line">    `attribute_names` Array(String),</span><br><span class="line">    `attribute_values` Array(String)</span><br><span class="line">)engine = Distributed(enic_cluster, devlog, applog, hiveHash(traceId));</span><br><span class="line"></span><br><span class="line">Distributed(集群名称,库名,本地表名,分片键)</span><br><span class="line">    </span><br><span class="line">show tables;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">SELECT <span class="title function_">COUNT</span><span class="params">(*)</span>  FROM devlog.applog_cluster;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">select * from system.clusters</span><br></pre></td></tr></table></figure>
+<h2 id="6-官方文档"><a href="#6-官方文档" class="headerlink" title="6.官方文档"></a>6.官方文档</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://clickhouse.com/docs/zh/getting-started/install/">https://clickhouse.com/docs/zh/getting-started/install/</a></li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://wuhaocn.github.io/2023/11/15/data/clickhouse/ClickHouse%E5%AE%89%E8%A3%85%E6%96%87%E6%A1%A3/" title="ClickHouse安装文档" target="_blank" rel="external">https://wuhaocn.github.io/2023/11/15/data/clickhouse/ClickHouse安装文档/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/wuhaocn" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/wuhaocn" target="_blank"><span class="text-dark">wuhaocn</span><small class="ml-1x">Java &amp; 后端 &amp; 通信</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2023/11/15/data/pika/pika%E9%85%8D%E7%BD%AE/" title="pika配置"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2023/11/15/data/clickhouse/%E6%97%A5%E5%BF%97%E5%8F%AF%E8%A7%86%E5%8C%96-ClickVisual/" title="ClickVisual"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/wuhaocn" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/wuhaocn" target="_blank"> cofess </a>base on <a href="https://github.com/wuhaocn/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'UWmpsjuNfPNkkicYrPtMzVQC-gzGzoHsz',
+    appKey: '825aG0XPHawp6VAXnYsrnlp3',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>
